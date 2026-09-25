@@ -1,0 +1,140 @@
+// ServisCRM API client — bütün backend sorğuları buradan keçir.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+
+export type Shop = {
+  id: string; name: string; code: string; city: string;
+  currency: string; default_warranty_days: number; status: string;
+};
+export type Branch = { id: number; name: string; address: string; is_main: boolean };
+export type Role = { id: number; name: string; is_owner_role: boolean; permissions: { module: string; is_allowed: boolean }[] };
+export type Me = {
+  id: number; username: string; first_name: string; last_name: string; email: string; phone: string;
+  shop: Shop | null; branch: Branch | null; role: Role | null; initials: string;
+  is_platform_admin: boolean; status: string; allowed_modules: string[];
+};
+
+function getTokens() {
+  if (typeof window === "undefined") return { access: null, refresh: null };
+  return {
+    access: localStorage.getItem("scrm_access"),
+    refresh: localStorage.getItem("scrm_refresh"),
+  };
+}
+
+export function setTokens(access: string, refresh: string) {
+  localStorage.setItem("scrm_access", access);
+  localStorage.setItem("scrm_refresh", refresh);
+}
+
+export function clearTokens() {
+  localStorage.removeItem("scrm_access");
+  localStorage.removeItem("scrm_refresh");
+}
+
+class ApiError extends Error {
+  status: number;
+  data: unknown;
+  constructor(status: number, data: unknown) {
+    super(typeof data === "string" ? data : JSON.stringify(data));
+    this.status = status;
+    this.data = data;
+  }
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+  const { refresh } = getTokens();
+  if (!refresh) return null;
+  const res = await fetch(`${API_URL}/auth/token/refresh/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  localStorage.setItem("scrm_access", data.access);
+  return data.access;
+}
+
+export async function apiFetch(path: string, options: RequestInit = {}, retry = true): Promise<unknown> {
+  const { access } = getTokens();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> | undefined),
+  };
+  if (access) headers["Authorization"] = `Bearer ${access}`;
+
+  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+
+  if (res.status === 401 && retry) {
+    const newAccess = await refreshAccessToken();
+    if (newAccess) {
+      return apiFetch(path, options, false);
+    }
+    clearTokens();
+    if (typeof window !== "undefined") window.location.href = "/login";
+    throw new ApiError(401, "Unauthorized");
+  }
+
+  if (!res.ok) {
+    let data: unknown = null;
+    try { data = await res.json(); } catch { /* ignore */ }
+    throw new ApiError(res.status, data);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+export const api = {
+  login: (username: string, password: string) =>
+      apiFetch("/auth/token/", { method: "POST", body: JSON.stringify({ username, password }) }, false),
+  me: () => apiFetch("/auth/me/") as Promise<Me>,
+  dashboard: () => apiFetch("/dashboard/"),
+  repairs: (params = "") => apiFetch(`/repairs/${params}`),
+  repair: (id: number | string) => apiFetch(`/repairs/${id}/`),
+  createRepair: (payload: Record<string, unknown>) =>
+      apiFetch("/repairs/", { method: "POST", body: JSON.stringify(payload) }),
+  setRepairStatus: (id: number | string, status: string) =>
+      apiFetch(`/repairs/${id}/status/`, { method: "POST", body: JSON.stringify({ status }) }),
+  addRepairPayment: (id: number | string, amount: number, method: string) =>
+      apiFetch(`/repairs/${id}/payments/`, { method: "POST", body: JSON.stringify({ amount, method }) }),
+  repairWarranties: () => apiFetch("/repairs/warranties/"),
+  repairDebts: () => apiFetch("/repairs/debts/"),
+  customers: (params = "") => apiFetch(`/customers/${params}`),
+  customer: (id: number | string) => apiFetch(`/customers/${id}/`),
+  updateCustomer: (id: number | string, payload: Record<string, unknown>) =>
+      apiFetch(`/customers/${id}/`, { method: "PATCH", body: JSON.stringify(payload) }),
+  createCustomer: (payload: Record<string, unknown>) =>
+      apiFetch("/customers/", { method: "POST", body: JSON.stringify(payload) }),
+  products: (params = "") => apiFetch(`/inventory/products/${params}`),
+  marketplaceSearch: (q: string) => apiFetch(`/marketplace/search/?search=${encodeURIComponent(q)}`),
+  cashboxSummary: () => apiFetch("/cashbox/summary/"),
+  cashTransactions: (params = "") => apiFetch(`/cashbox/transactions/${params}`),
+  createCashTransaction: (payload: Record<string, unknown>) =>
+      apiFetch("/cashbox/transactions/", { method: "POST", body: JSON.stringify(payload) }),
+  suppliers: () => apiFetch("/suppliers/"),
+  createSupplier: (payload: Record<string, unknown>) =>
+      apiFetch("/suppliers/", { method: "POST", body: JSON.stringify(payload) }),
+  addSupplierPurchase: (id: number | string, payload: Record<string, unknown>) =>
+      apiFetch(`/suppliers/${id}/purchases/`, { method: "POST", body: JSON.stringify(payload) }),
+  paySupplier: (id: number | string, amount: number, method = "cash") =>
+      apiFetch(`/suppliers/${id}/pay/`, { method: "POST", body: JSON.stringify({ amount, method }) }),
+  reportsSummary: (params = "") => apiFetch(`/reports/summary/${params}`),
+  myShop: () => apiFetch("/my-shop/"),
+};
+
+export const STATUS_LABELS: Record<string, string> = {
+  received: "Qəbul edildi",
+  diagnosing: "Diaqnostikada",
+  waiting_repair: "Təmir gözləyir",
+  in_progress: "Təmir prosesində",
+  ready: "Hazırdır",
+  delivered: "Təhvil verildi",
+  cancelled: "Ləğv edildi",
+};
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  unpaid: "Ödənilməyib",
+  partial: "Qismən ödənilib",
+  paid: "Ödənilib",
+  debt: "Borc qalıb",
+};
