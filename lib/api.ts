@@ -106,12 +106,19 @@ export const api = {
   createCustomer: (payload: Record<string, unknown>) =>
       apiFetch("/customers/", { method: "POST", body: JSON.stringify(payload) }),
   products: (params = "") => apiFetch(`/inventory/products/${params}`),
+  createProduct: (payload: Record<string, unknown>) =>
+      apiFetch("/inventory/products/", { method: "POST", body: JSON.stringify(payload) }),
+  updateProduct: (id: number | string, payload: Record<string, unknown>) =>
+      apiFetch(`/inventory/products/${id}/`, { method: "PATCH", body: JSON.stringify(payload) }),
+  stockMovements: (params = "") => apiFetch(`/inventory/movements/${params}`),
+  createStockMovement: (payload: Record<string, unknown>) =>
+      apiFetch("/inventory/movements/", { method: "POST", body: JSON.stringify(payload) }),
   marketplaceSearch: (q: string) => apiFetch(`/marketplace/search/?search=${encodeURIComponent(q)}`),
   cashboxSummary: () => apiFetch("/cashbox/summary/"),
   cashTransactions: (params = "") => apiFetch(`/cashbox/transactions/${params}`),
   createCashTransaction: (payload: Record<string, unknown>) =>
       apiFetch("/cashbox/transactions/", { method: "POST", body: JSON.stringify(payload) }),
-  suppliers: () => apiFetch("/suppliers/"),
+  suppliers: () => apiFetch(`/suppliers/`),
   createSupplier: (payload: Record<string, unknown>) =>
       apiFetch("/suppliers/", { method: "POST", body: JSON.stringify(payload) }),
   addSupplierPurchase: (id: number | string, payload: Record<string, unknown>) =>
@@ -120,6 +127,26 @@ export const api = {
       apiFetch(`/suppliers/${id}/pay/`, { method: "POST", body: JSON.stringify({ amount, method }) }),
   reportsSummary: (params = "") => apiFetch(`/reports/summary/${params}`),
   myShop: () => apiFetch("/my-shop/"),
+  updateMyShop: (payload: Record<string, unknown>) =>
+      apiFetch("/my-shop/", { method: "PATCH", body: JSON.stringify(payload) }),
+  branches: () => apiFetch("/branches/"),
+  createBranch: (payload: Record<string, unknown>) =>
+      apiFetch("/branches/", { method: "POST", body: JSON.stringify(payload) }),
+  users: (params = "") => apiFetch(`/users/${params}`),
+  createUser: (payload: Record<string, unknown>) =>
+      apiFetch("/users/", { method: "POST", body: JSON.stringify(payload) }),
+  updateUser: (id: number | string, payload: Record<string, unknown>) =>
+      apiFetch(`/users/${id}/`, { method: "PATCH", body: JSON.stringify(payload) }),
+  roles: () => apiFetch(`/roles/`),
+  createRole: (payload: Record<string, unknown>) =>
+      apiFetch("/roles/", { method: "POST", body: JSON.stringify(payload) }),
+  // Platform Super Admin
+  platformDashboard: () => apiFetch("/platform/dashboard/"),
+  shops: (params = "") => apiFetch(`/shops/${params}`),
+  updateShop: (id: string, payload: Record<string, unknown>) =>
+      apiFetch(`/shops/${id}/`, { method: "PATCH", body: JSON.stringify(payload) }),
+  plans: () => apiFetch("/plans/"),
+  platformTickets: (params = "") => apiFetch(`/platform/tickets/${params}`),
 };
 
 export const STATUS_LABELS: Record<string, string> = {

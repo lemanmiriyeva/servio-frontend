@@ -85,14 +85,16 @@ export default function CustomersPage() {
                 </div>
             )}
 
-            <div className="flex-1 min-w-[240px] h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 text-ink2 max-w-md">
-                <Search size={18} className="text-muted flex-none" />
-                <input
-                    className="w-full outline-none bg-transparent text-sm"
-                    placeholder="Ad və ya telefon üzrə axtar"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
+            <div className="flex gap-3 flex-wrap">
+                <div className="flex-1 min-w-[240px] h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 text-ink2 max-w-md">
+                    <Search size={18} className="text-muted flex-none" />
+                    <input
+                        className="w-full outline-none bg-transparent text-sm"
+                        placeholder="Ad və ya telefon üzrə axtar"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
             </div>
 
             <div className="card !p-2">
