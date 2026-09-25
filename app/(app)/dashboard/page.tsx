@@ -50,10 +50,11 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [profit, setProfit] = useState<number | null>(null);
-  const [showProfit, setShowProfit] = useState(false);
-  const [error, setError] = useState("");
 
-  useEffect(() => { setShowProfit(!getBlurProfitDefault()); }, []);
+  // FIX: Use lazy initialization to avoid setting state inside an effect on mount
+  const [showProfit, setShowProfit] = useState(() => !getBlurProfitDefault());
+
+  const [error, setError] = useState("");
 
   useEffect(() => {
     api.dashboard().then((d) => setData(d as DashboardData)).catch(() => setError("Məlumatlar yüklənmədi."));

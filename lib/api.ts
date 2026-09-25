@@ -114,6 +114,11 @@ export const api = {
   createStockMovement: (payload: Record<string, unknown>) =>
       apiFetch("/inventory/movements/", { method: "POST", body: JSON.stringify(payload) }),
   marketplaceSearch: (q: string) => apiFetch(`/marketplace/search/?search=${encodeURIComponent(q)}`),
+  marketplaceOrders: (params = "") => apiFetch(`/marketplace/orders/${params}`),
+  createMarketplaceOrder: (payload: Record<string, unknown>) =>
+      apiFetch("/marketplace/orders/", { method: "POST", body: JSON.stringify(payload) }),
+  marketplaceOrderAction: (id: number | string, action: string) =>
+      apiFetch(`/marketplace/orders/${id}/${action}/`, { method: "POST", body: JSON.stringify({}) }),
   cashboxSummary: () => apiFetch("/cashbox/summary/"),
   cashTransactions: (params = "") => apiFetch(`/cashbox/transactions/${params}`),
   createCashTransaction: (payload: Record<string, unknown>) =>
@@ -140,6 +145,8 @@ export const api = {
   roles: () => apiFetch(`/roles/`),
   createRole: (payload: Record<string, unknown>) =>
       apiFetch("/roles/", { method: "POST", body: JSON.stringify(payload) }),
+  updateRolePermissions: (id: number | string, permissions: { module: string; is_allowed: boolean }[]) =>
+      apiFetch(`/roles/${id}/permissions/`, { method: "PATCH", body: JSON.stringify({ permissions }) }),
   // Platform Super Admin
   platformDashboard: () => apiFetch("/platform/dashboard/"),
   shops: (params = "") => apiFetch(`/shops/${params}`),
