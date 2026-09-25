@@ -4,6 +4,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 export type Shop = {
   id: string; name: string; code: string; city: string;
   currency: string; default_warranty_days: number; status: string;
+  address?: string; phone?: string; work_hours?: string; tax_id?: string; receipt_terms?: string;
+  owner_full_name?: string; owner_phone?: string; owner_email?: string;
 };
 export type Branch = { id: number; name: string; address: string; is_main: boolean };
 export type Role = { id: number; name: string; is_owner_role: boolean; permissions: { module: string; is_allowed: boolean }[] };

@@ -8,6 +8,7 @@ import { getBlurProfitDefault, setBlurProfitDefault } from "@/lib/prefs";
 type ShopSettings = {
     name: string; owner_full_name: string; owner_phone: string; owner_email: string;
     city: string; default_warranty_days: number; currency: string;
+    address: string; phone: string; work_hours: string; tax_id: string; receipt_terms: string;
 };
 type Branch = { id: number; name: string; address: string; phone: string; is_main: boolean };
 
@@ -136,6 +137,49 @@ export default function SettingsPage() {
                             </>
                         )}
                     </div>
+
+                    {form && (
+                        <div className="card flex flex-col gap-3.5">
+                            <div>
+                                <h3 className="text-base font-semibold">Qəbz məlumatları</h3>
+                                <p className="text-ink2 text-xs mt-0.5">Çap edilən Təhvil-təslim aktında görünəcək məlumatlar.</p>
+                            </div>
+                            <div className="flex gap-3 flex-wrap">
+                                <div className="fld flex-1 min-w-[220px]">
+                                    <label>Ünvan</label>
+                                    <div className="inp"><input value={form.address} onChange={(e) => update("address", e.target.value)} placeholder="Nizami küç. 45, Bakı" /></div>
+                                </div>
+                                <div className="fld flex-1 min-w-[160px]">
+                                    <label>Telefon</label>
+                                    <div className="inp"><input value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+994 12 345 67 89" /></div>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 flex-wrap">
+                                <div className="fld flex-1 min-w-[200px]">
+                                    <label>İş saatları</label>
+                                    <div className="inp"><input value={form.work_hours} onChange={(e) => update("work_hours", e.target.value)} placeholder="B.e – Şənbə 10:00–19:00" /></div>
+                                </div>
+                                <div className="fld min-w-[140px]" style={{ maxWidth: 180 }}>
+                                    <label>VÖEN (istəyə bağlı)</label>
+                                    <div className="inp"><input value={form.tax_id} onChange={(e) => update("tax_id", e.target.value)} /></div>
+                                </div>
+                            </div>
+                            <div className="fld">
+                                <label>Zəmanət və təhvil-təslim şərtləri</label>
+                                <div className="inp ta" style={{ height: 130 }}>
+                                    <textarea
+                                        className="w-full h-full outline-none bg-transparent resize-none pt-0"
+                                        value={form.receipt_terms}
+                                        onChange={(e) => update("receipt_terms", e.target.value)}
+                                    />
+                                </div>
+                                <span className="mut text-xs">Yekun mətn Azərbaycan Respublikasının qüvvədə olan qanunvericiliyinə uyğun hüquqi yoxlamadan keçirilməlidir.</span>
+                            </div>
+                            <button className="btn pri self-start" disabled={saving} onClick={handleSave}>
+                                <Save size={16} /><span>{saving ? "Yadda saxlanılır…" : saved ? "Saxlanıldı ✓" : "Yadda saxla"}</span>
+                            </button>
+                        </div>
+                    )}
 
                     <div className="card flex flex-col gap-3.5">
                         <div className="flex items-center justify-between">
