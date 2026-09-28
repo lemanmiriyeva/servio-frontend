@@ -12,7 +12,20 @@ export type Role = { id: number; name: string; is_owner_role: boolean; permissio
 export type Me = {
   id: number; username: string; first_name: string; last_name: string; email: string; phone: string;
   shop: Shop | null; branch: Branch | null; role: Role | null; initials: string;
-  is_platform_admin: boolean; status: string; allowed_modules: string[];
+  is_platform_admin: boolean; is_superadmin: boolean; status: string; allowed_modules: string[];
+};
+
+export type PlatformField = {
+  name: string; label: string;
+  type: "text" | "textarea" | "email" | "integer" | "decimal" | "boolean" | "date" | "datetime" | "choice" | "related";
+  required: boolean; read_only: boolean; computed: boolean; allow_null: boolean; write_only: boolean; help: string;
+  choices?: { value: string; label: string }[];
+  related?: string | null;
+  default?: string | number | boolean | null;
+};
+export type PlatformResource = {
+  key: string; label: string; group: string; columns: string[]; filters: string[];
+  searchable: boolean; fields: PlatformField[];
 };
 
 function getTokens() {
@@ -33,7 +46,7 @@ export function clearTokens() {
   localStorage.removeItem("scrm_refresh");
 }
 
-class ApiError extends Error {
+export class ApiError extends Error {
   status: number;
   data: unknown;
   constructor(status: number, data: unknown) {
@@ -156,6 +169,15 @@ export const api = {
       apiFetch(`/shops/${id}/`, { method: "PATCH", body: JSON.stringify(payload) }),
   plans: () => apiFetch("/plans/"),
   platformTickets: (params = "") => apiFetch(`/platform/tickets/${params}`),
+  // Platforma — generik CRUD (mağazalar, istifadəçilər, rollar, ... hamısı)
+  platformResources: () => apiFetch("/platform/resources/") as Promise<PlatformResource[]>,
+  platformList: (key: string, params = "") => apiFetch(`/platform/r/${key}/${params}`),
+  platformCreate: (key: string, payload: Record<string, unknown>) =>
+      apiFetch(`/platform/r/${key}/`, { method: "POST", body: JSON.stringify(payload) }),
+  platformUpdate: (key: string, id: string | number, payload: Record<string, unknown>) =>
+      apiFetch(`/platform/r/${key}/${id}/`, { method: "PATCH", body: JSON.stringify(payload) }),
+  platformDelete: (key: string, id: string | number) =>
+      apiFetch(`/platform/r/${key}/${id}/`, { method: "DELETE" }),
 };
 
 export const STATUS_LABELS: Record<string, string> = {

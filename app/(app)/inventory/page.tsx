@@ -249,7 +249,7 @@ export default function InventoryPage() {
 
             {tab === "market" && (
                 <>
-                    <div className="flex-1 min-w-[240px] h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 text-ink2 max-w-lg">
+                    <div className="flex-none w-full h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 text-ink2 max-w-lg">
                         <Search size={18} className="text-muted flex-none" />
                         <input
                             className="w-full outline-none bg-transparent text-sm"

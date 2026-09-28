@@ -1,10 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { LogOut, Store, CircleCheck, Clock, Banknote, Search } from "lucide-react";
+import { Store, CircleCheck, Clock, Banknote, Search } from "lucide-react";
 import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth-context";
 
 type Shop = {
     id: string; name: string; code: string; owner_full_name: string; city: string;
@@ -33,8 +30,6 @@ function trialDaysLeft(d: string | null) {
 }
 
 export default function PlatformPage() {
-    const { user, loading, logout } = useAuth();
-    const router = useRouter();
     const [stats, setStats] = useState<Stats | null>(null);
     const [shops, setShops] = useState<Shop[] | null>(null);
     const [filter, setFilter] = useState<"all" | Shop["status"]>("all");
@@ -42,15 +37,12 @@ export default function PlatformPage() {
     const [error, setError] = useState("");
 
     useEffect(() => {
-        if (loading) return;
-        if (!user) { router.replace("/login"); return; }
-        if (!user.is_platform_admin) { router.replace("/dashboard"); return; }
         api.platformDashboard().then((d) => setStats(d as Stats)).catch(() => setError("Statistika yüklənmədi."));
         api.shops("?page_size=200").then((d) => {
             const data = d as { results?: Shop[] } | Shop[];
             setShops(Array.isArray(data) ? data : data.results ?? []);
         }).catch(() => setError("Mağaza siyahısı yüklənmədi."));
-    }, [loading, user, router]);
+    }, []);
 
     const filtered = useMemo(() => {
         let list = shops ?? [];
@@ -68,21 +60,9 @@ export default function PlatformPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-bg">
-            <header className="h-16 bg-side text-white flex items-center gap-3 px-6">
-                <div className="w-9 h-9 rounded-[9px] bg-brand text-side font-bold flex items-center justify-center">SC</div>
-                <div className="leading-tight"><b className="block text-sm">ServisCRM Platform</b><span className="text-xs text-[#8FA9B2]">Super Admin panel</span></div>
-                <div className="flex-1" />
-                {user?.shop && (
-                    <Link href="/dashboard" className="h-10 px-3.5 rounded-[10px] bg-white/10 flex items-center text-sm font-semibold">Servis paneli</Link>
-                )}
-                <span className="text-sm text-[#8FA9B2] hidden sm:block">{user?.first_name} {user?.last_name}</span>
-                <button onClick={logout} className="w-10 h-10 rounded-[10px] bg-white/10 flex items-center justify-center" title="Çıxış"><LogOut size={18} /></button>
-            </header>
-
-            <main className="p-5 md:p-8 flex flex-col gap-5 max-w-[1280px] mx-auto">
+        <>
                 <div>
-                    <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Mağazalar</h1>
+                    <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Ümumi baxış</h1>
                     <p className="text-ink2 mt-1">ServisCRM-dən istifadə edən bütün servislər, planları və hesab vəziyyəti.</p>
                 </div>
 
@@ -157,7 +137,6 @@ export default function PlatformPage() {
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
+        </>
     );
 }

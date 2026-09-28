@@ -40,7 +40,7 @@ export function Sidebar() {
         </div>
 
         <nav className="flex flex-col gap-0.5 px-3 flex-1 overflow-y-auto">
-          {user?.is_platform_admin && (
+          {user?.is_superadmin && (
               <Link href="/platform" className={`ni ${pathname.startsWith("/platform") ? "on" : ""}`}>
                 <Crown size={20} />
                 <span>Platforma (Super Admin)</span>
