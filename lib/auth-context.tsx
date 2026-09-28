@@ -20,18 +20,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const access = typeof window !== "undefined" ? localStorage.getItem("scrm_access") : null;
-    if (!access) {
-      setLoading(false);
-      return;
-    }
-    api.me().then(setUser).catch(() => clearTokens()).finally(() => setLoading(false));
+    const pending: Promise<unknown> = access
+        ? api.me().then(setUser).catch(() => clearTokens())
+        : Promise.resolve();
+    pending.finally(() => setLoading(false));
   }, []);
 
   async function login(username: string, password: string) {
     const data = (await api.login(username, password)) as { access: string; refresh: string; user: Me };
     setTokens(data.access, data.refresh);
     setUser(data.user);
-    router.push(data.user.is_platform_admin ? "/platform" : "/dashboard");
+    // Yalnız platforma admini (mağazasız) birbaşa /platform-a düşür; mağazası olan hesab servis panelində qalır, Platforma sol menyudadır
+    router.push(data.user.is_platform_admin && !data.user.shop ? "/platform" : "/dashboard");
   }
 
   function logout() {
@@ -46,9 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasModule }}>
-      {children}
-    </AuthContext.Provider>
+      <AuthContext.Provider value={{ user, loading, login, logout, hasModule }}>
+        {children}
+      </AuthContext.Provider>
   );
 }
 

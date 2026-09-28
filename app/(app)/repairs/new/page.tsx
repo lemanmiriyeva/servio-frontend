@@ -39,25 +39,34 @@ export default function NewRepairPage() {
   // Step 3 — money
   const [costPrice, setCostPrice] = useState("");
   const [salePrice, setSalePrice] = useState("");
+  // Detal mənbəyi (könüllü): heç biri / təchizatçıdan borcla / nağd
+  const [partMode, setPartMode] = useState<"none" | "credit" | "cash">("none");
+  const [supplierList, setSupplierList] = useState<{ id: number; name: string }[]>([]);
+  const [supplierId, setSupplierId] = useState("");
+  const [partName, setPartName] = useState("");
 
   // Step 4 — warranty & payment
   const [warrantyDays, setWarrantyDays] = useState(user?.shop?.default_warranty_days ?? 14);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "bank_transfer">("cash");
 
-  useEffect(() => {
-    if (user?.shop?.default_warranty_days) setWarrantyDays(user.shop.default_warranty_days);
-  }, [user]);
+  // İstifadəçi yükləndikdən sonra mağazanın standart zəmanət müddəti (istifadəçi əl ilə dəyişməyibsə)
+  const [warrantyTouched, setWarrantyTouched] = useState(false);
+  const effectiveWarranty = warrantyTouched ? warrantyDays : (user?.shop?.default_warranty_days ?? warrantyDays);
 
   useEffect(() => {
     const presetId = searchParams.get("customer");
-    if (presetId) {
-      api.customer(presetId).then((c) => { setSelectedCustomer(c as Customer); setStep(1); }).catch(() => {});
-    }
+    if (!presetId) return;
+    let cancelled = false;
+    api.customer(presetId).then((c) => {
+      if (cancelled) return;
+      setSelectedCustomer(c as Customer); setStep(1);
+    }).catch(() => {});
+    return () => { cancelled = true; };
   }, [searchParams]);
 
   useEffect(() => {
-    if (customerQuery.trim().length < 2) { setCustomerResults([]); return; }
+    if (customerQuery.trim().length < 2) return;
     const t = setTimeout(() => {
       api.customers(`?search=${encodeURIComponent(customerQuery)}`)
           .then((d) => {
@@ -87,6 +96,14 @@ export default function NewRepairPage() {
     return true;
   }
 
+  useEffect(() => {
+    if (partMode === "none" || supplierList.length > 0) return;
+    api.suppliers().then((d) => {
+      const data = d as { results?: { id: number; name: string }[] } | { id: number; name: string }[];
+      setSupplierList(Array.isArray(data) ? data : data.results ?? []);
+    }).catch(() => {});
+  }, [partMode, supplierList.length]);
+
   async function handleSubmit() {
     if (!selectedCustomer) return;
     setSaving(true);
@@ -100,8 +117,23 @@ export default function NewRepairPage() {
         issue_description: issueDescription,
         cost_price: costPrice || 0,
         sale_price: salePrice,
-        warranty_days: warrantyDays,
-      })) as { id: number };
+        warranty_days: effectiveWarranty,
+      })) as { id: number; number?: string };
+
+      // Təchizatçıdan alınan detal: borc kimi (və ya ödənilmiş) təchizatçı hesabına yazılır
+      const cost = parseFloat(costPrice);
+      if (partMode !== "none" && supplierId && cost > 0) {
+        try {
+          await api.addSupplierPurchase(supplierId, {
+            description: `${partName || issueDescription || "Detal"} — ${deviceBrand} ${deviceModel}${repair.number ? ` (${repair.number})` : ""}`.trim(),
+            amount: cost,
+            paid_amount: partMode === "cash" ? cost : 0,
+            repair: repair.id,
+          });
+        } catch {
+          // təmir yaradılıb; borc qeydi alınmasa istifadəçi təchizatçı səhifəsindən əlavə edə bilər
+        }
+      }
 
       const amount = parseFloat(paymentAmount);
       if (amount > 0) {
@@ -175,7 +207,7 @@ export default function NewRepairPage() {
                             onChange={(e) => setCustomerQuery(e.target.value)}
                         />
                       </div>
-                      {customerResults.length > 0 && (
+                      {customerQuery.trim().length >= 2 && customerResults.length > 0 && (
                           <div className="border border-line rounded-[10px] overflow-hidden">
                             {customerResults.map((c) => (
                                 <button
@@ -261,6 +293,40 @@ export default function NewRepairPage() {
                     <div className="inp"><input type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} placeholder="0" /></div>
                   </div>
                 </div>
+                <div className="fld">
+                  <label>Detal mənbəyi <span className="mut text-xs">(könüllü)</span></label>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { k: "credit", l: "Təchizatçıdan — borc yaradılsın" },
+                      { k: "cash", l: "Nağd aldım — borcsuz" },
+                      { k: "none", l: "Detal istifadə olunmayıb" },
+                    ].map((o) => (
+                        <button key={o.k} type="button" onClick={() => setPartMode(o.k as typeof partMode)} className={`chip ${partMode === o.k ? "on" : ""}`}>{o.l}</button>
+                    ))}
+                  </div>
+                </div>
+                {partMode !== "none" && (
+                    <>
+                      <div className="frow flex gap-4">
+                        <div className="fld flex-1">
+                          <label>Təchizatçı</label>
+                          <select className="inp" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+                            <option value="">Seçin…</option>
+                            {supplierList.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
+                        </div>
+                        <div className="fld flex-1">
+                          <label>İstifadə olunan detal</label>
+                          <div className="inp"><input value={partName} onChange={(e) => setPartName(e.target.value)} placeholder="iPhone 17 Pro ekran" /></div>
+                        </div>
+                      </div>
+                      {partMode === "credit" && supplierId && parseFloat(costPrice) > 0 && (
+                          <div className="rounded-[10px] px-3.5 py-3 text-sm" style={{ background: "var(--brand-soft)", color: "#8A6100" }}>
+                            Yadda saxlayanda <b>{parseFloat(costPrice).toFixed(2)} AZN</b> avtomatik <b>Təchizatçılar</b> bölməsində seçilmiş təchizatçıya borc kimi əlavə olunacaq. Ödədikdən sonra oradan ödənilmiş kimi işarələyə bilərsiniz.
+                          </div>
+                      )}
+                    </>
+                )}
                 {costPrice && salePrice && (
                     <div className="prof rounded-[10px] px-4 py-3.5 flex justify-between items-center" style={{ background: "var(--green-s)", color: "var(--green)" }}>
                       <span className="font-semibold">Gözlənilən qazanc</span>
@@ -275,7 +341,7 @@ export default function NewRepairPage() {
                 <h3 className="text-base font-semibold">Zəmanət və ilkin ödəniş</h3>
                 <div className="fld">
                   <label>Zəmanət müddəti (gün)</label>
-                  <div className="inp"><input type="number" value={warrantyDays} onChange={(e) => setWarrantyDays(Number(e.target.value))} /></div>
+                  <div className="inp"><input type="number" value={effectiveWarranty} onChange={(e) => { setWarrantyTouched(true); setWarrantyDays(Number(e.target.value)); }} /></div>
                   <span className="mut text-xs">Cihaz təhvil veriləndə avtomatik başlayacaq</span>
                 </div>
                 <div className="frow flex gap-4">

@@ -14,9 +14,9 @@ type DashboardData = {
   customers_total: number;
   customers_new_this_week: number;
   active_repairs_count: number;
-  today_income: number;
-  today_payments_count: number;
-  month_income: number;
+  today_income: number | null;
+  today_payments_count: number | null;
+  month_income: number | null;
   active_warranty_count: number;
   warranty_ending_soon_count: number;
   customer_debt_total: number;
@@ -47,7 +47,8 @@ function fmt(n: number) {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, hasModule } = useAuth();
+  const canSeeProfit = hasModule("revenue_numbers");
   const [data, setData] = useState<DashboardData | null>(null);
   const [profit, setProfit] = useState<number | null>(null);
 
@@ -58,7 +59,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     api.dashboard().then((d) => setData(d as DashboardData)).catch(() => setError("Məlumatlar yüklənmədi."));
-    api.reportsSummary().then((d) => setProfit((d as ReportsData).net_profit)).catch(() => {});
+    if (canSeeProfit) api.reportsSummary().then((d) => setProfit((d as ReportsData).net_profit)).catch(() => {});
   }, []);
 
   const today = new Date().toLocaleDateString("az-AZ", { day: "numeric", month: "long", year: "numeric" });
@@ -86,7 +87,7 @@ export default function DashboardPage() {
           <div>
             <div className="text-[13px] text-[#8FA9B2]">Bu ayın gəliri</div>
             <div className="text-[40px] md:text-[48px] font-semibold tracking-tight leading-[1.05] mt-1.5">
-              {data ? fmt(data.month_income) : "—"}
+              {data ? (data.month_income === null ? "•••••" : fmt(data.month_income)) : "—"}
               <small className="text-lg font-semibold text-[#8FA9B2] ml-2">AZN</small>
             </div>
           </div>
@@ -94,14 +95,16 @@ export default function DashboardPage() {
           <div className="w-full sm:w-[250px] bg-white/[0.07] rounded-xl p-4.5 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span className="text-[13px] text-[#8FA9B2]">Bu ayın qazancı</span>
-              <button onClick={() => setShowProfit((s) => !s)} className="w-8 h-8 rounded-lg bg-brand text-brand-ink flex items-center justify-center flex-none">
-                {showProfit ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              {canSeeProfit && (
+                  <button onClick={() => setShowProfit((s) => !s)} className="w-8 h-8 rounded-lg bg-brand text-brand-ink flex items-center justify-center flex-none">
+                    {showProfit ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+              )}
             </div>
             <div className="text-2xl font-semibold tracking-tight">
-              {showProfit && profit !== null ? `${fmt(profit)} AZN` : "••••• AZN"}
+              {canSeeProfit && showProfit && profit !== null ? `${fmt(profit)} AZN` : "••••• AZN"}
             </div>
-            <div className="text-xs text-[#8FA9B2]">Göstərmək üçün göz işarəsinə klik edin</div>
+            <div className="text-xs text-[#8FA9B2]">{canSeeProfit ? "Göstərmək üçün göz işarəsinə klik edin" : "Bu rol üçün gizlədilib"}</div>
           </div>
         </div>
 
@@ -135,9 +138,9 @@ export default function DashboardPage() {
               <span className="t-green w-[38px] h-[38px] rounded-[10px] flex items-center justify-center"><Banknote size={20} /></span>
             </div>
             <div className="text-[32px] font-semibold tracking-tight leading-none">
-              {data ? fmt(data.today_income) : "—"}<small className="text-sm font-semibold text-muted ml-1.5">AZN</small>
+              {data ? (data.today_income === null ? "•••••" : fmt(data.today_income)) : "—"}<small className="text-sm font-semibold text-muted ml-1.5">AZN</small>
             </div>
-            <div className="text-xs text-muted">{data?.today_payments_count ?? 0} ödəniş qəbul edildi</div>
+            <div className="text-xs text-muted">{data?.today_payments_count === null ? "Bu rol üçün gizlədilib" : `${data?.today_payments_count ?? 0} ödəniş qəbul edildi`}</div>
           </div>
 
           <div className="card flex flex-col gap-3">

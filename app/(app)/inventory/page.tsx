@@ -78,7 +78,7 @@ export default function InventoryPage() {
     useEffect(() => { loadProducts(); loadOrders(); }, []);
 
     useEffect(() => {
-        if (tab !== "market" || query.trim().length < 2) { setMarketResults(null); return; }
+        if (tab !== "market" || query.trim().length < 2) return;
         const t = setTimeout(() => {
             api.marketplaceSearch(query).then((d) => setMarketResults(d as MarketProduct[])).catch(() => {});
         }, 300);
@@ -260,7 +260,7 @@ export default function InventoryPage() {
                     </div>
 
                     <div className="flex flex-col gap-2.5">
-                        {(marketResults ?? []).map((mp) => (
+                        {(tab === "market" && query.trim().length >= 2 ? (marketResults ?? []) : []).map((mp) => (
                             <div key={mp.id} className="card flex items-center gap-3">
                                 <div className="t-cyan w-10 h-10 rounded-[10px] flex items-center justify-center flex-none"><Store size={18} /></div>
                                 <div className="flex-1 min-w-0">
