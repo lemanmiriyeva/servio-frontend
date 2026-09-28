@@ -96,9 +96,9 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <span className="text-[13px] text-[#8FA9B2]">Bu ayın qazancı</span>
               {canSeeProfit && (
-                  <button onClick={() => setShowProfit((s) => !s)} className="w-8 h-8 rounded-lg bg-brand text-brand-ink flex items-center justify-center flex-none">
-                    {showProfit ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                <button onClick={() => setShowProfit((s) => !s)} className="w-8 h-8 rounded-lg bg-brand text-brand-ink flex items-center justify-center flex-none">
+                  {showProfit ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               )}
             </div>
             <div className="text-2xl font-semibold tracking-tight">

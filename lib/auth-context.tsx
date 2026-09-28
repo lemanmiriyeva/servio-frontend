@@ -31,7 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokens(data.access, data.refresh);
     setUser(data.user);
     // Yalnız platforma admini (mağazasız) birbaşa /platform-a düşür; mağazası olan hesab servis panelində qalır, Platforma sol menyudadır
-    router.push(data.user.is_superadmin && !data.user.shop ? "/platform" : "/dashboard");
+    // Daxil olandan sonra ana səhifəyə qayıdır; oradan "İdarəetmə paneli" düyməsi ilə panelə keçilir
+    router.push("/");
   }
 
   function logout() {

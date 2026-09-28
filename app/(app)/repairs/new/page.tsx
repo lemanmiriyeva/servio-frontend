@@ -301,31 +301,31 @@ export default function NewRepairPage() {
                       { k: "cash", l: "Nağd aldım — borcsuz" },
                       { k: "none", l: "Detal istifadə olunmayıb" },
                     ].map((o) => (
-                        <button key={o.k} type="button" onClick={() => setPartMode(o.k as typeof partMode)} className={`chip ${partMode === o.k ? "on" : ""}`}>{o.l}</button>
+                      <button key={o.k} type="button" onClick={() => setPartMode(o.k as typeof partMode)} className={`chip ${partMode === o.k ? "on" : ""}`}>{o.l}</button>
                     ))}
                   </div>
                 </div>
                 {partMode !== "none" && (
-                    <>
-                      <div className="frow flex gap-4">
-                        <div className="fld flex-1">
-                          <label>Təchizatçı</label>
-                          <select className="inp" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-                            <option value="">Seçin…</option>
-                            {supplierList.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                          </select>
-                        </div>
-                        <div className="fld flex-1">
-                          <label>İstifadə olunan detal</label>
-                          <div className="inp"><input value={partName} onChange={(e) => setPartName(e.target.value)} placeholder="iPhone 17 Pro ekran" /></div>
-                        </div>
+                  <>
+                    <div className="frow flex gap-4">
+                      <div className="fld flex-1">
+                        <label>Təchizatçı</label>
+                        <select className="inp" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+                          <option value="">Seçin…</option>
+                          {supplierList.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
                       </div>
-                      {partMode === "credit" && supplierId && parseFloat(costPrice) > 0 && (
-                          <div className="rounded-[10px] px-3.5 py-3 text-sm" style={{ background: "var(--brand-soft)", color: "#8A6100" }}>
-                            Yadda saxlayanda <b>{parseFloat(costPrice).toFixed(2)} AZN</b> avtomatik <b>Təchizatçılar</b> bölməsində seçilmiş təchizatçıya borc kimi əlavə olunacaq. Ödədikdən sonra oradan ödənilmiş kimi işarələyə bilərsiniz.
-                          </div>
-                      )}
-                    </>
+                      <div className="fld flex-1">
+                        <label>İstifadə olunan detal</label>
+                        <div className="inp"><input value={partName} onChange={(e) => setPartName(e.target.value)} placeholder="iPhone 17 Pro ekran" /></div>
+                      </div>
+                    </div>
+                    {partMode === "credit" && supplierId && parseFloat(costPrice) > 0 && (
+                      <div className="rounded-[10px] px-3.5 py-3 text-sm" style={{ background: "var(--brand-soft)", color: "#8A6100" }}>
+                        Yadda saxlayanda <b>{parseFloat(costPrice).toFixed(2)} AZN</b> avtomatik <b>Təchizatçılar</b> bölməsində seçilmiş təchizatçıya borc kimi əlavə olunacaq. Ödədikdən sonra oradan ödənilmiş kimi işarələyə bilərsiniz.
+                      </div>
+                    )}
+                  </>
                 )}
                 {costPrice && salePrice && (
                     <div className="prof rounded-[10px] px-4 py-3.5 flex justify-between items-center" style={{ background: "var(--green-s)", color: "var(--green)" }}>
