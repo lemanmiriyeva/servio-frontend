@@ -62,7 +62,11 @@ export default function DashboardPage() {
     if (canSeeProfit) api.reportsSummary().then((d) => setProfit((d as ReportsData).net_profit)).catch(() => {});
   }, []);
 
-  const today = new Date().toLocaleDateString("az-AZ", { day: "numeric", month: "long", year: "numeric" });
+  // Node/brauzerin ICU verilənlər bazasında "az-AZ" üçün ay adları tam olmaya bilər —
+  // bu halda Intl "2026 M09 29" kimi pozuq format qaytarır. Ona görə ay adlarını özümüz yazırıq.
+  const AZ_MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avqust", "sentyabr", "oktyabr", "noyabr", "dekabr"];
+  const now = new Date();
+  const today = `${now.getDate()} ${AZ_MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 
   return (
       <>
@@ -70,7 +74,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Dashboard</h1>
             <p className="text-ink2 mt-1">
-              Sabahınız xeyir, {user?.first_name}. Bu gün {today}
+              Salam, {user?.first_name}. Bu gün {today}
               {data ? `, servisdə ${data.active_repairs_count} aktiv təmir var.` : "."}
             </p>
           </div>
@@ -96,9 +100,9 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <span className="text-[13px] text-[#8FA9B2]">Bu ayın qazancı</span>
               {canSeeProfit && (
-                <button onClick={() => setShowProfit((s) => !s)} className="w-8 h-8 rounded-lg bg-brand text-brand-ink flex items-center justify-center flex-none">
-                  {showProfit ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+                  <button onClick={() => setShowProfit((s) => !s)} className="w-8 h-8 rounded-lg bg-brand text-brand-ink flex items-center justify-center flex-none">
+                    {showProfit ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
               )}
             </div>
             <div className="text-2xl font-semibold tracking-tight">

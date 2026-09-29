@@ -31,7 +31,7 @@ export function Sidebar() {
   return (
       <aside className="w-[264px] flex-none bg-side text-white py-6 pb-5 flex flex-col gap-6 h-screen sticky top-0">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-11 h-11 rounded-[10px] bg-white/[0.06] flex items-center justify-center flex-none">
+          <div className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center flex-none">
             <LogoMark size={26} />
           </div>
           <div className="min-w-0">
