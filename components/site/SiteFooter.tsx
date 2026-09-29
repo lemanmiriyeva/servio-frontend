@@ -4,7 +4,7 @@ import { NAV, SITE } from "@/lib/site-config";
 
 export function SiteFooter() {
   return (
-    <footer className="bg-[#060D24] text-white/70">
+    <footer className="bg-[#041326] text-white/70">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-14 grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <Logo />

@@ -20,21 +20,21 @@ export const NAV = [
 ];
 
 export const FEATURES = [
-  { icon: Users, tone: "bg-[#1F6BFF]", title: "Müştərilər", short: "Müştəri bazasını yaradın və asanlıqla idarə edin.",
+  { icon: Users, tone: "bg-[#116CFB]", title: "Müştərilər", short: "Müştəri bazasını yaradın və asanlıqla idarə edin.",
     points: ["Ad, telefon və qeydlər üzrə sürətli axtarış", "Hər müştərinin bütün təmir tarixçəsi", "Ödənişlər, borclar və zəmanətlər bir profildə"] },
-  { icon: Wrench, tone: "bg-[#2BA6FF]", title: "Təmir / Xidmətlər", short: "Təmir prosesini izləyin, statusları qeyd edin.",
+  { icon: Wrench, tone: "bg-[#041326]", title: "Təmir / Xidmətlər", short: "Təmir prosesini izləyin, statusları qeyd edin.",
     points: ["Hər xidmətə avtomatik nömrə (SRV-2026-000125)", "Qəbul edildi → Diaqnostika → Hazırdır → Təhvil verildi", "Qazanc satış və maya dəyərindən avtomatik hesablanır"] },
-  { icon: Boxes, tone: "bg-[#7C5CFF]", title: "Anbar", short: "Ehtiyat hissələri və malların idarə edilməsi.",
+  { icon: Boxes, tone: "bg-[#116CFB]", title: "Anbar", short: "Ehtiyat hissələri və malların idarə edilməsi.",
     points: ["Alış və satış qiyməti, say və minimum hədd", "Stok azaldıqda xəbərdarlıq", "Detal istifadə olunanda say avtomatik azalır"] },
-  { icon: Truck, tone: "bg-[#8B4DFF]", title: "Təchizatçılar", short: "Təchizatçıları əlavə edin, borcları izləyin.",
+  { icon: Truck, tone: "bg-[#041326]", title: "Təchizatçılar", short: "Təchizatçıları əlavə edin, borcları izləyin.",
     points: ["Alış tarixçəsi və ümumi məbləğ", "Ay sonu hesablaşma üçün borc qeydi", "Təmirdən avtomatik təchizatçı borcu yaratmaq"] },
-  { icon: Wallet, tone: "bg-[#12B48A]", title: "Kassa", short: "Gəlir və xərcləri idarə edin, kassa balansını görün.",
+  { icon: Wallet, tone: "bg-[#116CFB]", title: "Kassa", short: "Gəlir və xərcləri idarə edin, kassa balansını görün.",
     points: ["Xidmət ödənişləri və digər gəlirlər", "Xərclər və təchizatçı ödənişləri balansdan çıxılır", "Bütün əməliyyatların tarixçəsi"] },
-  { icon: BarChart3, tone: "bg-[#8B5CF6]", title: "Hesabatlar", short: "Gündəlik, aylıq, illik analizlər və qrafiklər.",
+  { icon: BarChart3, tone: "bg-[#041326]", title: "Hesabatlar", short: "Gündəlik, aylıq, illik analizlər və qrafiklər.",
     points: ["İstənilən tarix aralığı üzrə hesabat", "Xidmət və təchizatçı üzrə analiz", "Ümumi satış, maya, xərc və xalis qazanc"] },
-  { icon: ShieldCheck, tone: "bg-[#1E8BFF]", title: "Zəmanətlər", short: "Zəmanət müddətlərini izləyin, müştərilərə xəbərdarlıq edin.",
+  { icon: ShieldCheck, tone: "bg-[#116CFB]", title: "Zəmanətlər", short: "Zəmanət müddətlərini izləyin, müştərilərə xəbərdarlıq edin.",
     points: ["Təhvildən sonra zəmanət avtomatik geri sayılır", "Bitməyə 3 gün qalanlar ayrıca görünür", "7 / 14 / 30 / 90 gün və ya zəmanətsiz"] },
-  { icon: Printer, tone: "bg-[#3B82F6]", title: "Qəbz / Çap", short: "Rəsmi qəbz və təhvil-təslim sənədlərini çap edin.",
+  { icon: Printer, tone: "bg-[#041326]", title: "Qəbz / Çap", short: "Rəsmi qəbz və təhvil-təslim sənədlərini çap edin.",
     points: ["A4 formatında səliqəli təhvil-təslim aktı", "Servisin öz zəmanət şərtləri mətni", "Müştəri və usta imza sahələri"] },
 ];
 

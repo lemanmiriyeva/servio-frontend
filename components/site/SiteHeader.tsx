@@ -14,13 +14,13 @@ export function SiteHeader() {
   const panelHref = user?.is_superadmin && !user.shop ? "/platform" : "/dashboard";
 
   const actions = loading ? null : user ? (
-    <Link href={panelHref} className="h-11 px-5 rounded-[10px] bg-[#1F6BFF] hover:bg-[#3A7DFF] text-white text-sm font-semibold inline-flex items-center gap-2 transition-colors">
+    <Link href={panelHref} className="h-11 px-5 rounded-[10px] bg-[#116CFB] hover:bg-[#3A85FF] text-white text-sm font-semibold inline-flex items-center gap-2 transition-colors">
       <LayoutDashboard size={17} />İdarəetmə paneli
     </Link>
   ) : (
     <>
       <Link href="/login" className="h-11 px-5 rounded-[10px] border border-white/25 hover:bg-white/10 text-white text-sm font-semibold inline-flex items-center transition-colors">Daxil ol</Link>
-      <Link href="/elaqe" className="h-11 px-5 rounded-[10px] bg-[#1F6BFF] hover:bg-[#3A7DFF] text-white text-sm font-semibold inline-flex items-center transition-colors">Pulsuz başla</Link>
+      <Link href="/elaqe" className="h-11 px-5 rounded-[10px] bg-[#116CFB] hover:bg-[#3A85FF] text-white text-sm font-semibold inline-flex items-center transition-colors">Pulsuz başla</Link>
     </>
   );
 
@@ -44,7 +44,7 @@ export function SiteHeader() {
         </button>
       </div>
       {open && (
-        <div className="lg:hidden mx-4 rounded-2xl bg-[#0B1636] border border-white/10 p-4 flex flex-col gap-1 shadow-2xl">
+        <div className="lg:hidden mx-4 rounded-2xl bg-[#0B2A4D] border border-white/10 p-4 flex flex-col gap-1 shadow-2xl">
           {NAV.map((n) => (
             <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="px-3 py-3 rounded-lg text-white/85 hover:bg-white/10 text-[15px] font-medium">{n.label}</Link>
           ))}
