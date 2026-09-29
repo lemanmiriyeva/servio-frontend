@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Wrench, User, Lock, Eye, Check } from "lucide-react";
+import { User, Lock, Eye, Check } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { Logo } from "@/components/site/Logo";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -26,130 +27,124 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#D3D8DB] p-4">
-      <div className="w-full max-w-[1440px] rounded-[20px] overflow-hidden flex bg-white shadow-2xl min-h-[640px] md:min-h-[760px]">
-        {/* Left panel */}
-        <div className="hidden md:flex w-[46%] flex-none bg-side text-white relative overflow-hidden p-10 lg:p-14 flex-col justify-between">
-          <svg className="absolute left-16 top-0 opacity-80 pointer-events-none" width="420" height="760" viewBox="0 0 560 900" fill="none">
-            <path d="M0 140 H150 L210 200 H420" stroke="rgba(255,199,44,.5)" strokeWidth="2" />
-            <circle cx="420" cy="200" r="7" stroke="rgba(255,199,44,.5)" strokeWidth="2" />
-            <path d="M0 230 H80 L140 290 H300 L360 350 H560" stroke="rgba(255,255,255,.12)" strokeWidth="2" />
-            <path d="M0 640 H120 L180 580 H360 L420 640 H560" stroke="rgba(255,255,255,.12)" strokeWidth="2" />
-            <path d="M0 730 H200 L260 790 H440" stroke="rgba(255,199,44,.35)" strokeWidth="2" />
-          </svg>
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#D3D8DB] p-4">
+        <div className="w-full max-w-[1440px] rounded-[20px] overflow-hidden flex bg-white shadow-2xl min-h-[640px] md:min-h-[760px]">
+          {/* Left panel */}
+          <div className="hidden md:flex w-[46%] flex-none bg-side text-white relative overflow-hidden p-10 lg:p-14 flex-col justify-between">
+            <svg className="absolute left-16 top-0 opacity-80 pointer-events-none" width="420" height="760" viewBox="0 0 560 900" fill="none">
+              <path d="M0 140 H150 L210 200 H420" stroke="rgba(17,108,251,.55)" strokeWidth="2" />
+              <circle cx="420" cy="200" r="7" stroke="rgba(17,108,251,.55)" strokeWidth="2" />
+              <path d="M0 230 H80 L140 290 H300 L360 350 H560" stroke="rgba(255,255,255,.12)" strokeWidth="2" />
+              <path d="M0 640 H120 L180 580 H360 L420 640 H560" stroke="rgba(255,255,255,.12)" strokeWidth="2" />
+              <path d="M0 730 H200 L260 790 H440" stroke="rgba(17,108,251,.4)" strokeWidth="2" />
+            </svg>
 
-          <div className="relative z-10 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-[10px] bg-brand text-brand-ink flex items-center justify-center flex-none">
-              <Wrench size={22} />
+            <div className="relative z-10 flex items-center">
+              <Logo height={40} />
             </div>
-            <b className="text-lg font-semibold">ServisCRM</b>
+
+            <div className="relative z-10 flex flex-col gap-5">
+              <h2 className="text-[38px] lg:text-[44px] font-semibold leading-[1.1] tracking-tight max-w-[480px]">
+                Ustanın masası, bir ekranda.
+              </h2>
+              <p className="text-[#A9BEC5] text-base max-w-[420px]">
+                Müştəri, təmir, maya, qazanc və zəmanət eyni yerdə. Telefonda da, kompüterdə də.
+              </p>
+            </div>
           </div>
 
-          <div className="relative z-10 flex flex-col gap-5">
-            <h2 className="text-[38px] lg:text-[44px] font-semibold leading-[1.1] tracking-tight max-w-[480px]">
-              Ustanın masası, bir ekranda.
-            </h2>
-            <p className="text-[#A9BEC5] text-base max-w-[420px]">
-              Müştəri, təmir, maya, qazanc və zəmanət eyni yerdə. Telefonda da, kompüterdə də.
-            </p>
-          </div>
-        </div>
-
-        {/* Right panel — form */}
-        <div className="flex-1 flex items-center justify-center bg-bg px-6 py-12">
-          <form onSubmit={handleSubmit} className="w-full max-w-[400px] flex flex-col gap-5">
-            <div className="md:hidden flex items-center gap-3 mb-2">
-              <div className="w-11 h-11 rounded-[10px] bg-brand text-brand-ink flex items-center justify-center flex-none">
-                <Wrench size={22} />
+          {/* Right panel — form */}
+          <div className="flex-1 flex items-center justify-center bg-bg px-6 py-12">
+            <form onSubmit={handleSubmit} className="w-full max-w-[400px] flex flex-col gap-5">
+              <div className="md:hidden flex items-center mb-2">
+                <Logo dark height={36} />
               </div>
-              <b className="text-lg font-semibold">ServisCRM</b>
-            </div>
 
-            <div>
-              <h1 className="text-[28px] md:text-[30px] font-semibold tracking-tight">Hesaba daxil ol</h1>
-              <p className="text-ink2 mt-1.5 text-sm">Yalnız öz servisinizin məlumatları göstərilir.</p>
-            </div>
-
-            <div className="fld">
-              <label>Login</label>
-              <div className="inp">
-                <User size={18} className="text-muted flex-none" />
-                <input
-                  className="pl"
-                  placeholder="elvin.techfix"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  required
-                />
+              <div>
+                <h1 className="text-[28px] md:text-[30px] font-semibold tracking-tight">Hesaba daxil ol</h1>
+                <p className="text-ink2 mt-1.5 text-sm">Yalnız öz servisinizin məlumatları göstərilir.</p>
               </div>
-              <span className="mut text-xs">
+
+              <div className="fld">
+                <label>Login</label>
+                <div className="inp">
+                  <User size={18} className="text-muted flex-none" />
+                  <input
+                      className="pl"
+                      placeholder="elvin.techfix"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      autoComplete="username"
+                      required
+                  />
+                </div>
+                <span className="mut text-xs">
                 Format: istifadəçi adı.mağaza kodu — hər mağaza öz məlumatına ayrıca giriş əldə edir
               </span>
-            </div>
+              </div>
 
-            <div className="fld">
-              <label>Şifrə</label>
-              <div className="inp">
-                <Lock size={18} className="text-muted flex-none" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                />
+              <div className="fld">
+                <label>Şifrə</label>
+                <div className="inp">
+                  <Lock size={18} className="text-muted flex-none" />
+                  <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      required
+                  />
+                  <button
+                      type="button"
+                      onClick={() => setShowPassword((s) => !s)}
+                      className="ml-auto text-muted flex-none"
+                      tabIndex={-1}
+                  >
+                    <Eye size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                  <div className="text-sm rounded-lg px-3 py-2" style={{ background: "var(--red-s)", color: "var(--red)" }}>
+                    {error}
+                  </div>
+              )}
+
+              <div className="flex justify-between items-center text-[13px]">
                 <button
-                  type="button"
-                  onClick={() => setShowPassword((s) => !s)}
-                  className="ml-auto text-muted flex-none"
-                  tabIndex={-1}
+                    type="button"
+                    onClick={() => setRemember((r) => !r)}
+                    className="flex gap-2 items-center text-ink2 font-medium"
                 >
-                  <Eye size={18} />
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="text-sm rounded-lg px-3 py-2" style={{ background: "var(--red-s)", color: "var(--red)" }}>
-                {error}
-              </div>
-            )}
-
-            <div className="flex justify-between items-center text-[13px]">
-              <button
-                type="button"
-                onClick={() => setRemember((r) => !r)}
-                className="flex gap-2 items-center text-ink2 font-medium"
-              >
                 <span
-                  className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center flex-none"
-                  style={{
-                    background: remember ? "var(--brand)" : "#fff",
-                    color: "var(--brand-ink)",
-                    border: remember ? "none" : "1px solid var(--line)",
-                  }}
+                    className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center flex-none"
+                    style={{
+                      background: remember ? "var(--brand)" : "#fff",
+                      color: "var(--brand-ink)",
+                      border: remember ? "none" : "1px solid var(--line)",
+                    }}
                 >
                   {remember && <Check size={13} strokeWidth={3} />}
                 </span>
-                Məni xatırla
-              </button>
-              <span className="link cursor-pointer" style={{ color: "var(--blue)" }}>
+                  Məni xatırla
+                </button>
+                <span className="link cursor-pointer" style={{ color: "var(--blue)" }}>
                 Şifrəni unutmusan?
               </span>
-            </div>
+              </div>
 
-            <button type="submit" className="btn pri block" disabled={loading}>
-              <span>{loading ? "Daxil olunur…" : "Daxil ol"}</span>
-            </button>
+              <button type="submit" className="btn pri block" disabled={loading}>
+                <span>{loading ? "Daxil olunur…" : "Daxil ol"}</span>
+              </button>
 
-            <div className="text-center text-muted text-[13px]">
-              Hesabınız yoxdursa, administratorla əlaqə saxlayın
-            </div>
-          </form>
+              <div className="text-center text-muted text-[13px]">
+                Hesabınız yoxdursa, administratorla əlaqə saxlayın
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
   );
 }

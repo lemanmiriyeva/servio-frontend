@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogOut, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { PlatformProvider, usePlatform } from "@/lib/platform-context";
+import { LogoMark } from "@/components/site/Logo";
 
 function Shell({ children }: { children: React.ReactNode }) {
     const { user, logout } = useAuth();
@@ -25,7 +26,9 @@ function Shell({ children }: { children: React.ReactNode }) {
     return (
         <div className="min-h-screen bg-bg flex flex-col">
             <header className="h-16 bg-side text-white flex items-center gap-3 px-4 md:px-6 flex-none">
-                <div className="w-9 h-9 rounded-[9px] bg-brand text-side font-bold flex items-center justify-center">SC</div>
+                <div className="w-9 h-9 rounded-[9px] bg-white/[0.08] flex items-center justify-center">
+                    <LogoMark size={22} />
+                </div>
                 <div className="leading-tight"><b className="block text-sm">Servio Platform</b><span className="text-xs text-[#8FA9B2]">Super Admin panel</span></div>
                 <div className="flex-1" />
                 {user?.shop && (

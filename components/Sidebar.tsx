@@ -3,9 +3,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutGrid, Users, Wrench, Truck, Boxes, Wallet, Receipt,
-  CreditCard, BarChart3, ShieldCheck, UsersRound, Bell, Settings2, LogOut, Store, Crown,
+  CreditCard, BarChart3, ShieldCheck, UsersRound, Bell, Settings2, LogOut, Crown,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { LogoMark } from "@/components/site/Logo";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, module: null },
@@ -30,11 +31,11 @@ export function Sidebar() {
   return (
       <aside className="w-[264px] flex-none bg-side text-white py-6 pb-5 flex flex-col gap-6 h-screen sticky top-0">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-11 h-11 rounded-[10px] bg-brand text-brand-ink flex items-center justify-center font-bold text-[17px] flex-none">
-            {user?.shop ? user.shop.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toLocaleUpperCase("az") : <Store size={20} />}
+          <div className="w-11 h-11 rounded-[10px] bg-white/[0.06] flex items-center justify-center flex-none">
+            <LogoMark size={26} />
           </div>
           <div className="min-w-0">
-            <b className="block text-[15px] font-semibold truncate">{user?.shop?.name || "ServisCRM"}</b>
+            <b className="block text-[15px] font-semibold truncate">{user?.shop?.name || "Servio"}</b>
             <span className="text-xs text-[#8FA9B2] truncate block">{user?.branch?.name || ""}</span>
           </div>
         </div>

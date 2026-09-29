@@ -61,82 +61,82 @@ export default function PlatformPage() {
 
     return (
         <>
-                <div>
-                    <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Ümumi baxış</h1>
-                    <p className="text-ink2 mt-1">ServisCRM-dən istifadə edən bütün servislər, planları və hesab vəziyyəti.</p>
-                </div>
+            <div>
+                <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Ümumi baxış</h1>
+                <p className="text-ink2 mt-1">Servio-dan istifadə edən bütün servislər, planları və hesab vəziyyəti.</p>
+            </div>
 
-                {error && <div className="card" style={{ color: "var(--red)" }}>{error}</div>}
+            {error && <div className="card" style={{ color: "var(--red)" }}>{error}</div>}
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                        { l: "Ümumi mağaza", v: stats?.total_shops, c: "t-blue", I: Store, f: stats ? `${stats.blocked_count} bloklanıb` : "" },
-                        { l: "Aktiv abunə", v: stats?.active_count, c: "t-green", I: CircleCheck, f: stats ? `${stats.overdue_count} ödəniş gecikib` : "" },
-                        { l: "Sınaq müddətində", v: stats?.trial_count, c: "t-amber", I: Clock, f: stats ? `${stats.open_tickets} açıq dəstək sorğusu` : "" },
-                        { l: "Aylıq gəlir (MRR)", v: stats ? fmt(stats.mrr) : undefined, c: "t-purple", I: Banknote, f: "AZN / ay" },
-                    ].map((k) => (
-                        <div key={k.l} className="card flex flex-col gap-2.5">
-                            <div className="flex items-center justify-between text-[13px] text-ink2 font-medium">
-                                <span>{k.l}</span>
-                                <span className={`${k.c} w-9 h-9 rounded-[9px] flex items-center justify-center`}><k.I size={18} /></span>
-                            </div>
-                            <div className="text-[28px] font-semibold tracking-tight leading-none">{k.v ?? "—"}</div>
-                            <div className="text-xs text-muted">{k.f}</div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                    { l: "Ümumi mağaza", v: stats?.total_shops, c: "t-blue", I: Store, f: stats ? `${stats.blocked_count} bloklanıb` : "" },
+                    { l: "Aktiv abunə", v: stats?.active_count, c: "t-green", I: CircleCheck, f: stats ? `${stats.overdue_count} ödəniş gecikib` : "" },
+                    { l: "Sınaq müddətində", v: stats?.trial_count, c: "t-amber", I: Clock, f: stats ? `${stats.open_tickets} açıq dəstək sorğusu` : "" },
+                    { l: "Aylıq gəlir (MRR)", v: stats ? fmt(stats.mrr) : undefined, c: "t-purple", I: Banknote, f: "AZN / ay" },
+                ].map((k) => (
+                    <div key={k.l} className="card flex flex-col gap-2.5">
+                        <div className="flex items-center justify-between text-[13px] text-ink2 font-medium">
+                            <span>{k.l}</span>
+                            <span className={`${k.c} w-9 h-9 rounded-[9px] flex items-center justify-center`}><k.I size={18} /></span>
                         </div>
+                        <div className="text-[28px] font-semibold tracking-tight leading-none">{k.v ?? "—"}</div>
+                        <div className="text-xs text-muted">{k.f}</div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex gap-2 flex-wrap">
+                    {tabs.map((t) => (
+                        <button key={t.k} onClick={() => setFilter(t.k)}
+                                className={`h-[38px] px-3.5 rounded-full border font-semibold text-sm ${filter === t.k ? "bg-side border-side text-white" : "bg-white border-line text-ink2"}`}>
+                            {t.l}
+                        </button>
                     ))}
                 </div>
-
-                <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex gap-2 flex-wrap">
-                        {tabs.map((t) => (
-                            <button key={t.k} onClick={() => setFilter(t.k)}
-                                    className={`h-[38px] px-3.5 rounded-full border font-semibold text-sm ${filter === t.k ? "bg-side border-side text-white" : "bg-white border-line text-ink2"}`}>
-                                {t.l}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="flex-1" />
-                    <div className="h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 min-w-[240px]">
-                        <Search size={18} className="text-muted flex-none" />
-                        <input className="w-full outline-none bg-transparent text-sm" placeholder="Mağaza, kod və ya sahib" value={search} onChange={(e) => setSearch(e.target.value)} />
-                    </div>
+                <div className="flex-1" />
+                <div className="h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 min-w-[240px]">
+                    <Search size={18} className="text-muted flex-none" />
+                    <input className="w-full outline-none bg-transparent text-sm" placeholder="Mağaza, kod və ya sahib" value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
+            </div>
 
-                <div className="card !p-2">
-                    <div className="overflow-x-auto">
-                        <div className="min-w-[820px]">
-                            <div className="tr h">
-                                <div className="flex-[1.7]">Mağaza</div>
-                                <div className="flex-none w-[100px]">Plan</div>
-                                <div className="flex-none w-[70px] text-center">Filial</div>
-                                <div className="flex-none w-[90px] text-center">İstifadəçi</div>
-                                <div className="flex-none w-[170px]">Status</div>
-                                <div className="flex-none w-[120px]">Növbəti ödəniş</div>
-                                <div className="flex-none w-[90px] text-right">Aylıq</div>
-                            </div>
-                            {filtered.map((s, i) => {
-                                const st = STATUS[s.status];
-                                const left = s.status === "trial" ? trialDaysLeft(s.trial_ends_at) : null;
-                                return (
-                                    <div key={s.id} className="tr">
-                                        <div className="flex-[1.7] flex items-center gap-2.5 min-w-0">
-                                            <div className={`av ${AV[i % AV.length]}`}>{s.logo_initials || s.name.slice(0, 2).toUpperCase()}</div>
-                                            <div className="min-w-0"><b className="block truncate">{s.name}</b><span className="text-xs text-muted truncate block">{s.owner_full_name}{s.city ? ` · ${s.city}` : ""}</span></div>
-                                        </div>
-                                        <div className="flex-none w-[100px]">{s.plan ? <span className={`badge ${s.plan.name.toLowerCase() === "pro" ? "b-purple" : "b-blue"}`}><i />{s.plan.name}</span> : <span className="mut">—</span>}</div>
-                                        <div className="flex-none w-[70px] text-center">{s.branch_count}</div>
-                                        <div className="flex-none w-[90px] text-center">{s.user_count}</div>
-                                        <div className="flex-none w-[170px]"><span className={`badge ${st.badge}`}><i />{st.label}{left !== null && left >= 0 ? ` — ${left} gün qalıb` : ""}</span></div>
-                                        <div className="flex-none w-[120px] text-ink2 text-sm">{s.next_payment_at ?? "—"}</div>
-                                        <div className="flex-none w-[90px] text-right font-semibold">{s.plan && s.status !== "trial" ? `${fmt(s.plan.price_monthly)} AZN` : "—"}</div>
-                                    </div>
-                                );
-                            })}
-                            {shops && filtered.length === 0 && <div className="text-center text-muted text-sm py-10">Mağaza tapılmadı.</div>}
-                            {!shops && !error && <div className="text-center text-muted text-sm py-10">Yüklənir…</div>}
+            <div className="card !p-2">
+                <div className="overflow-x-auto">
+                    <div className="min-w-[820px]">
+                        <div className="tr h">
+                            <div className="flex-[1.7]">Mağaza</div>
+                            <div className="flex-none w-[100px]">Plan</div>
+                            <div className="flex-none w-[70px] text-center">Filial</div>
+                            <div className="flex-none w-[90px] text-center">İstifadəçi</div>
+                            <div className="flex-none w-[170px]">Status</div>
+                            <div className="flex-none w-[120px]">Növbəti ödəniş</div>
+                            <div className="flex-none w-[90px] text-right">Aylıq</div>
                         </div>
+                        {filtered.map((s, i) => {
+                            const st = STATUS[s.status];
+                            const left = s.status === "trial" ? trialDaysLeft(s.trial_ends_at) : null;
+                            return (
+                                <div key={s.id} className="tr">
+                                    <div className="flex-[1.7] flex items-center gap-2.5 min-w-0">
+                                        <div className={`av ${AV[i % AV.length]}`}>{s.logo_initials || s.name.slice(0, 2).toUpperCase()}</div>
+                                        <div className="min-w-0"><b className="block truncate">{s.name}</b><span className="text-xs text-muted truncate block">{s.owner_full_name}{s.city ? ` · ${s.city}` : ""}</span></div>
+                                    </div>
+                                    <div className="flex-none w-[100px]">{s.plan ? <span className={`badge ${s.plan.name.toLowerCase() === "pro" ? "b-purple" : "b-blue"}`}><i />{s.plan.name}</span> : <span className="mut">—</span>}</div>
+                                    <div className="flex-none w-[70px] text-center">{s.branch_count}</div>
+                                    <div className="flex-none w-[90px] text-center">{s.user_count}</div>
+                                    <div className="flex-none w-[170px]"><span className={`badge ${st.badge}`}><i />{st.label}{left !== null && left >= 0 ? ` — ${left} gün qalıb` : ""}</span></div>
+                                    <div className="flex-none w-[120px] text-ink2 text-sm">{s.next_payment_at ?? "—"}</div>
+                                    <div className="flex-none w-[90px] text-right font-semibold">{s.plan && s.status !== "trial" ? `${fmt(s.plan.price_monthly)} AZN` : "—"}</div>
+                                </div>
+                            );
+                        })}
+                        {shops && filtered.length === 0 && <div className="text-center text-muted text-sm py-10">Mağaza tapılmadı.</div>}
+                        {!shops && !error && <div className="text-center text-muted text-sm py-10">Yüklənir…</div>}
                     </div>
                 </div>
+            </div>
         </>
     );
 }

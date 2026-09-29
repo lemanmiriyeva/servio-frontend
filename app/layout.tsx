@@ -16,7 +16,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
-    title: "ServisCRM",
+    title: "Servio — servis idarəetmə sistemi",
     description: "Servis mərkəzləri üçün idarəetmə sistemi",
 };
 
