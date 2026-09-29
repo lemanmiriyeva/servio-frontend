@@ -42,14 +42,14 @@ export const PLANS = [
   { name: "Basic", price: 19, desc: "Tək usta və kiçik servislər üçün", branches: "1 filial", users: "3 istifadəçi", featured: false,
     items: ["Müştərilər və təmir qeydiyyatı", "Kassa, xərclər və borclar", "Zəmanət izləmə və A4 qəbz", "Anbar və təchizatçılar", "Hesabatlar və analitika"] },
   { name: "Pro", price: 49, desc: "Böyüyən və çox filiallı servislər üçün", branches: "5 filial", users: "15 istifadəçi", featured: true,
-    items: ["Basic planın bütün imkanları", "5 filialadək bir hesabda", "15 istifadəçiyə qədər (usta, şəyird, kassir)", "Rol və icazələrin geniş idarəsi", "Böyük komanda üçün rahat nəzarət"] },
+    items: ["Basic planın bütün imkanları", "5 filialadək bir hesabda", "15 istifadəçiyə qədər (usta, tələbə, kassir)", "Rol və icazələrin geniş idarəsi", "Böyük komanda üçün rahat nəzarət"] },
 ];
 
 export const FAQ = [
   { q: "Servio kimlər üçündür?", a: "Telefon və kompüter təmiri ilə məşğul olan ustalar və servis mərkəzləri üçün. Müştəri, təmir, kassa, anbar, borc və hesabatların hamısı bir yerdədir." },
   { q: "Telefonda işləyirmi?", a: "Bəli. Sistem həm kompüter, həm də telefon ekranında rahat işləyir, ona görə də ustalar işin ortasında da məlumat daxil edə bilər." },
   { q: "Mənim məlumatımı başqa servis görə bilərmi?", a: "Xeyr. Hər servis ayrıca hesab kimi işləyir və yalnız öz müştərilərini, gəlirini, xərclərini, borclarını və təmir məlumatlarını görür." },
-  { q: "Şəyirdə giriş versəm, qazancı görəcəkmi?", a: "Yox. Rol və icazələr bölməsindən şəyird üçün gəlir və net qazanc rəqəmlərini bağlaya bilərsiniz. O, təmirlərlə işləyə bilər, amma maya, qazanc və gəlir ona görünmür." },
+  { q: "Tələbəyə giriş versəm, qazancı görəcəkmi?", a: "Yox. Rol və icazələr bölməsindən şəyird üçün gəlir və net qazanc rəqəmlərini bağlaya bilərsiniz. O, təmirlərlə işləyə bilər, amma maya, qazanc və gəlir ona görünmür." },
   { q: "Bir neçə filialla işləmək mümkündürmü?", a: "Bəli. Basic planda 1, Pro planda 5 filial dəstəklənir. Hər plan üzrə filial və istifadəçi limiti Qiymətlər səhifəsində göstərilib." },
   { q: "Təchizatçıya borcu necə izləyirəm?", a: "Təmiri qeyd edəndə detalı təchizatçıdan borcla aldığınızı seçirsiniz, məbləğ təchizatçının hesabına borc kimi yazılır. Ödəyəndən sonra ödənilmiş kimi işarələyirsiniz. Detal istifadə olunmayıbsa (məsələn, plata təmiri), bu sahəni doldurmaq məcburi deyil." },
   { q: "Zəmanət necə hesablanır?", a: "Cihaz təhvil veriləndə zəmanət müddəti avtomatik başlayır və gün-gün geri sayılır. Müddəti bitən zəmanət “müddəti bitib” kimi göstərilir." },
