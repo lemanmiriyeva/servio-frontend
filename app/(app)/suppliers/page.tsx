@@ -1,12 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, X, ChevronDown, ChevronUp, Truck } from "lucide-react";
+import { Plus, X, ChevronDown, ChevronUp, Truck, RotateCcw } from "lucide-react";
 import { api } from "@/lib/api";
 
 type Purchase = { id: number; description: string; amount: number; paid_amount: number; remaining: number; purchased_at: string };
+type PendingReturn = {
+    id: number; repair_number: string; customer_name: string; reason: string;
+    part_description: string | null; return_amount: number | null; created_at: string;
+};
 type Supplier = {
     id: number; name: string; phone: string; note: string;
     purchases: Purchase[]; total_purchased: number; total_paid: number; total_debt: number;
+    pending_returns?: PendingReturn[];
 };
 
 function fmt(n: number) {
@@ -66,6 +71,15 @@ export default function SuppliersPage() {
         try {
             await api.paySupplier(supplierId, amt);
             setPayForm(null); setPayAmount("");
+            load();
+        } finally { setBusy(false); }
+    }
+
+    async function resolveReturn(returnId: number, decision: "accepted" | "rejected") {
+        const note = decision === "rejected" ? (window.prompt("Rədd səbəbi (məs. fiziki zədə, ləkə):") ?? "") : "";
+        setBusy(true);
+        try {
+            await api.resolveWarrantyReturn(returnId, decision, note);
             load();
         } finally { setBusy(false); }
     }
@@ -151,6 +165,27 @@ export default function SuppliersPage() {
                                             <div className="inp"><input type="number" value={pAmount} onChange={(e) => setPAmount(e.target.value)} /></div>
                                         </div>
                                         <button className="btn pri" disabled={busy} onClick={() => submitPurchase(s.id)}>Əlavə et</button>
+                                    </div>
+                                )}
+
+                                {s.pending_returns && s.pending_returns.length > 0 && (
+                                    <div className="flex flex-col gap-2 p-3 rounded-[10px] border border-line bg-brand-soft">
+                                        <div className="flex items-center gap-2">
+                                            <RotateCcw size={16} className="text-muted flex-none" />
+                                            <b className="text-sm">Gözləyən zəmanət qaytarmaları</b>
+                                        </div>
+                                        {s.pending_returns.map((r) => (
+                                            <div key={r.id} className="flex items-center justify-between gap-3 py-2 border-t border-line first:border-t-0">
+                                                <div className="min-w-0">
+                                                    <span className="text-sm block truncate">{r.repair_number} · {r.customer_name}</span>
+                                                    <span className="text-xs text-muted block truncate">{r.part_description || r.reason}{r.return_amount !== null ? ` · ${r.return_amount} AZN` : ""}</span>
+                                                </div>
+                                                <div className="flex gap-2 flex-none">
+                                                    <button className="btn sm pri" disabled={busy} onClick={() => resolveReturn(r.id, "accepted")}>Qəbul et</button>
+                                                    <button className="btn sm" disabled={busy} onClick={() => resolveReturn(r.id, "rejected")}>Rədd et</button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
 

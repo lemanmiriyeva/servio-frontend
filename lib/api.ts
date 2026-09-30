@@ -145,6 +145,10 @@ export const api = {
       apiFetch(`/suppliers/${id}/purchases/`, { method: "POST", body: JSON.stringify(payload) }),
   paySupplier: (id: number | string, amount: number, method = "cash") =>
       apiFetch(`/suppliers/${id}/pay/`, { method: "POST", body: JSON.stringify({ amount, method }) }),
+  createWarrantyReturn: (repairId: number | string, payload: Record<string, unknown>) =>
+      apiFetch(`/repairs/${repairId}/warranty-return/`, { method: "POST", body: JSON.stringify(payload) }),
+  resolveWarrantyReturn: (id: number | string, decision: "accepted" | "rejected", note = "") =>
+      apiFetch(`/repairs/warranty-returns/${id}/resolve/`, { method: "PATCH", body: JSON.stringify({ decision, note }) }),
   reportsSummary: (params = "") => apiFetch(`/reports/summary/${params}`),
   myShop: () => apiFetch("/my-shop/"),
   updateMyShop: (payload: Record<string, unknown>) =>

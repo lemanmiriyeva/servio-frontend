@@ -1,8 +1,16 @@
 "use client";
 import { useEffect, useState, use as usePromise } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Plus, ShieldCheck, RotateCcw, X } from "lucide-react";
 import { api } from "@/lib/api";
+
+type WarrantyReturn = {
+  id: number; reason: string; refund_amount: number | null;
+  supplier_purchase: number | null; supplier_id: number | null; supplier_name: string | null;
+  part_description: string | null; return_amount: number | null;
+  supplier_status: "not_sent" | "pending" | "accepted" | "rejected";
+  supplier_note: string; supplier_resolved_at: string | null; created_at: string;
+};
 
 type RepairDetail = {
   id: number; number: string;
@@ -16,6 +24,15 @@ type RepairDetail = {
   payments: { id: number; amount: number; method: string; paid_at: string }[];
   paid_amount: number; remaining_debt: number;
   supplier_purchases?: { id: number; supplier: string; description: string; amount: number; paid_amount: number; remaining: number }[];
+  warranty_returns?: WarrantyReturn[];
+};
+
+const RETURN_STATUS_LABEL: Record<string, string> = {
+  not_sent: "Təchizatçıya göndərilməyib", pending: "Təchizatçıda gözləyir",
+  accepted: "Təchizatçı qəbul etdi", rejected: "Təchizatçı rədd etdi",
+};
+const RETURN_STATUS_BADGE: Record<string, string> = {
+  not_sent: "b-gray", pending: "b-amber", accepted: "b-green", rejected: "b-red",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -36,6 +53,12 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [busy, setBusy] = useState(false);
+
+  const [showReturnForm, setShowReturnForm] = useState(false);
+  const [returnReason, setReturnReason] = useState("");
+  const [returnRefund, setReturnRefund] = useState("");
+  const [returnSupplierPurchaseId, setReturnSupplierPurchaseId] = useState<string>("");
+  const [returnAmount, setReturnAmount] = useState("");
 
   function load() {
     api.repair(id).then((d) => setData(d as RepairDetail)).catch(() => setError("Təmir tapılmadı."));
@@ -60,6 +83,36 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
       await api.addRepairPayment(id, amount, paymentMethod);
       setShowPaymentForm(false);
       setPaymentAmount("");
+      load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitWarrantyReturn() {
+    if (!returnReason.trim()) return;
+    setBusy(true);
+    try {
+      const payload: Record<string, unknown> = { reason: returnReason };
+      if (returnRefund) payload.refund_amount = parseFloat(returnRefund);
+      if (returnSupplierPurchaseId) {
+        payload.supplier_purchase_id = parseInt(returnSupplierPurchaseId, 10);
+        if (returnAmount) payload.return_amount = parseFloat(returnAmount);
+      }
+      await api.createWarrantyReturn(id, payload);
+      setShowReturnForm(false);
+      setReturnReason(""); setReturnRefund(""); setReturnSupplierPurchaseId(""); setReturnAmount("");
+      load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resolveReturn(returnId: number, decision: "accepted" | "rejected") {
+    const note = decision === "rejected" ? (window.prompt("Rədd səbəbi (məs. fiziki zədə, ləkə):") ?? "") : "";
+    setBusy(true);
+    try {
+      await api.resolveWarrantyReturn(returnId, decision, note);
       load();
     } finally {
       setBusy(false);
@@ -186,6 +239,82 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
                 <div className="flex justify-between"><span className="mut">Bitmə</span><b>{data.warranty_end_date}</b></div>
                 <div className="flex justify-between"><span className="mut">Qalan gün</span><b>{data.warranty_days_left}</b></div>
               </div>
+
+              <button
+                className="btn mt-4 w-full justify-center"
+                onClick={() => setShowReturnForm((s) => !s)}
+              >
+                <RotateCcw size={16} /><span>Zəmanət altında qaytarma</span>
+              </button>
+
+              {showReturnForm && (
+                <div className="flex flex-col gap-3 mt-3 p-3 rounded-[10px] border border-line">
+                  <div className="flex items-center justify-between">
+                    <b className="text-sm">Yeni qaytarma</b>
+                    <button onClick={() => setShowReturnForm(false)} className="text-muted"><X size={16} /></button>
+                  </div>
+                  <div className="fld">
+                    <label>Səbəb</label>
+                    <div className="inp"><textarea rows={2} value={returnReason} onChange={(e) => setReturnReason(e.target.value)} placeholder="Məs. ekran sensoru yenidən işləmir" /></div>
+                  </div>
+                  <div className="fld">
+                    <label>Müştəriyə qaytarılan (AZN, varsa)</label>
+                    <div className="inp"><input type="number" value={returnRefund} onChange={(e) => setReturnRefund(e.target.value)} placeholder="0" /></div>
+                  </div>
+                  {data.supplier_purchases && data.supplier_purchases.length > 0 && (
+                    <>
+                      <div className="fld">
+                        <label>Təchizatçıya göndərilsin (hissə)</label>
+                        <select
+                          className="inp"
+                          value={returnSupplierPurchaseId}
+                          onChange={(e) => {
+                            setReturnSupplierPurchaseId(e.target.value);
+                            const sp = data.supplier_purchases?.find((p) => String(p.id) === e.target.value);
+                            setReturnAmount(sp ? String(sp.amount) : "");
+                          }}
+                        >
+                          <option value="">Göndərilməsin</option>
+                          {data.supplier_purchases.map((sp) => (
+                            <option key={sp.id} value={sp.id}>{sp.supplier} — {sp.description}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {returnSupplierPurchaseId && (
+                        <div className="fld">
+                          <label>Təchizatçıdan tələb olunan məbləğ (AZN)</label>
+                          <div className="inp"><input type="number" value={returnAmount} onChange={(e) => setReturnAmount(e.target.value)} /></div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <button className="btn pri" disabled={busy} onClick={submitWarrantyReturn}>Qaytarmanı qeydə al</button>
+                </div>
+              )}
+
+              {data.warranty_returns && data.warranty_returns.length > 0 && (
+                <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-line">
+                  <b className="text-sm">Qaytarma tarixçəsi</b>
+                  {data.warranty_returns.map((wr) => (
+                    <div key={wr.id} className="text-sm p-2.5 rounded-[10px] border border-line flex flex-col gap-1.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="min-w-0 truncate">{wr.reason}</span>
+                        <span className={`badge flex-none ${RETURN_STATUS_BADGE[wr.supplier_status]}`}><i />{RETURN_STATUS_LABEL[wr.supplier_status]}</span>
+                      </div>
+                      {wr.supplier_name && (
+                        <span className="text-xs text-muted">{wr.supplier_name} · {wr.part_description}{wr.return_amount !== null ? ` · ${wr.return_amount} AZN` : ""}</span>
+                      )}
+                      {wr.supplier_note && <span className="text-xs text-muted">Qeyd: {wr.supplier_note}</span>}
+                      {wr.supplier_status === "pending" && (
+                        <div className="flex gap-2 mt-1">
+                          <button className="btn sm pri flex-1 justify-center" disabled={busy} onClick={() => resolveReturn(wr.id, "accepted")}>Qəbul edildi</button>
+                          <button className="btn sm flex-1 justify-center" disabled={busy} onClick={() => resolveReturn(wr.id, "rejected")}>Rədd edildi</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

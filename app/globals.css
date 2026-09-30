@@ -93,6 +93,7 @@ body {
 .btn.dark { background: var(--side); border-color: var(--side); @apply text-white; }
 .btn.ghost { @apply border-transparent bg-transparent; color: var(--ink2); }
 .btn.block { @apply w-full; }
+.btn.sm { @apply h-9 px-3 text-xs; }
 .btn:disabled { @apply opacity-60 cursor-not-allowed; }
 
 .chip { @apply h-10 px-4 rounded-full border border-line inline-flex items-center gap-2 font-semibold text-sm bg-white whitespace-nowrap; color: var(--ink2); }

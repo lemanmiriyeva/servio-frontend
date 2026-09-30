@@ -61,19 +61,21 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
     return (
         <>
-            <div className="flex items-center gap-3">
-                <Link href="/customers" className="w-10 h-10 rounded-[10px] bg-white border border-line flex items-center justify-center text-ink2 flex-none">
-                    <ArrowLeft size={18} />
-                </Link>
-                <div className="av lg a1">{customer.initials}</div>
-                <div className="flex-1">
-                    <h1 className="text-xl font-semibold">{customer.full_name}</h1>
-                    <div className="flex items-center gap-4 text-ink2 text-sm mt-1">
-                        <span className="flex items-center gap-1.5"><Phone size={14} />{customer.phone}</span>
-                        {customer.email && <span className="flex items-center gap-1.5"><Mail size={14} />{customer.email}</span>}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Link href="/customers" className="w-10 h-10 rounded-[10px] bg-white border border-line flex items-center justify-center text-ink2 flex-none">
+                        <ArrowLeft size={18} />
+                    </Link>
+                    <div className="av lg a1 flex-none">{customer.initials}</div>
+                    <div className="flex-1 min-w-0">
+                        <h1 className="text-xl font-semibold truncate">{customer.full_name}</h1>
+                        <div className="flex items-center gap-4 text-ink2 text-sm mt-1 flex-wrap">
+                            <span className="flex items-center gap-1.5 min-w-0"><Phone size={14} className="flex-none" /><span className="truncate">{customer.phone}</span></span>
+                            {customer.email && <span className="flex items-center gap-1.5 min-w-0"><Mail size={14} className="flex-none" /><span className="truncate">{customer.email}</span></span>}
+                        </div>
                     </div>
                 </div>
-                <Link href={`/repairs/new?customer=${customer.id}`} className="btn pri">
+                <Link href={`/repairs/new?customer=${customer.id}`} className="btn pri w-full sm:w-auto flex-none">
                     <Plus size={18} /><span>Yeni xidmət</span>
                 </Link>
             </div>
