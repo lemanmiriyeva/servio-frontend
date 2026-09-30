@@ -3,7 +3,15 @@
 // ki, sayt heç vaxt boş və ya sınmış görünməsin.
 import { FAQ, SITE } from "./site-config";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+// Bu modul YALNIZ server komponentlərində (page.tsx-lər, SiteChrome) işləyir, brauzerdə yox.
+// NEXT_PUBLIC_API_URL adətən "/api" (nisbi yol) olur, çünki brauzer sorğuları nginx vasitəsilə
+// gedir — amma server tərəfdəki fetch üçün nisbi URL keçərsiz olur, ona görə server üçün ayrıca,
+// mütləq (absolute) bir ünvan lazımdır: ya INTERNAL_API_URL env dəyişəni, ya da (o olmasa)
+// docker-compose.yml-dəki backend servisinin adı ilə birbaşa konteynerlər-arası ünvan.
+const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+const API_URL =
+  process.env.INTERNAL_API_URL ||
+  (PUBLIC_API_URL.startsWith("http") ? PUBLIC_API_URL : "http://backend:8000/api");
 
 export type SiteSettingsContent = {
   brand_name: string;
@@ -86,7 +94,18 @@ const FALLBACK: SiteContent = {
 
 export async function getSiteContent(): Promise<SiteContent> {
   try {
-    const res = await fetch(`${API_URL}/site-content/`, { next: { revalidate: 60 } });
+    // Docker build mərhələsində (`next build` zamanı) backend hələ ayağa qalxmayıb və ya
+    // şəbəkədən əlçatan deyil — adi fetch bu halda saxlanıla bilər (hang) və build-i
+    // dəqiqələrlə dondurar. AbortController ilə sərt vaxt limiti qoyuruq ki, əlçatan
+    // olmasa tez FALLBACK-a keçsin.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/site-content/`, { next: { revalidate: 60 }, signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!res.ok) return FALLBACK;
     const data = (await res.json()) as Partial<SiteContent>;
     return {
