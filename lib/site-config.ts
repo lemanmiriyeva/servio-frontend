@@ -53,5 +53,5 @@ export const FAQ = [
   { q: "Bir neçə filialla işləmək mümkündürmü?", a: "Bəli. Basic planda 1, Pro planda 5 filial dəstəklənir. Hər plan üzrə filial və istifadəçi limiti Qiymətlər səhifəsində göstərilib." },
   { q: "Təchizatçıya borcu necə izləyirəm?", a: "Təmiri qeyd edəndə detalı təchizatçıdan borcla aldığınızı seçirsiniz, məbləğ təchizatçının hesabına borc kimi yazılır. Ödəyəndən sonra ödənilmiş kimi işarələyirsiniz. Detal istifadə olunmayıbsa (məsələn, plata təmiri), bu sahəni doldurmaq məcburi deyil." },
   { q: "Zəmanət necə hesablanır?", a: "Cihaz təhvil veriləndə zəmanət müddəti avtomatik başlayır və gün-gün geri sayılır. Müddəti bitən zəmanət “müddəti bitib” kimi göstərilir." },
-  { q: "Pulsuz başlaya bilərəmmi?", a: "Bəli, pulsuz sınaqla başlaya bilərsiniz. Müddət və şərtlər barədə Əlaqə səhifəsindən bizə yazın." },
+  // { q: "Pulsuz başlaya bilərəmmi?", a: "Bəli, pulsuz sınaqla başlaya bilərsiniz. Müddət və şərtlər barədə Əlaqə səhifəsindən bizə yazın." },
 ];

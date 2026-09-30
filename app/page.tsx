@@ -3,24 +3,21 @@ import Link from "next/link";
 import { Play, Smile, ShieldCheck, MonitorSmartphone } from "lucide-react";
 import { HeroMock } from "@/components/site/HeroMock";
 import { CtaBand, DARK_BG, FeatureGrid, SectionTitle } from "@/components/site/Sections";
+import { getSiteContent } from "@/lib/site-content";
 
-const STEPS = [
-  { n: "1", t: "Müştəri və cihazı qeyd edin", d: "Müştəri, cihaz, şikayət və görüləcək işi bir neçə kliklə əlavə edin." },
-  { n: "2", t: "Maya, satış və təchizatçını seçin", d: "Qazanc avtomatik hesablanır, təchizatçı borcu isə lazım olarsa avtomatik yazılır." },
-  { n: "3", t: "Təhvil verin və çap edin", d: "Ödənişi qeyd edin, A4 qəbz çap edin, zəmanət avtomatik geri saymağa başlasın." },
-];
+export default async function HomePage() {
+  const { settings, home_steps, features } = await getSiteContent();
 
-export default function HomePage() {
   return (
     <SiteChrome>
       <section className={`${DARK_BG} text-white pt-[120px] md:pt-[140px] pb-16 md:pb-24 overflow-hidden`}>
         <div className="max-w-[1200px] mx-auto px-5 md:px-8 grid lg:grid-cols-[1fr_1.05fr] gap-12 items-center">
           <div>
             <h1 className="text-[40px] md:text-[56px] font-bold leading-[1.1] tracking-tight">
-              Servisinizi daha <span className="text-[#116CFB]">rahat idarə edin.</span>
+              {settings.hero_title}
             </h1>
             <p className="mt-6 text-white/75 text-[17px] leading-relaxed max-w-[500px]">
-              Müştərilər, təmirlər, gəlir-xərc, anbar, borclar və hesabatlar — hamısı bir platformada. Telefon və kompüter servis bizneslər üçün ağıllı idarəetmə sistemi.
+              {settings.hero_subtitle}
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/elaqe" className="h-[54px] px-9 rounded-full bg-[#116CFB] hover:bg-[#3A85FF] font-semibold inline-flex items-center transition-colors">Pulsuz başla</Link>
@@ -41,7 +38,7 @@ export default function HomePage() {
       <section className="bg-[#F2F7FF] py-16 md:py-24">
         <div className="max-w-[1200px] mx-auto px-5 md:px-8">
           <SectionTitle eyebrow="Funksiyalar" title="Bütün proseslər bir yerdə" text="Servio ilə servis biznesinizi tam idarə edin. Vaxtınıza qənaət edin, qazancınızı artırın." />
-          <div className="mt-10"><FeatureGrid /></div>
+          <div className="mt-10"><FeatureGrid features={features} /></div>
           <div className="mt-8"><Link href="/funksiyalar" className="text-[#116CFB] font-semibold hover:underline">Bütün funksiyalara bax →</Link></div>
         </div>
       </section>
@@ -50,11 +47,11 @@ export default function HomePage() {
         <div className="max-w-[1200px] mx-auto px-5 md:px-8">
           <SectionTitle eyebrow="Necə işləyir" title="Bir neçə kliklə tam proses" />
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {STEPS.map((s) => (
-              <div key={s.n} className="rounded-2xl border border-[#DCE8FF] p-7">
-                <span className="w-10 h-10 rounded-full bg-[#116CFB] text-white font-bold flex items-center justify-center">{s.n}</span>
-                <h3 className="mt-5 text-lg font-semibold">{s.t}</h3>
-                <p className="mt-2 text-[#3E4C6B] text-sm leading-relaxed">{s.d}</p>
+            {home_steps.map((s) => (
+              <div key={s.id} className="rounded-2xl border border-[#DCE8FF] p-7">
+                <span className="w-10 h-10 rounded-full bg-[#116CFB] text-white font-bold flex items-center justify-center">{s.number}</span>
+                <h3 className="mt-5 text-lg font-semibold">{s.title}</h3>
+                <p className="mt-2 text-[#3E4C6B] text-sm leading-relaxed">{s.description}</p>
               </div>
             ))}
           </div>

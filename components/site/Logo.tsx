@@ -9,7 +9,12 @@ export function LogoMark({ size = 36 }: { size?: number }) {
 }
 
 // Tam lockup (işarə + "Servio.az" yazısı). `dark` = açıq fonda görünəcəksə true.
-export function Logo({ dark = false, height = 54 }: { dark?: boolean; height?: number }) {
-  const src = dark ? logoFull : logoFullWhite;
-  return <Image src={src} alt="Servio.az" height={height} style={{ height, width: "auto" }} priority />;
+// `src` verilibsə (Baş Admin panelindən yüklənmiş loqo), o istifadə olunur; əks halda statik loqo.
+export function Logo({ dark = false, height = 54, src, alt = "Servio.az" }: { dark?: boolean; height?: number; src?: string | null; alt?: string }) {
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element -- xarici (backend media) mənbə, next/image üçün domain konfiqurasiyası lazımdır
+    return <img src={src} alt={alt} style={{ height, width: "auto" }} />;
+  }
+  const fallback = dark ? logoFull : logoFullWhite;
+  return <Image src={fallback} alt={alt} height={height} style={{ height, width: "auto" }} priority />;
 }

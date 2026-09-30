@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { FEATURES } from "@/lib/site-config";
+import { getIcon } from "@/lib/icon-map";
+import type { FeatureEntry } from "@/lib/site-content";
 
 export const DARK_BG = "bg-[#041326] bg-[radial-gradient(900px_500px_at_75%_10%,rgba(31,107,255,0.28),transparent_60%),radial-gradient(600px_400px_at_0%_100%,rgba(31,107,255,0.12),transparent_60%)]";
 
@@ -26,16 +27,20 @@ export function SectionTitle({ eyebrow, title, text }: { eyebrow: string; title:
   );
 }
 
-export function FeatureGrid() {
+export function FeatureGrid({ features }: { features: FeatureEntry[] }) {
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      {FEATURES.map((f) => (
-        <div key={f.title} className="rounded-2xl bg-white border border-[#DCE8FF] p-6 shadow-[0_8px_30px_rgba(16,40,100,0.06)] hover:shadow-[0_12px_40px_rgba(31,107,255,0.14)] hover:-translate-y-0.5 transition">
-          <span className={`w-12 h-12 rounded-xl ${f.tone} text-white flex items-center justify-center`}><f.icon size={24} /></span>
-          <h3 className="mt-5 text-[17px] font-semibold">{f.title}</h3>
-          <p className="mt-2 text-sm text-[#3E4C6B] leading-relaxed">{f.short}</p>
-        </div>
-      ))}
+      {features.map((f) => {
+        const Icon = getIcon(f.icon);
+        const tone = f.tone === "dark" ? "bg-[#041326]" : "bg-[#116CFB]";
+        return (
+          <div key={f.id} className="rounded-2xl bg-white border border-[#DCE8FF] p-6 shadow-[0_8px_30px_rgba(16,40,100,0.06)] hover:shadow-[0_12px_40px_rgba(31,107,255,0.14)] hover:-translate-y-0.5 transition">
+            <span className={`w-12 h-12 rounded-xl ${tone} text-white flex items-center justify-center`}><Icon size={24} /></span>
+            <h3 className="mt-5 text-[17px] font-semibold">{f.title}</h3>
+            <p className="mt-2 text-sm text-[#3E4C6B] leading-relaxed">{f.short_description}</p>
+          </div>
+        );
+      })}
     </div>
   );
 }

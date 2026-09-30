@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { Menu, X, LayoutDashboard } from "lucide-react";
 import { Logo } from "./Logo";
 import { NAV } from "@/lib/site-config";
+import type { SiteSettingsContent } from "@/lib/site-content";
 import { useAuth } from "@/lib/auth-context";
 
-export function SiteHeader() {
+export function SiteHeader({ settings }: { settings: SiteSettingsContent }) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
@@ -27,7 +28,7 @@ export function SiteHeader() {
   return (
     <header className="absolute top-0 inset-x-0 z-30">
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 h-[84px] flex items-center gap-8">
-        <Link href="/" aria-label="Servio"><Logo /></Link>
+        <Link href="/" aria-label={settings.brand_name}><Logo src={settings.logo} alt={settings.brand_name} /></Link>
         <nav className="hidden lg:flex items-center gap-8 mx-auto">
           {NAV.map((n) => {
             const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
