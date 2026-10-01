@@ -2,18 +2,21 @@
 import { useEffect, useState } from "react";
 import {
     Plus, X, Search, Boxes, Store, ArrowRightLeft, AlertTriangle,
-    Check, Ban, Truck, PackageCheck, CircleDollarSign,
+    Check, Ban, Truck, PackageCheck, CircleDollarSign, Info,
+    ArrowDownToLine, ArrowUpFromLine,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { Modal } from "@/components/Modal";
 
 type Product = {
     id: number; name: string; brand: string; category: string; sku: string;
     quantity_in_stock: number; min_stock_alert: number; is_low_stock: boolean;
-    unit_cost: number; unit_sale_price: number;
+    unit_cost: number; unit_sale_price: number; is_used: boolean;
     is_shared_to_marketplace: boolean; marketplace_price: number | null;
 };
 type MarketProduct = {
-    id: number; name: string; brand: string; category: string;
+    id: number; name: string; brand: string; category: string; is_used: boolean;
     quantity_in_stock: number; price: number; shop_id: string; shop_name: string; shop_city: string;
 };
 type MarketOrder = {
@@ -43,6 +46,8 @@ function fmt(n: number) {
 }
 
 export default function InventoryPage() {
+    const { user } = useAuth();
+    const myShopId = user?.shop?.id ?? null;
     const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("stock");
 
     // Stock
@@ -52,6 +57,10 @@ export default function InventoryPage() {
     const [pCategory, setPCategory] = useState(""); const [pQty, setPQty] = useState("");
     const [pCost, setPCost] = useState(""); const [pPrice, setPPrice] = useState("");
     const [pShared, setPShared] = useState(false); const [pMarketPrice, setPMarketPrice] = useState("");
+    const [pUsed, setPUsed] = useState(false);
+
+    // Stock search ("Mənim anbarım" tabında axtarış)
+    const [stockQuery, setStockQuery] = useState("");
 
     // Market search
     const [query, setQuery] = useState("");
@@ -63,8 +72,9 @@ export default function InventoryPage() {
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
 
-    function loadProducts() {
-        api.products("?page_size=200").then((d) => {
+    function loadProducts(q = stockQuery) {
+        const params = q.trim() ? `?page_size=200&search=${encodeURIComponent(q.trim())}` : "?page_size=200";
+        api.products(params).then((d) => {
             const data = d as { results?: Product[] } | Product[];
             setProducts(Array.isArray(data) ? data : data.results ?? []);
         }).catch(() => setError("Anbar yüklənmədi."));
@@ -76,6 +86,12 @@ export default function InventoryPage() {
         }).catch(() => {});
     }
     useEffect(() => { loadProducts(); loadOrders(); }, []);
+
+    useEffect(() => {
+        const t = setTimeout(() => loadProducts(stockQuery), 300);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [stockQuery]);
 
     useEffect(() => {
         if (tab !== "market" || query.trim().length < 2) return;
@@ -94,13 +110,14 @@ export default function InventoryPage() {
                 unit_cost: pCost || 0, unit_sale_price: pPrice || 0,
                 is_shared_to_marketplace: pShared,
                 marketplace_price: pShared && pMarketPrice ? pMarketPrice : null,
+                is_used: pUsed,
             })) as Product;
             const qty = parseInt(pQty, 10);
             if (qty > 0) {
                 await api.createStockMovement({ product: created.id, movement_type: "purchase_in", quantity_delta: qty, note: "İlkin anbar" });
             }
             setShowNewProduct(false);
-            setPName(""); setPBrand(""); setPCategory(""); setPQty(""); setPCost(""); setPPrice(""); setPShared(false); setPMarketPrice("");
+            setPName(""); setPBrand(""); setPCategory(""); setPQty(""); setPCost(""); setPPrice(""); setPShared(false); setPMarketPrice(""); setPUsed(false);
             loadProducts();
         } catch {
             setError("Məhsul yaradıla bilmədi.");
@@ -180,31 +197,66 @@ export default function InventoryPage() {
 
             {tab === "stock" && (
                 <>
+                    <div className="w-full max-w-md h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 text-ink2">
+                        <Search size={18} className="text-muted flex-none" />
+                        <input
+                            className="w-full outline-none bg-transparent text-sm min-w-0"
+                            placeholder="Ad, marka, kateqoriya və ya SKU üzrə axtar…"
+                            value={stockQuery}
+                            onChange={(e) => setStockQuery(e.target.value)}
+                        />
+                        {stockQuery && (
+                            <button onClick={() => setStockQuery("")} className="text-muted flex-none"><X size={16} /></button>
+                        )}
+                    </div>
+
                     {showNewProduct && (
-                        <div className="card max-w-2xl flex flex-col gap-3.5">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-base font-semibold">Yeni məhsul</h3>
-                                <button onClick={() => setShowNewProduct(false)} className="text-muted"><X size={18} /></button>
-                            </div>
+                        <Modal title="Yeni məhsul" onClose={() => setShowNewProduct(false)} maxWidth="max-w-2xl">
                             <div className="flex gap-3 flex-wrap">
                                 <div className="fld flex-1 min-w-[160px]"><label>Ad</label><div className="inp"><input value={pName} onChange={(e) => setPName(e.target.value)} placeholder="iPhone 17 Pro ekranı" /></div></div>
-                                <div className="fld flex-1 min-w-[140px]"><label>Marka</label><div className="inp"><input value={pBrand} onChange={(e) => setPBrand(e.target.value)} placeholder="Apple" /></div></div>
-                                <div className="fld flex-1 min-w-[140px]"><label>Kateqoriya</label><div className="inp"><input value={pCategory} onChange={(e) => setPCategory(e.target.value)} placeholder="Ekran" /></div></div>
+                                <div className="fld flex-1 min-w-[140px]">
+                                    <label>Marka</label>
+                                    <div className="inp"><input value={pBrand} onChange={(e) => setPBrand(e.target.value)} placeholder="Apple" list="product-brand-list" autoComplete="off" /></div>
+                                    <datalist id="product-brand-list">
+                                        {Array.from(new Set((products ?? []).map((p) => p.brand).filter(Boolean))).map((b) => <option key={b} value={b} />)}
+                                    </datalist>
+                                </div>
+                                <div className="fld flex-1 min-w-[140px]">
+                                    <label>Kateqoriya</label>
+                                    <div className="inp"><input value={pCategory} onChange={(e) => setPCategory(e.target.value)} placeholder="Ekran" list="product-category-list" autoComplete="off" /></div>
+                                    <datalist id="product-category-list">
+                                        {Array.from(new Set((products ?? []).map((p) => p.category).filter(Boolean))).map((c) => <option key={c} value={c} />)}
+                                    </datalist>
+                                </div>
                             </div>
                             <div className="flex gap-3 flex-wrap">
                                 <div className="fld min-w-[110px]" style={{ maxWidth: 130 }}><label>Miqdar</label><div className="inp"><input type="number" value={pQty} onChange={(e) => setPQty(e.target.value)} /></div></div>
                                 <div className="fld min-w-[110px]" style={{ maxWidth: 130 }}><label>Maya (AZN)</label><div className="inp"><input type="number" value={pCost} onChange={(e) => setPCost(e.target.value)} /></div></div>
                                 <div className="fld min-w-[110px]" style={{ maxWidth: 130 }}><label>Satış (AZN)</label><div className="inp"><input type="number" value={pPrice} onChange={(e) => setPPrice(e.target.value)} /></div></div>
                             </div>
-                            <label className="flex items-center gap-2.5 text-sm font-medium cursor-pointer">
-                                <input type="checkbox" checked={pShared} onChange={(e) => setPShared(e.target.checked)} className="w-4 h-4" />
-                                Marketplace-də digər mağazalara göstər
+                            <label className="flex items-start gap-2.5 text-sm font-medium cursor-pointer">
+                                <input type="checkbox" checked={pUsed} onChange={(e) => setPUsed(e.target.checked)} className="w-4 h-4 mt-0.5" />
+                                <span>
+                                    İkinci əl (istifadə olunmuş) məhsuldur
+                                    <span className="block text-xs text-muted font-normal mt-0.5">
+                                        Yeni deyil — əvvəl istifadə olunub. Cədvəldə və Marketplace-də bu qeyd görünəcək.
+                                    </span>
+                                </span>
+                            </label>
+                            <label className="flex items-start gap-2.5 text-sm font-medium cursor-pointer">
+                                <input type="checkbox" checked={pShared} onChange={(e) => setPShared(e.target.checked)} className="w-4 h-4 mt-0.5" />
+                                <span>
+                                    Marketplace-də digər mağazalara göstər
+                                    <span className="block text-xs text-muted font-normal mt-0.5">
+                                        Açsanız, başqa servislər bu məhsulu axtaranda görüb sizdən sifariş verə bilər.
+                                    </span>
+                                </span>
                             </label>
                             {pShared && (
                                 <div className="fld max-w-[200px]"><label>Marketplace qiyməti (AZN)</label><div className="inp"><input type="number" value={pMarketPrice} onChange={(e) => setPMarketPrice(e.target.value)} placeholder={pPrice || "0"} /></div></div>
                             )}
                             <button className="btn pri self-start" disabled={busy} onClick={createProduct}>Əlavə et</button>
-                        </div>
+                        </Modal>
                     )}
 
                     <div className="card !p-2">
@@ -215,13 +267,18 @@ export default function InventoryPage() {
                                     <div className="flex-none w-[130px] text-right">Miqdar</div>
                                     <div className="flex-none w-[90px] text-right">Maya</div>
                                     <div className="flex-none w-[90px] text-right">Satış</div>
-                                    <div className="flex-none w-[130px] text-center">Marketplace</div>
+                                    <div className="flex-none w-[130px] text-center" title="Açıq olsa, bu məhsulu digər mağazalar da Marketplace-də axtararkən görür və sizdən sifariş verə bilər.">
+                                        Marketplace
+                                    </div>
                                 </div>
                                 {(products ?? []).map((p) => (
                                     <div key={p.id} className="tr">
                                         <div className="flex-1 min-w-0">
-                                            <b className="block truncate">{p.name}</b>
-                                            <span className="text-xs text-muted">{[p.brand, p.category].filter(Boolean).join(" · ") || "—"}</span>
+                                            <span className="flex items-center gap-1.5 min-w-0">
+                                                <b className="block truncate">{p.name}</b>
+                                                {p.is_used && <span className="badge b-amber !text-[10px] flex-none"><i />İkinci əl</span>}
+                                            </span>
+                                            <span className="text-xs text-muted block truncate">{[p.brand, p.category].filter(Boolean).join(" · ") || "—"}</span>
                                         </div>
                                         <div className="flex-none w-[130px] flex items-center justify-end gap-1.5">
                                             {p.is_low_stock && <AlertTriangle size={14} className="amb" />}
@@ -249,14 +306,28 @@ export default function InventoryPage() {
 
             {tab === "market" && (
                 <>
-                    <div className="flex-1 min-w-[240px] h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 text-ink2 max-w-lg">
+                    <div className="card !py-3 !px-4 flex items-start gap-2.5 bg-brand-soft">
+                        <Info size={18} className="text-muted flex-none mt-0.5" />
+                        <p className="text-sm text-ink2">
+                            <b className="text-ink">Marketplace nədir?</b> Başqa servislərin anbarında olan, onların
+                            "Marketplace-də göstər" ilə açıq qoyduğu ehtiyat hissələrini bura axtarıb sifariş verə
+                            bilərsiniz — öz anbarınızda olmayan bir hissəni başqa mağazadan əldə etmək üçün. Eyni
+                            şəkildə, sizin "Mənim anbarım" tabında açıq (yaşıl) etdiyiniz məhsulları da başqa
+                            mağazalar burada görüb sizdən sifariş verə bilər.
+                        </p>
+                    </div>
+
+                    <div className="w-full max-w-lg h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 text-ink2">
                         <Search size={18} className="text-muted flex-none" />
                         <input
-                            className="w-full outline-none bg-transparent text-sm"
+                            className="w-full outline-none bg-transparent text-sm min-w-0"
                             placeholder="Başqa mağazaların anbarında axtar (ekran, batareya…)"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
+                        {query && (
+                            <button onClick={() => setQuery("")} className="text-muted flex-none"><X size={16} /></button>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-2.5">
@@ -264,8 +335,11 @@ export default function InventoryPage() {
                             <div key={mp.id} className="card flex items-center gap-3">
                                 <div className="t-cyan w-10 h-10 rounded-[10px] flex items-center justify-center flex-none"><Store size={18} /></div>
                                 <div className="flex-1 min-w-0">
-                                    <b className="block truncate">{mp.name}</b>
-                                    <span className="text-xs text-muted">{[mp.brand, mp.category].filter(Boolean).join(" · ")} · {mp.shop_name} ({mp.shop_city})</span>
+                                    <span className="flex items-center gap-1.5 min-w-0">
+                                        <b className="block truncate">{mp.name}</b>
+                                        {mp.is_used && <span className="badge b-amber !text-[10px] flex-none"><i />İkinci əl</span>}
+                                    </span>
+                                    <span className="text-xs text-muted truncate block">{[mp.brand, mp.category].filter(Boolean).join(" · ")} · {mp.shop_name} ({mp.shop_city})</span>
                                 </div>
                                 <div className="text-right">
                                     <span className="text-xs text-muted block">Mövcud</span>
@@ -292,33 +366,54 @@ export default function InventoryPage() {
                 <div className="flex flex-col gap-2.5">
                     {(orders ?? []).map((o) => {
                         const st = ORDER_STATUS[o.status] ?? { label: o.status, badge: "b-gray" };
+                        // Mən alıcıyam, yoxsa satıcı? — cəhətə görə fərqli ikon/rəng/mətn, çünki
+                        // "kimdən kimə" sualı məhz bunun qarışdırılmasından yaranırdı.
+                        const iBuy = myShopId !== null && String(o.buyer_shop) === String(myShopId);
                         return (
-                            <div key={o.id} className="card flex items-center gap-3 flex-wrap">
-                                <div className="t-purple w-10 h-10 rounded-[10px] flex items-center justify-center flex-none"><ArrowRightLeft size={18} /></div>
-                                <div className="flex-1 min-w-[200px]">
-                                    <b className="block">{o.product_name} × {o.quantity}</b>
-                                    <span className="text-xs text-muted">{o.buyer_shop_name} ← {o.seller_shop_name}</span>
+                            <div key={o.id} className="card flex flex-col gap-3">
+                                <div className="flex items-start gap-3 flex-wrap">
+                                    <div
+                                        className={`w-11 h-11 rounded-[10px] flex items-center justify-center flex-none ${iBuy ? "t-blue" : "t-purple"}`}
+                                        title={iBuy ? "Siz sifariş vermisiniz (gələcək)" : "Sizə sifariş gəlib (göndərəcəksiniz)"}
+                                    >
+                                        {iBuy ? <ArrowDownToLine size={20} /> : <ArrowUpFromLine size={20} />}
+                                    </div>
+                                    <div className="flex-1 min-w-0 basis-[260px]">
+                                        <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                            <b className="truncate text-[15px]">{o.product_name} × {o.quantity}</b>
+                                            <span className={`badge !text-[11px] flex-none ${iBuy ? "b-blue" : "b-purple"}`}>
+                                                <i />{iBuy ? "Siz alırsınız" : "Siz satırsınız"}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-1.5 text-sm min-w-0 flex-wrap">
+                                            <span className="text-muted">Satıcı:</span>
+                                            <span className={`truncate ${!iBuy ? "font-bold text-ink" : "font-medium"}`}>{o.seller_shop_name}</span>
+                                            <ArrowRightLeft size={13} className="flex-none text-muted" />
+                                            <span className="text-muted">Alıcı:</span>
+                                            <span className={`truncate ${iBuy ? "font-bold text-ink" : "font-medium"}`}>{o.buyer_shop_name}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xs text-muted block">Məbləğ</span>
+                                        <b className="text-base">{fmt(o.total_price)} AZN</b>
+                                    </div>
+                                    <span className={`badge ${st.badge}`}><i />{st.label}</span>
                                 </div>
-                                <div className="text-right w-24">
-                                    <span className="text-xs text-muted block">Məbləğ</span>
-                                    <b>{fmt(o.total_price)} AZN</b>
-                                </div>
-                                <span className={`badge ${st.badge}`}><i />{st.label}</span>
-                                <div className="flex gap-1.5">
+                                <div className="flex gap-2 flex-wrap pl-0 sm:pl-[56px]">
                                     {o.status === "pending" && (
                                         <>
-                                            <button title="Qəbul et" disabled={busy} onClick={() => runOrderAction(o, "accept")} className="w-9 h-9 rounded-[9px] border border-line flex items-center justify-center t-green"><Check size={16} /></button>
-                                            <button title="Rədd et" disabled={busy} onClick={() => runOrderAction(o, "reject")} className="w-9 h-9 rounded-[9px] border border-line flex items-center justify-center t-red"><Ban size={16} /></button>
+                                            <button disabled={busy} onClick={() => runOrderAction(o, "accept")} className="btn sm t-green !border-current"><Check size={16} /><span>Qəbul et</span></button>
+                                            <button disabled={busy} onClick={() => runOrderAction(o, "reject")} className="btn sm t-red !border-current"><Ban size={16} /><span>Rədd et</span></button>
                                         </>
                                     )}
                                     {o.status === "accepted" && (
-                                        <button title="Ödənildi" disabled={busy} onClick={() => runOrderAction(o, "mark-paid")} className="w-9 h-9 rounded-[9px] border border-line flex items-center justify-center t-cyan"><CircleDollarSign size={16} /></button>
+                                        <button disabled={busy} onClick={() => runOrderAction(o, "mark-paid")} className="btn sm t-cyan !border-current"><CircleDollarSign size={16} /><span>Ödənildi</span></button>
                                     )}
                                     {o.status === "paid" && (
-                                        <button title="Göndərildi" disabled={busy} onClick={() => runOrderAction(o, "mark-shipped")} className="w-9 h-9 rounded-[9px] border border-line flex items-center justify-center t-purple"><Truck size={16} /></button>
+                                        <button disabled={busy} onClick={() => runOrderAction(o, "mark-shipped")} className="btn sm t-purple !border-current"><Truck size={16} /><span>Göndərildi</span></button>
                                     )}
                                     {o.status === "shipped" && (
-                                        <button title="Təhvil aldım" disabled={busy} onClick={() => runOrderAction(o, "mark-completed")} className="w-9 h-9 rounded-[9px] border border-line flex items-center justify-center t-green"><PackageCheck size={16} /></button>
+                                        <button disabled={busy} onClick={() => runOrderAction(o, "mark-completed")} className="btn sm t-green !border-current"><PackageCheck size={16} /><span>Təhvil aldım</span></button>
                                     )}
                                 </div>
                             </div>

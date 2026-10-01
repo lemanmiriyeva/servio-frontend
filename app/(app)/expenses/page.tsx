@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, X, Receipt } from "lucide-react";
+import { Plus, Receipt } from "lucide-react";
 import { api } from "@/lib/api";
+import { Modal } from "@/components/Modal";
 
 type Transaction = {
     id: number; amount: number; method: string; description: string;
@@ -74,11 +75,7 @@ export default function ExpensesPage() {
             {error && <div className="card" style={{ color: "var(--red)" }}>{error}</div>}
 
             {showForm && (
-                <div className="card max-w-xl flex flex-col gap-3.5">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-base font-semibold">Yeni xərc</h3>
-                        <button onClick={() => setShowForm(false)} className="text-muted"><X size={18} /></button>
-                    </div>
+                <Modal title="Yeni xərc" onClose={() => setShowForm(false)} maxWidth="max-w-xl">
                     <div className="flex gap-3 flex-wrap">
                         <div className="fld flex-1 min-w-[140px]">
                             <label>Məbləğ (AZN)</label>
@@ -86,7 +83,18 @@ export default function ExpensesPage() {
                         </div>
                         <div className="fld flex-1 min-w-[140px]">
                             <label>Kateqoriya</label>
-                            <div className="inp"><input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="İcarə, Elektrik, Maaş" /></div>
+                            <div className="inp">
+                                <input
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    placeholder="İcarə, Elektrik, Maaş"
+                                    list="expense-category-list"
+                                    autoComplete="off"
+                                />
+                            </div>
+                            <datalist id="expense-category-list">
+                                {byCategory.map(([cat]) => <option key={cat} value={cat} />)}
+                            </datalist>
                         </div>
                         <div className="fld flex-1 min-w-[140px]">
                             <label>Üsul</label>
@@ -104,7 +112,7 @@ export default function ExpensesPage() {
                     <button className="btn pri self-start" disabled={saving} onClick={handleSubmit}>
                         {saving ? "Yadda saxlanılır…" : "Yadda saxla"}
                     </button>
-                </div>
+                </Modal>
             )}
 
             {byCategory.length > 0 && (
@@ -119,20 +127,20 @@ export default function ExpensesPage() {
 
             <div className="card !p-2">
                 <div className="overflow-x-auto">
-                    <div className="min-w-[560px]">
+                    <div className="min-w-[620px]">
                         <div className="tr h">
                             <div className="flex-none w-[150px]">Tarix</div>
                             <div className="flex-1">Təsvir</div>
-                            <div className="flex-none w-[130px]">Kateqoriya</div>
-                            <div className="flex-none w-[100px]">Üsul</div>
+                            <div className="flex-none w-[150px]">Kateqoriya</div>
+                            <div className="flex-none w-[120px]">Üsul</div>
                             <div className="flex-none w-[90px] text-right">Məbləğ</div>
                         </div>
                         {(expenses ?? []).map((e) => (
                             <div key={e.id} className="tr">
                                 <div className="flex-none w-[150px] text-ink2 text-sm">{new Date(e.created_at).toLocaleString("az-AZ")}</div>
                                 <div className="flex-1 min-w-0 truncate">{e.description}</div>
-                                <div className="flex-none w-[130px] text-sm text-ink2">{e.expense_category || "—"}</div>
-                                <div className="flex-none w-[100px] text-sm text-ink2">{METHOD_LABEL[e.method]}</div>
+                                <div className="flex-none w-[150px] text-sm text-ink2 truncate" title={e.expense_category || ""}>{e.expense_category || "—"}</div>
+                                <div className="flex-none w-[120px] text-sm text-ink2 truncate">{METHOD_LABEL[e.method]}</div>
                                 <div className="flex-none w-[90px] text-right font-semibold neg">-{fmt(e.amount)}</div>
                             </div>
                         ))}

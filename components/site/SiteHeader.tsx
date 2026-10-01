@@ -21,7 +21,7 @@ export function SiteHeader({ settings }: { settings: SiteSettingsContent }) {
   ) : (
     <>
       <Link href="/login" className="h-11 px-5 rounded-[10px] border border-white/25 hover:bg-white/10 text-white text-sm font-semibold inline-flex items-center transition-colors">Daxil ol</Link>
-      <Link href="/elaqe" className="h-11 px-5 rounded-[10px] bg-[#116CFB] hover:bg-[#3A85FF] text-white text-sm font-semibold inline-flex items-center transition-colors">Pulsuz başla</Link>
+      <Link href="/elaqe" className="h-11 px-5 rounded-[10px] bg-[#116CFB] hover:bg-[#3A85FF] text-white text-sm font-semibold inline-flex items-center transition-colors">Başla</Link>
     </>
   );
 

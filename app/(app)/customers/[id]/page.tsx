@@ -3,6 +3,7 @@ import { useEffect, useState, use as usePromise } from "react";
 import Link from "next/link";
 import { ArrowLeft, Phone, Mail, Pencil, Check, X, Plus } from "lucide-react";
 import { api } from "@/lib/api";
+import { Loader } from "@/components/Loader";
 
 type Customer = {
     id: number; full_name: string; phone: string; email: string; note: string;
@@ -57,25 +58,23 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     const activeWarranties = (repairs ?? []).filter((r) => r.warranty_days_left !== null && r.warranty_days_left >= 0).length;
 
     if (error) return <div className="card" style={{ color: "var(--red)" }}>{error}</div>;
-    if (!customer) return <div className="text-muted text-sm">Yüklənir…</div>;
+    if (!customer) return <Loader />;
 
     return (
         <>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <Link href="/customers" className="w-10 h-10 rounded-[10px] bg-white border border-line flex items-center justify-center text-ink2 flex-none">
-                        <ArrowLeft size={18} />
-                    </Link>
-                    <div className="av lg a1 flex-none">{customer.initials}</div>
-                    <div className="flex-1 min-w-0">
-                        <h1 className="text-xl font-semibold truncate">{customer.full_name}</h1>
-                        <div className="flex items-center gap-4 text-ink2 text-sm mt-1 flex-wrap">
-                            <span className="flex items-center gap-1.5 min-w-0"><Phone size={14} className="flex-none" /><span className="truncate">{customer.phone}</span></span>
-                            {customer.email && <span className="flex items-center gap-1.5 min-w-0"><Mail size={14} className="flex-none" /><span className="truncate">{customer.email}</span></span>}
-                        </div>
+            <div className="flex items-center gap-3">
+                <Link href="/customers" className="w-10 h-10 rounded-[10px] bg-white border border-line flex items-center justify-center text-ink2 flex-none">
+                    <ArrowLeft size={18} />
+                </Link>
+                <div className="av lg a1">{customer.initials}</div>
+                <div className="flex-1">
+                    <h1 className="text-xl font-semibold">{customer.full_name}</h1>
+                    <div className="flex items-center gap-4 text-ink2 text-sm mt-1">
+                        <span className="flex items-center gap-1.5"><Phone size={14} />{customer.phone}</span>
+                        {customer.email && <span className="flex items-center gap-1.5"><Mail size={14} />{customer.email}</span>}
                     </div>
                 </div>
-                <Link href={`/repairs/new?customer=${customer.id}`} className="btn pri w-full sm:w-auto flex-none">
+                <Link href={`/repairs/new?customer=${customer.id}`} className="btn pri">
                     <Plus size={18} /><span>Yeni xidmət</span>
                 </Link>
             </div>
@@ -110,7 +109,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                                 <div className="tr h">
                                     <div className="flex-none w-[120px]">Təmir №</div>
                                     <div className="flex-1">Cihaz / iş</div>
-                                    <div className="flex-none w-[150px]">Status</div>
+                                    <div className="flex-none w-[150px]">Vəziyyət</div>
                                     <div className="flex-none w-[80px] text-right">Məbləğ</div>
                                 </div>
                                 {(repairs ?? []).map((r) => (

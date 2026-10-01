@@ -6,6 +6,7 @@ import { LogOut, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { PlatformProvider, usePlatform } from "@/lib/platform-context";
 import { LogoMark } from "@/components/site/Logo";
+import { Loader } from "@/components/Loader";
 
 function Shell({ children }: { children: React.ReactNode }) {
     const { user, logout } = useAuth();
@@ -60,7 +61,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
             <div className="flex flex-1 min-h-0">
                 <aside className="hidden md:flex w-[248px] flex-none flex-col gap-4 p-3 border-r border-line bg-white overflow-y-auto">
-                    <Link href="/platform" className={linkCls(pathname === "/platform")}>
+                    <Link href="/kapitan" className={linkCls(pathname === "/kapitan")}>
                         <LayoutDashboard size={18} /><span>Ümumi baxış</span>
                     </Link>
                     {sections.map((s) => (
@@ -72,7 +73,7 @@ function Shell({ children }: { children: React.ReactNode }) {
                                         <span className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{g.name}</span>
                                     )}
                                     {g.items.map((it) => (
-                                        <Link key={it.key} href={`/platform/${it.key}`} className={linkCls(pathname === `/platform/${it.key}`)}>
+                                        <Link key={it.key} href={`/kapitan/${it.key}`} className={linkCls(pathname === `/kapitan/${it.key}`)}>
                                             <span className="truncate">{it.label}</span>
                                         </Link>
                                     ))}
@@ -89,9 +90,9 @@ function Shell({ children }: { children: React.ReactNode }) {
                             value={pathname}
                             onChange={(e) => router.push(e.target.value)}
                         >
-                            <option value="/platform">Ümumi baxış</option>
+                            <option value="/kapitan">Ümumi baxış</option>
                             {isSuperadmin && (resources ?? []).filter((r) => !r.hidden).map((r) => (
-                                <option key={r.key} value={`/platform/${r.key}`}>{r.section} — {r.group} — {r.label}</option>
+                                <option key={r.key} value={`/kapitan/${r.key}`}>{r.section} — {r.group} — {r.label}</option>
                             ))}
                         </select>
                     </div>
@@ -107,7 +108,7 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
     const router = useRouter();
     // Platform Super Admin — hər yerə. Mağaza admini (`is_shop_admin=True`, Rol sistemindən
     // tamam ayrı bir bayraq) — "platforma"ya daxil ola bilər, amma yalnız öz mağazasını görür
-    // (bax: `/platform/page.tsx`-dəki mağaza admini budağı).
+    // (bax: `/kapitan/page.tsx`-dəki mağaza admini budağı).
     const isShopOwner = !!(user?.shop && user?.is_shop_admin);
     const allowed = !!user?.is_superadmin || isShopOwner;
 
@@ -118,7 +119,7 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
     }, [loading, user, isShopOwner, router]);
 
     if (loading || !allowed) {
-        return <div className="min-h-screen flex items-center justify-center bg-bg text-muted text-sm">Yüklənir…</div>;
+        return <Loader fullScreen size={44} />;
     }
     return (
         <PlatformProvider>

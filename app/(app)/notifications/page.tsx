@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShieldAlert, Clock3, Boxes, CheckCircle2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { Loader } from "@/components/Loader";
 
 type Warranty = { id: number; customer_name: string; device: string; warranty_days_left: number | null };
 type Debt = { id: number; customer_name: string; number: string; due_date: string | null; amount: number };
@@ -75,7 +76,7 @@ export default function NotificationsPage() {
                         Hər şey qaydasındadır — açıq bildiriş yoxdur.
                     </div>
                 )}
-                {!items && <div className="text-center text-muted text-sm py-12">Yüklənir…</div>}
+                {!items && <Loader />}
             </div>
         </>
     );

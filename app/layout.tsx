@@ -14,6 +14,7 @@ import "@fontsource/ibm-plex-mono/latin-500.css";
 import "@fontsource/ibm-plex-mono/latin-ext-500.css";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { DialogProvider } from "@/lib/dialog-context";
 
 export const metadata: Metadata = {
     title: "Servio — servis idarəetmə sistemi",
@@ -24,7 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="az" className="h-full">
         <body className="min-h-full">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+            <DialogProvider>{children}</DialogProvider>
+        </AuthProvider>
         </body>
         </html>
     );

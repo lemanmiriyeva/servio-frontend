@@ -51,10 +51,10 @@ export function CtaBand() {
       <div className="max-w-[1200px] mx-auto px-5 md:px-8 py-16 md:py-20 flex flex-col md:flex-row md:items-center gap-8">
         <div className="flex-1">
           <h2 className="text-[28px] md:text-[36px] font-bold tracking-tight">Servisinizi bu gün daha rahat idarə edin</h2>
-          <p className="mt-3 text-white/70 max-w-[520px]">Pulsuz başlayın, komandanızı əlavə edin və bütün işləri bir yerdən izləyin.</p>
+          <p className="mt-3 text-white/70 max-w-[520px]">Komandanızı əlavə edin və bütün işləri bir yerdən izləyin.</p>
         </div>
         <Link href="/elaqe" className="h-[52px] px-8 rounded-full bg-[#116CFB] hover:bg-[#3A85FF] font-semibold inline-flex items-center gap-2 self-start md:self-auto transition-colors">
-          Pulsuz başla <ArrowRight size={18} />
+          Başla <ArrowRight size={18} />
         </Link>
       </div>
     </section>

@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Search, Plus, User, Smartphone, Wallet, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { Modal } from "@/components/Modal";
 
 type Customer = { id: number; full_name: string; phone: string; initials: string };
 
@@ -29,6 +30,11 @@ export default function NewRepairPage() {
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
+
+  // Marka/model avtomatik tamamlama — mağazanın əvvəlki təmirlərindən.
+  const [deviceBrands, setDeviceBrands] = useState<string[]>([]);
+  const [deviceModels, setDeviceModels] = useState<string[]>([]);
+  const [modelsByBrand, setModelsByBrand] = useState<Record<string, string[]>>({});
 
   // Step 2 — device
   const [deviceBrand, setDeviceBrand] = useState("");
@@ -76,6 +82,21 @@ export default function NewRepairPage() {
     }, 300);
     return () => clearTimeout(t);
   }, [customerQuery]);
+
+  useEffect(() => {
+    api.deviceSuggestions()
+        .then((d) => {
+          const data = d as { brands?: string[]; models?: string[]; models_by_brand?: Record<string, string[]> };
+          setDeviceBrands(data.brands ?? []);
+          setDeviceModels(data.models ?? []);
+          setModelsByBrand(data.models_by_brand ?? {});
+        }).catch(() => {});
+  }, []);
+
+  // Marka seçilibsə, həmin markaya aid modelləri göstər — seçilməyibsə bütün modelləri.
+  const modelSuggestions = deviceBrand.trim() && modelsByBrand[deviceBrand.trim()]
+      ? modelsByBrand[deviceBrand.trim()]
+      : deviceModels;
 
   async function handleCreateCustomer() {
     if (!newCustomerName.trim() || !newCustomerPhone.trim()) return;
@@ -224,25 +245,21 @@ export default function NewRepairPage() {
                             ))}
                           </div>
                       )}
-                      {!showNewCustomer ? (
-                          <button className="btn self-start" onClick={() => setShowNewCustomer(true)}>
-                            <Plus size={18} /><span>Yeni müştəri əlavə et</span>
-                          </button>
-                      ) : (
-                          <div className="flex flex-col gap-3 p-3 rounded-[10px] border border-line">
+                      <button className="btn self-start" onClick={() => setShowNewCustomer(true)}>
+                        <Plus size={18} /><span>Yeni müştəri əlavə et</span>
+                      </button>
+                      {showNewCustomer && (
+                          <Modal title="Yeni müştəri" onClose={() => setShowNewCustomer(false)} maxWidth="max-w-sm">
                             <div className="fld">
                               <label>Ad Soyad</label>
-                              <div className="inp"><input value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Rəşad Məmmədov" /></div>
+                              <div className="inp"><input autoFocus value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Rəşad Məmmədov" /></div>
                             </div>
                             <div className="fld">
                               <label>Telefon</label>
                               <div className="inp"><input value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} placeholder="+994 50 123 45 67" /></div>
                             </div>
-                            <div className="flex gap-2">
-                              <button className="btn pri" onClick={handleCreateCustomer}>Əlavə et</button>
-                              <button className="btn ghost" onClick={() => setShowNewCustomer(false)}>Ləğv et</button>
-                            </div>
-                          </div>
+                            <button className="btn pri self-start" onClick={handleCreateCustomer}>Əlavə et</button>
+                          </Modal>
                       )}
                     </>
                 )}
@@ -255,11 +272,33 @@ export default function NewRepairPage() {
                 <div className="frow flex gap-4">
                   <div className="fld flex-1">
                     <label>Marka</label>
-                    <div className="inp"><input value={deviceBrand} onChange={(e) => setDeviceBrand(e.target.value)} placeholder="Apple" /></div>
+                    <div className="inp">
+                      <input
+                          value={deviceBrand}
+                          onChange={(e) => setDeviceBrand(e.target.value)}
+                          placeholder="Apple"
+                          list="device-brand-list"
+                          autoComplete="off"
+                      />
+                    </div>
+                    <datalist id="device-brand-list">
+                      {deviceBrands.map((b) => <option key={b} value={b} />)}
+                    </datalist>
                   </div>
                   <div className="fld flex-1">
                     <label>Model</label>
-                    <div className="inp"><input value={deviceModel} onChange={(e) => setDeviceModel(e.target.value)} placeholder="iPhone 17 Pro" /></div>
+                    <div className="inp">
+                      <input
+                          value={deviceModel}
+                          onChange={(e) => setDeviceModel(e.target.value)}
+                          placeholder="iPhone 17 Pro"
+                          list="device-model-list"
+                          autoComplete="off"
+                      />
+                    </div>
+                    <datalist id="device-model-list">
+                      {modelSuggestions.map((m) => <option key={m} value={m} />)}
+                    </datalist>
                   </div>
                 </div>
                 <div className="fld">

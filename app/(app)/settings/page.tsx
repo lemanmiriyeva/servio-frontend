@@ -4,6 +4,7 @@ import { Save, Plus, MapPin, Eye, EyeOff } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { getBlurProfitDefault, setBlurProfitDefault } from "@/lib/prefs";
+import { Loader } from "@/components/Loader";
 
 type ShopSettings = {
     name: string; owner_full_name: string; owner_phone: string; owner_email: string;
@@ -88,7 +89,7 @@ export default function SettingsPage() {
                     <div className="card flex flex-col gap-3.5">
                         <h3 className="text-base font-semibold">Mağaza profili</h3>
                         {!form ? (
-                            <div className="text-center text-muted text-sm py-6">Yüklənir…</div>
+                            <Loader />
                         ) : (
                             <>
                                 <div className="flex gap-3 flex-wrap">

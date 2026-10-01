@@ -4,7 +4,9 @@ import Link from "next/link";
 import { Store, CircleCheck, Clock, Banknote, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { useDialog } from "@/lib/dialog-context";
 import { ShopTabs } from "./ShopTabs";
+import { Loader } from "@/components/Loader";
 
 type Shop = {
     id: string; name: string; code: string; owner_full_name: string; city: string;
@@ -51,17 +53,18 @@ export default function PlatformPage() {
     const [search, setSearch] = useState("");
     const [error, setError] = useState("");
     const [togglingId, setTogglingId] = useState<string | null>(null);
+    const { prompt } = useDialog();
 
     async function toggleShopActive(s: Shop) {
         const next = !s.is_active;
         let reason = "";
         if (!next) {
-            reason = window.prompt(
+            reason = (await prompt(
                 `${s.name} mağazasını bağlamaq üzrəsiniz — bütün istifadəçiləri giriş edə bilməyəcək.\n` +
                 "Səbəbi yazın (istifadəçiyə giriş zamanı göstəriləcək):",
-                "Baş Admin tərəfindən söndürülüb."
-            ) ?? "";
-            if (reason === "") return; // ləğv edildi
+                { title: "Mağazanı bağla", label: "Səbəb", defaultValue: "Baş Admin tərəfindən söndürülüb.", confirmLabel: "Bağla" }
+            )) ?? "";
+            if (!reason.trim()) return; // ləğv edildi
         }
         setTogglingId(s.id);
         try {
@@ -105,7 +108,7 @@ export default function PlatformPage() {
     // Mağaza sahibi (owner rolu) "platformaya" bu yoldan girir, amma yalnız ÖZ mağazasını görür —
     // digər mağazaların siyahısı, platforma-admin bölmələri (Planlar, Sayt məzmunu və s.) yoxdur.
     if (!isSuperadmin) {
-        if (!user?.shop) return <div className="text-center text-muted text-sm py-10">Yüklənir…</div>;
+        if (!user?.shop) return <Loader />;
         return (
             <>
                 <div>
@@ -179,14 +182,14 @@ export default function PlatformPage() {
                             const urgency = URGENCY_STYLE[s.payment_urgency] ?? URGENCY_STYLE.ok;
                             return (
                                 <div key={s.id} className="tr" style={{ alignItems: "flex-start" }}>
-                                    <Link href={`/platform/shops/${s.id}`} className="flex-[1.7] flex items-center gap-2.5 min-w-0">
+                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-[1.7] flex items-center gap-2.5 min-w-0">
                                         <div className={`av ${AV[i % AV.length]}`}>{s.logo_initials || s.name.slice(0, 2).toUpperCase()}</div>
                                         <div className="min-w-0"><b className="block truncate">{s.name}</b><span className="text-xs text-muted truncate block">{s.owner_full_name}{s.city ? ` · ${s.city}` : ""}</span></div>
                                     </Link>
-                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[100px]">{s.plan ? <span className={`badge ${s.plan.name.toLowerCase() === "pro" ? "b-purple" : "b-blue"}`}><i />{s.plan.name}</span> : <span className="mut">—</span>}</Link>
-                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[70px] text-center">{s.branch_count}</Link>
-                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[90px] text-center">{s.user_count}</Link>
-                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[170px]">
+                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[100px]">{s.plan ? <span className={`badge ${s.plan.name.toLowerCase() === "pro" ? "b-purple" : "b-blue"}`}><i />{s.plan.name}</span> : <span className="mut">—</span>}</Link>
+                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[70px] text-center">{s.branch_count}</Link>
+                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[90px] text-center">{s.user_count}</Link>
+                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[170px]">
                                         <span className={`badge ${st.badge}`}><i />{st.label}</span>
                                         {left !== null && left >= 0 && (
                                             <span className="block text-[11px] mt-1 text-muted truncate">{left} gün qalıb</span>
@@ -195,7 +198,7 @@ export default function PlatformPage() {
                                             <span className="block text-[11px] mt-1 text-muted truncate" title={s.disabled_reason}>{s.disabled_reason}</span>
                                         )}
                                     </Link>
-                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[140px] text-sm font-medium" style={{ color: urgency.text }}>
+                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[140px] text-sm font-medium" style={{ color: urgency.text }}>
                                         <span className="inline-flex items-center gap-1.5">
                                             <span className="w-2 h-2 rounded-full flex-none" style={{ background: urgency.dot }} />
                                             {s.next_payment_at ?? "—"}
@@ -206,7 +209,7 @@ export default function PlatformPage() {
                                             </span>
                                         )}
                                     </Link>
-                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[90px] text-right font-semibold">{s.plan && s.status !== "trial" ? `${fmt(s.plan.price_monthly)} AZN` : "—"}</Link>
+                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[90px] text-right font-semibold">{s.plan && s.status !== "trial" ? `${fmt(s.plan.price_monthly)} AZN` : "—"}</Link>
                                     <div className="flex-none w-[70px] flex justify-center">
                                         <button
                                             type="button"
@@ -226,7 +229,7 @@ export default function PlatformPage() {
                             );
                         })}
                         {shops && filtered.length === 0 && <div className="text-center text-muted text-sm py-10">Mağaza tapılmadı.</div>}
-                        {!shops && !error && <div className="text-center text-muted text-sm py-10">Yüklənir…</div>}
+                        {!shops && !error && <Loader />}
                     </div>
                 </div>
             </div>

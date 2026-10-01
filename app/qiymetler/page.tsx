@@ -27,7 +27,7 @@ export default async function PricingPage() {
               <ul className="mt-6 flex flex-col gap-3">
                 {p.features.map((i) => <li key={i} className="flex gap-3 text-[15px]"><Check size={18} className="text-[#041326] flex-none mt-0.5" />{i}</li>)}
               </ul>
-              <Link href="/elaqe" className={`mt-8 h-12 rounded-xl font-semibold flex items-center justify-center transition-colors ${p.is_featured ? "bg-[#116CFB] hover:bg-[#3A85FF] text-white" : "border border-[#116CFB] text-[#116CFB] hover:bg-[#E3EFFF]"}`}>Pulsuz başla</Link>
+              {/*<Link href="/elaqe" className={`mt-8 h-12 rounded-xl font-semibold flex items-center justify-center transition-colors ${p.is_featured ? "bg-[#116CFB] hover:bg-[#3A85FF] text-white" : "border border-[#116CFB] text-[#116CFB] hover:bg-[#E3EFFF]"}`}>Pulsuz başla</Link>*/}
             </div>
           ))}
         </div>

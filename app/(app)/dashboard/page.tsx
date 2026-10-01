@@ -72,7 +72,7 @@ export default function DashboardPage() {
       <>
         <div className="flex items-end justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Dashboard</h1>
+            <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Ana səhifə</h1>
             <p className="text-ink2 mt-1">
               Salam, {user?.first_name}. Bu gün {today}
               {data ? `, servisdə ${data.active_repairs_count} aktiv təmir var.` : "."}
@@ -171,7 +171,7 @@ export default function DashboardPage() {
                     <div className="flex-none w-32">Təmir №</div>
                     <div className="flex-1">Müştəri</div>
                     <div className="flex-[1.2]">Cihaz</div>
-                    <div className="flex-none w-[140px]">Status</div>
+                    <div className="flex-none w-[140px]">Vəziyyət</div>
                     <div className="flex-none w-20 text-right">Məbləğ</div>
                   </div>
                   {(data?.recent_repairs ?? []).map((r, i) => (

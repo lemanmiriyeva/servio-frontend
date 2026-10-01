@@ -28,7 +28,7 @@ export function ContactForm({ settings }: { settings: SiteSettingsContent }) {
       <section className={`${DARK_BG} text-white pt-[140px] pb-16`}>
         <div className="max-w-[1200px] mx-auto px-5 md:px-8">
           <div className="text-[13px] font-semibold tracking-[0.12em] text-[#3A85FF] uppercase">Əlaqə</div>
-          <h1 className="mt-3 text-[34px] md:text-[48px] font-bold leading-tight tracking-tight">Pulsuz başlamaq üçün bizimlə əlaqə saxlayın</h1>
+          <h1 className="mt-3 text-[34px] md:text-[48px] font-bold leading-tight tracking-tight">Başlamaq üçün bizimlə əlaqə saxlayın</h1>
           <p className="mt-4 text-white/70 text-[17px] max-w-[620px]">Adınızı və nömrənizi yazın, sizinlə əlaqə saxlayıb hesabınızı açaq.</p>
         </div>
       </section>

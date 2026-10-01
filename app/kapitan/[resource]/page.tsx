@@ -4,6 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, X, Search, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { api, ApiError, type PlatformField, type PlatformResource } from "@/lib/api";
 import { usePlatform } from "@/lib/platform-context";
+import { useDialog } from "@/lib/dialog-context";
+import { Loader } from "@/components/Loader";
 
 type Row = Record<string, unknown> & { id: string | number };
 export type Option = { value: string; label: string };
@@ -209,10 +211,10 @@ export function RecordForm({ res, row, options, presetValues, onClose, onSaved }
         }
         const type =
             f.write_only ? "password" :
-            f.type === "integer" || f.type === "decimal" ? "number" :
-            f.type === "date" ? "date" :
-            f.type === "datetime" ? "datetime-local" :
-            f.type === "email" ? "email" : "text";
+                f.type === "integer" || f.type === "decimal" ? "number" :
+                    f.type === "date" ? "date" :
+                        f.type === "datetime" ? "datetime-local" :
+                            f.type === "email" ? "email" : "text";
         return (
             <div className="inp">
                 <input
@@ -283,6 +285,7 @@ export function ResourceView({ res, fixedFilters, hiddenColumns }: {
     const [editing, setEditing] = useState<Row | "new" | null>(null);
     const options = useRelatedOptions(res);
     const router = useRouter();
+    const { confirm } = useDialog();
 
     const columns = useMemo(
         () => res.columns
@@ -325,7 +328,8 @@ export function ResourceView({ res, fixedFilters, hiddenColumns }: {
     useEffect(() => { load(); }, [load]);
 
     async function remove(row: Row) {
-        if (!window.confirm(`“${String(row.display ?? row.id)}” silinsin?`)) return;
+        const ok = await confirm(`“${String(row.display ?? row.id)}” silinsin?`, { title: "Silinsin?", confirmLabel: "Sil", danger: true });
+        if (!ok) return;
         try {
             await api.platformDelete(res.key, row.id);
             if (rows.length === 1 && page > 1) setPage(page - 1);
@@ -384,14 +388,14 @@ export function ResourceView({ res, fixedFilters, hiddenColumns }: {
                                 ))}
                                 <div className="flex-none w-[118px] flex gap-1.5 justify-end">
                                     {res.key === "shops" && (
-                                        <button className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2" title="Ətraflı (mağazanın məlumatları)" onClick={() => router.push(`/platform/shops/${row.id}`)}><Eye size={15} /></button>
+                                        <button className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2" title="Ətraflı (mağazanın məlumatları)" onClick={() => router.push(`/kapitan/shops/${row.id}`)}><Eye size={15} /></button>
                                     )}
                                     <button className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2" title="Redaktə" onClick={() => setEditing(row)}><Pencil size={15} /></button>
                                     <button className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center" style={{ color: "var(--red)" }} title="Sil" onClick={() => remove(row)}><Trash2 size={15} /></button>
                                 </div>
                             </div>
                         ))}
-                        {loading && <div className="text-center text-muted text-sm py-10">Yüklənir…</div>}
+                        {loading && <Loader />}
                         {!loading && rows.length === 0 && !error && <div className="text-center text-muted text-sm py-10">Qeyd tapılmadı.</div>}
                     </div>
                 </div>
@@ -424,7 +428,7 @@ export default function ResourcePage() {
     const { resources, error } = usePlatform();
 
     if (error) return <div className="card" style={{ color: "var(--red)" }}>{error}</div>;
-    if (!resources) return <div className="text-center text-muted text-sm py-10">Yüklənir…</div>;
+    if (!resources) return <Loader />;
     const res = resources.find((r) => r.key === params.resource);
     if (!res) return <div className="card text-center text-muted text-sm py-10">Belə bölmə yoxdur.</div>;
     return <ResourceView key={res.key} res={res} />;

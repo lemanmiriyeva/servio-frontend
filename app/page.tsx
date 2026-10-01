@@ -20,7 +20,7 @@ export default async function HomePage() {
               {settings.hero_subtitle}
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link href="/elaqe" className="h-[54px] px-9 rounded-full bg-[#116CFB] hover:bg-[#3A85FF] font-semibold inline-flex items-center transition-colors">Pulsuz başla</Link>
+              <Link href="/elaqe" className="h-[54px] px-9 rounded-full bg-[#116CFB] hover:bg-[#3A85FF] font-semibold inline-flex items-center transition-colors">Başla</Link>
               <Link href="/funksiyalar" className="h-[54px] px-7 rounded-full border border-[#116CFB]/60 hover:bg-white/10 font-semibold inline-flex items-center gap-2.5 transition-colors">
                 <span className="w-7 h-7 rounded-full border border-white/50 flex items-center justify-center"><Play size={12} fill="white" /></span>Sistemi izlə
               </Link>

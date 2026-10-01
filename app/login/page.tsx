@@ -3,6 +3,7 @@ import { useState } from "react";
 import { User, Lock, Eye, Check } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Logo } from "@/components/site/Logo";
+import { ApiError } from "@/lib/api";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,8 +21,16 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(username, password);
-    } catch {
-      setError("İstifadəçi adı və ya şifrə yanlışdır.");
+    } catch (err) {
+      // Backend mağaza bağlı olduqda ("planın vaxtı bitib" və s.) dəqiq səbəbi
+      // non_field_errors ilə qaytarır — onu olduğu kimi göstəririk; əks halda
+      // ümumi "yanlış" mesajı (istifadəçi adı/şifrə ayrı-ayrı doğrulanmasın deyə).
+      const detail =
+          err instanceof ApiError &&
+          err.data && typeof err.data === "object" && "non_field_errors" in (err.data as Record<string, unknown>)
+              ? (err.data as { non_field_errors: string[] }).non_field_errors[0]
+              : null;
+      setError(detail || "İstifadəçi adı və ya şifrə yanlışdır.");
     } finally {
       setLoading(false);
     }
@@ -130,10 +140,23 @@ export default function LoginPage() {
                 </span>
                   Məni xatırla
                 </button>
-                <span className="link cursor-pointer" style={{ color: "var(--blue)" }}>
-                Şifrəni unutmusan?
-              </span>
+                <button
+                    type="button"
+                    onClick={() => setShowForgot((s) => !s)}
+                    className="link cursor-pointer"
+                    style={{ color: "var(--blue)" }}
+                >
+                  Şifrəni unutmusan?
+                </button>
               </div>
+
+              {showForgot && (
+                  <div className="text-sm rounded-lg px-3 py-2.5 bg-[#F3F6FB] text-ink2 leading-relaxed">
+                    Şifrənizi özünüz sıfırlaya bilmirsiniz — mağazanızın administratoru (Sahib) və ya
+                    Platforma admini sizin üçün yeni şifrə təyin edə bilər: <b>Platforma → İstifadəçilər</b>{" "}
+                    bölməsindən adınızı tapıb yeni şifrə yazmaq kifayətdir.
+                  </div>
+              )}
 
               <button type="submit" className="btn pri block" disabled={loading}>
                 <span>{loading ? "Daxil olunur…" : "Daxil ol"}</span>

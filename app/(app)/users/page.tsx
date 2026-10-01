@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, X, UserPlus, ShieldCheck, Check } from "lucide-react";
+import { Plus, UserPlus, ShieldCheck, Check } from "lucide-react";
 import { api } from "@/lib/api";
+import { Modal } from "@/components/Modal";
 
 type RolePerm = { module: string; is_allowed: boolean };
 type Role = { id: number; name: string; is_owner_role: boolean; permissions: RolePerm[]; user_count: number };
@@ -145,11 +146,7 @@ export default function UsersPage() {
             {tab === "users" && (
                 <>
                     {showNewUser && (
-                        <div className="card max-w-2xl flex flex-col gap-3.5">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-base font-semibold">Yeni istifadəçi</h3>
-                                <button onClick={() => setShowNewUser(false)} className="text-muted"><X size={18} /></button>
-                            </div>
+                        <Modal title="Yeni istifadəçi" onClose={() => setShowNewUser(false)} maxWidth="max-w-2xl">
                             <div className="flex gap-3 flex-wrap">
                                 <div className="fld flex-1 min-w-[140px]"><label>Ad</label><div className="inp"><input value={uFirst} onChange={(e) => setUFirst(e.target.value)} /></div></div>
                                 <div className="fld flex-1 min-w-[140px]"><label>Soyad</label><div className="inp"><input value={uLast} onChange={(e) => setULast(e.target.value)} /></div></div>
@@ -166,7 +163,7 @@ export default function UsersPage() {
                                 </select>
                             </div>
                             <button className="btn pri self-start" disabled={busy} onClick={createUser}>Əlavə et</button>
-                        </div>
+                        </Modal>
                     )}
 
                     <div className="card !p-2">
@@ -175,7 +172,7 @@ export default function UsersPage() {
                                 <div className="tr h">
                                     <div className="flex-1">İstifadəçi</div>
                                     <div className="flex-none w-[180px]">Rol</div>
-                                    <div className="flex-none w-[130px]">Status</div>
+                                    <div className="flex-none w-[130px]">Vəziyyət</div>
                                 </div>
                                 {(users ?? []).map((u) => (
                                     <div key={u.id} className="tr">
@@ -221,10 +218,10 @@ export default function UsersPage() {
                 <div className="flex flex-col lg:flex-row gap-5 items-start">
                     <div className="w-full lg:w-[260px] flex-none flex flex-col gap-2">
                         {showNewRole && (
-                            <div className="card flex gap-2 items-end !p-3">
-                                <div className="fld flex-1"><label>Rol adı</label><div className="inp !h-9"><input value={newRoleName} onChange={(e) => setNewRoleName(e.target.value)} placeholder="Kassir" /></div></div>
-                                <button className="btn pri !h-9" disabled={busy} onClick={createRole}>Əlavə et</button>
-                            </div>
+                            <Modal title="Yeni rol" onClose={() => setShowNewRole(false)} maxWidth="max-w-sm">
+                                <div className="fld"><label>Rol adı</label><div className="inp"><input autoFocus value={newRoleName} onChange={(e) => setNewRoleName(e.target.value)} placeholder="Kassir" /></div></div>
+                                <button className="btn pri self-start" disabled={busy || !newRoleName.trim()} onClick={createRole}>Əlavə et</button>
+                            </Modal>
                         )}
                         {(roles ?? []).map((r) => (
                             <button

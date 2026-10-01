@@ -12,19 +12,20 @@ export type Role = { id: number; name: string; is_owner_role: boolean; permissio
 export type Me = {
   id: number; username: string; first_name: string; last_name: string; email: string; phone: string;
   shop: Shop | null; branch: Branch | null; role: Role | null; initials: string;
-  is_platform_admin: boolean; is_superadmin: boolean; status: string; allowed_modules: string[];
+  is_platform_admin: boolean; is_shop_admin: boolean; is_superadmin: boolean; status: string; allowed_modules: string[];
 };
 
 export type PlatformField = {
   name: string; label: string;
-  type: "text" | "textarea" | "email" | "integer" | "decimal" | "boolean" | "date" | "datetime" | "choice" | "related";
+  type: "text" | "textarea" | "email" | "integer" | "decimal" | "boolean" | "date" | "datetime" | "choice" | "related" | "image";
   required: boolean; read_only: boolean; computed: boolean; allow_null: boolean; write_only: boolean; help: string;
   choices?: { value: string; label: string }[];
   related?: string | null;
   default?: string | number | boolean | null;
 };
 export type PlatformResource = {
-  key: string; label: string; group: string; columns: string[]; filters: string[];
+  key: string; label: string; group: string; section: string; hidden: boolean;
+  columns: string[]; filters: string[];
   searchable: boolean; fields: PlatformField[];
 };
 
@@ -99,6 +100,32 @@ export async function apiFetch(path: string, options: RequestInit = {}, retry = 
   return res.json();
 }
 
+// Fayl (şəkil və s.) göndərən sorğular üçün — JSON yox, FormData istifadə olunur.
+// Content-Type HEÇ VAXT əl ilə qoyulmur: brauzer onu "boundary" ilə özü əlavə etməlidir,
+// əks halda server multipart body-ni düzgün parçalaya bilmir.
+export async function apiFetchMultipart(path: string, method: "POST" | "PATCH", formData: FormData, retry = true): Promise<unknown> {
+  const { access } = getTokens();
+  const headers: Record<string, string> = {};
+  if (access) headers["Authorization"] = `Bearer ${access}`;
+
+  const res = await fetch(`${API_URL}${path}`, { method, headers, body: formData });
+
+  if (res.status === 401 && retry) {
+    const newAccess = await refreshAccessToken();
+    if (newAccess) return apiFetchMultipart(path, method, formData, false);
+    clearTokens();
+    if (typeof window !== "undefined") window.location.href = "/login";
+    throw new ApiError(401, "Unauthorized");
+  }
+  if (!res.ok) {
+    let data: unknown = null;
+    try { data = await res.json(); } catch { /* ignore */ }
+    throw new ApiError(res.status, data);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
 export const api = {
   login: (username: string, password: string) =>
       apiFetch("/auth/token/", { method: "POST", body: JSON.stringify({ username, password }) }, false),
@@ -112,7 +139,23 @@ export const api = {
       apiFetch(`/repairs/${id}/status/`, { method: "POST", body: JSON.stringify({ status }) }),
   addRepairPayment: (id: number | string, amount: number, method: string) =>
       apiFetch(`/repairs/${id}/payments/`, { method: "POST", body: JSON.stringify({ amount, method }) }),
+  sendWarrantyEmail: (id: number | string) =>
+      apiFetch(`/repairs/${id}/warranty-email/`, { method: "POST", body: JSON.stringify({}) }),
+  downloadWarrantyPdf: async (id: number | string, filename: string) => {
+    const { access } = getTokens();
+    const res = await fetch(`${API_URL}/repairs/${id}/warranty-pdf/`, {
+      headers: access ? { Authorization: `Bearer ${access}` } : {},
+    });
+    if (!res.ok) throw new ApiError(res.status, null);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  },
   repairWarranties: () => apiFetch("/repairs/warranties/"),
+  deviceSuggestions: () => apiFetch("/repairs/device-suggestions/"),
   repairDebts: () => apiFetch("/repairs/debts/"),
   customers: (params = "") => apiFetch(`/customers/${params}`),
   customer: (id: number | string) => apiFetch(`/customers/${id}/`),
@@ -138,7 +181,7 @@ export const api = {
   cashTransactions: (params = "") => apiFetch(`/cashbox/transactions/${params}`),
   createCashTransaction: (payload: Record<string, unknown>) =>
       apiFetch("/cashbox/transactions/", { method: "POST", body: JSON.stringify(payload) }),
-  suppliers: () => apiFetch(`/suppliers/`),
+  suppliers: (params = "") => apiFetch(`/suppliers/${params}`),
   createSupplier: (payload: Record<string, unknown>) =>
       apiFetch("/suppliers/", { method: "POST", body: JSON.stringify(payload) }),
   addSupplierPurchase: (id: number | string, payload: Record<string, unknown>) =>
@@ -176,12 +219,18 @@ export const api = {
   // Platforma — generik CRUD (mağazalar, istifadəçilər, rollar, ... hamısı)
   platformResources: () => apiFetch("/platform/resources/") as Promise<PlatformResource[]>,
   platformList: (key: string, params = "") => apiFetch(`/platform/r/${key}/${params}`),
+  platformGet: (key: string, id: string | number) => apiFetch(`/platform/r/${key}/${id}/`),
   platformCreate: (key: string, payload: Record<string, unknown>) =>
       apiFetch(`/platform/r/${key}/`, { method: "POST", body: JSON.stringify(payload) }),
   platformUpdate: (key: string, id: string | number, payload: Record<string, unknown>) =>
       apiFetch(`/platform/r/${key}/${id}/`, { method: "PATCH", body: JSON.stringify(payload) }),
   platformDelete: (key: string, id: string | number) =>
       apiFetch(`/platform/r/${key}/${id}/`, { method: "DELETE" }),
+  // Şəkil (logo və s.) sahəsi olan formlar üçün — FormData ilə göndərilir.
+  platformCreateMultipart: (key: string, formData: FormData) =>
+      apiFetchMultipart(`/platform/r/${key}/`, "POST", formData),
+  platformUpdateMultipart: (key: string, id: string | number, formData: FormData) =>
+      apiFetchMultipart(`/platform/r/${key}/${id}/`, "PATCH", formData),
 };
 
 export const STATUS_LABELS: Record<string, string> = {

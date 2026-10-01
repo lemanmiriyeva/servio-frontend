@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, X, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Plus, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { api } from "@/lib/api";
+import { Modal } from "@/components/Modal";
 
 type Summary = {
     opening_balance: number; income: number; expense: number;
@@ -10,6 +11,7 @@ type Summary = {
 type Transaction = {
     id: number; type: string; amount: number; method: string;
     description: string; expense_category: string; created_at: string;
+    supplier_name?: string | null;
 };
 
 const TYPE_LABEL: Record<string, string> = { income: "Gəlir", expense: "Xərc", supplier_payment: "Təchizatçı ödənişi" };
@@ -29,6 +31,8 @@ export default function CashboxPage() {
     const [method, setMethod] = useState("cash");
     const [description, setDescription] = useState("");
     const [category, setCategory] = useState("");
+    const [suppliers, setSuppliers] = useState<{ id: number; name: string }[]>([]);
+    const [supplierId, setSupplierId] = useState("");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
 
@@ -41,17 +45,33 @@ export default function CashboxPage() {
             }).catch(() => {});
     }
     useEffect(() => { load(); }, [typeFilter]);
+    useEffect(() => {
+        if (formType !== "expense") { setSupplierId(""); return; }
+        api.suppliers().then((d) => {
+            const data = d as { results?: { id: number; name: string }[] } | { id: number; name: string }[];
+            setSuppliers(Array.isArray(data) ? data : data.results ?? []);
+        }).catch(() => {});
+    }, [formType]);
 
     async function handleSubmit() {
         const amt = parseFloat(amount);
-        if (!amt || amt <= 0 || !description.trim()) return;
+        if (!amt || amt <= 0) return;
         setSaving(true);
         try {
-            await api.createCashTransaction({
-                type: formType, amount: amt, method, description,
-                expense_category: formType === "expense" ? category : "",
-            });
-            setShowForm(false); setAmount(""); setDescription(""); setCategory("");
+            if (formType === "expense" && supplierId) {
+                // Təchizatçıya bağlanmış xərc — mövcud "borc ödə" məntiqinə (FIFO +
+                // Kassa/Təchizatçı tarixçəsi) yönləndirilir ki, iki fərqli yol
+                // bir-birindən ayrı düşməsin (əks halda bu əməliyyat kassada görünər,
+                // amma təchizatçının borcuna təsir etməzdi).
+                await api.paySupplier(parseInt(supplierId, 10), amt, method);
+            } else {
+                if (!description.trim()) return;
+                await api.createCashTransaction({
+                    type: formType, amount: amt, method, description,
+                    expense_category: formType === "expense" ? category : "",
+                });
+            }
+            setShowForm(false); setAmount(""); setDescription(""); setCategory(""); setSupplierId("");
             load();
         } catch {
             setError("Əməliyyat yadda saxlanılmadı.");
@@ -100,11 +120,7 @@ export default function CashboxPage() {
             </div>
 
             {showForm && (
-                <div className="card max-w-xl flex flex-col gap-3.5">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-base font-semibold">Yeni əməliyyat</h3>
-                        <button onClick={() => setShowForm(false)} className="text-muted"><X size={18} /></button>
-                    </div>
+                <Modal title="Yeni əməliyyat" onClose={() => setShowForm(false)} maxWidth="max-w-xl">
                     <div className="flex gap-2">
                         <button onClick={() => setFormType("income")} className={`chip ${formType === "income" ? "on" : ""}`}>
                             <ArrowUpCircle size={16} />Gəlir
@@ -129,18 +145,37 @@ export default function CashboxPage() {
                     </div>
                     {formType === "expense" && (
                         <div className="fld">
+                            <label>Təchizatçıya borc ödənişidir? (istəyə bağlı)</label>
+                            <select className="inp" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+                                <option value="">Xeyr — adi xərc</option>
+                                {suppliers.map((s) => (
+                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    {formType === "expense" && !supplierId && (
+                        <div className="fld">
                             <label>Kateqoriya</label>
                             <div className="inp"><input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="İcarə, Elektrik, Maaş və s." /></div>
                         </div>
                     )}
-                    <div className="fld">
-                        <label>Təsvir</label>
-                        <div className="inp"><input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Qısa izah" /></div>
-                    </div>
+                    {!supplierId && (
+                        <div className="fld">
+                            <label>Təsvir</label>
+                            <div className="inp"><input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Qısa izah" /></div>
+                        </div>
+                    )}
+                    {supplierId && (
+                        <p className="text-xs text-muted">
+                            Bu əməliyyat seçilmiş təchizatçının borcundan (ən köhnə alışdan başlayaraq) avtomatik çıxılacaq
+                            və onun "Ödəniş tarixçəsi"ndə görünəcək.
+                        </p>
+                    )}
                     <button className="btn pri self-start" disabled={saving} onClick={handleSubmit}>
                         {saving ? "Yadda saxlanılır…" : "Yadda saxla"}
                     </button>
-                </div>
+                </Modal>
             )}
 
             <div className="flex gap-2 flex-wrap">
@@ -157,22 +192,25 @@ export default function CashboxPage() {
 
             <div className="card !p-2">
                 <div className="overflow-x-auto">
-                    <div className="min-w-[600px]">
+                    <div className="min-w-[680px]">
                         <div className="tr h">
                             <div className="flex-none w-[150px]">Tarix</div>
                             <div className="flex-1">Təsvir</div>
-                            <div className="flex-none w-[110px]">Növ</div>
-                            <div className="flex-none w-[100px]">Üsul</div>
+                            <div className="flex-none w-[150px]">Növ</div>
+                            <div className="flex-none w-[120px]">Üsul</div>
                             <div className="flex-none w-[90px] text-right">Məbləğ</div>
                         </div>
                         {(transactions ?? []).map((t) => (
                             <div key={t.id} className="tr">
                                 <div className="flex-none w-[150px] text-ink2 text-sm">{new Date(t.created_at).toLocaleString("az-AZ")}</div>
-                                <div className="flex-1 min-w-0 truncate">{t.description}{t.expense_category && <span className="text-muted text-xs ml-2">· {t.expense_category}</span>}</div>
-                                <div className="flex-none w-[110px]">
-                                    <span className={`badge ${t.type === "income" ? "b-green" : t.type === "expense" ? "b-red" : "b-purple"}`}><i />{TYPE_LABEL[t.type]}</span>
+                                <div className="flex-1 min-w-0 truncate">
+                                    {t.description || (t.supplier_name ? `${t.supplier_name} — borc ödənişi` : "")}
+                                    {t.expense_category && <span className="text-muted text-xs ml-2">· {t.expense_category}</span>}
                                 </div>
-                                <div className="flex-none w-[100px] text-ink2 text-sm">{METHOD_LABEL[t.method]}</div>
+                                <div className="flex-none w-[150px]">
+                                    <span className={`badge ${t.type === "income" ? "b-green" : t.type === "expense" ? "b-red" : "b-purple"} !whitespace-normal`}><i />{TYPE_LABEL[t.type]}</span>
+                                </div>
+                                <div className="flex-none w-[120px] text-ink2 text-sm truncate">{METHOD_LABEL[t.method]}</div>
                                 <div className={`flex-none w-[90px] text-right font-semibold ${t.type === "income" ? "pos" : "neg"}`}>
                                     {t.type === "income" ? "+" : "-"}{fmt(t.amount)}
                                 </div>

@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Plus, X } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { api } from "@/lib/api";
+import { Modal } from "@/components/Modal";
+import { Loader } from "@/components/Loader";
 
 type Customer = {
     id: number; full_name: string; phone: string; email: string; note: string;
@@ -18,6 +20,7 @@ export default function CustomersPage() {
     const [showNew, setShowNew] = useState(false);
     const [newName, setNewName] = useState("");
     const [newPhone, setNewPhone] = useState("");
+    const [newEmail, setNewEmail] = useState("");
     const [saving, setSaving] = useState(false);
 
     function load() {
@@ -39,8 +42,8 @@ export default function CustomersPage() {
         if (!newName.trim() || !newPhone.trim()) return;
         setSaving(true);
         try {
-            await api.createCustomer({ full_name: newName, phone: newPhone });
-            setShowNew(false); setNewName(""); setNewPhone("");
+            await api.createCustomer({ full_name: newName, phone: newPhone, email: newEmail });
+            setShowNew(false); setNewName(""); setNewPhone(""); setNewEmail("");
             load();
         } catch {
             setError("Müştəri yaradıla bilmədi.");
@@ -64,11 +67,7 @@ export default function CustomersPage() {
             {error && <div className="card" style={{ color: "var(--red)" }}>{error}</div>}
 
             {showNew && (
-                <div className="card max-w-lg flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-base font-semibold">Yeni müştəri</h3>
-                        <button onClick={() => setShowNew(false)} className="text-muted"><X size={18} /></button>
-                    </div>
+                <Modal title="Yeni müştəri" onClose={() => setShowNew(false)} maxWidth="max-w-2xl">
                     <div className="flex gap-3 flex-wrap">
                         <div className="fld flex-1 min-w-[180px]">
                             <label>Ad Soyad</label>
@@ -78,11 +77,15 @@ export default function CustomersPage() {
                             <label>Telefon</label>
                             <div className="inp"><input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="+994 50 123 45 67" /></div>
                         </div>
+                        <div className="fld flex-1 min-w-[180px]">
+                            <label>E-poçt (istəyə bağlı)</label>
+                            <div className="inp"><input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="musteri@example.com" /></div>
+                        </div>
                     </div>
                     <button className="btn pri self-start" disabled={saving} onClick={handleCreate}>
                         {saving ? "Yadda saxlanılır…" : "Əlavə et"}
                     </button>
-                </div>
+                </Modal>
             )}
 
             <div className="flex gap-3 flex-wrap">
@@ -127,7 +130,7 @@ export default function CustomersPage() {
                             <div className="text-center text-muted text-sm py-10">Uyğun nəticə tapılmadı.</div>
                         )}
                         {!all && !error && (
-                            <div className="text-center text-muted text-sm py-10">Yüklənir…</div>
+                            <Loader />
                         )}
                     </div>
                 </div>
