@@ -199,6 +199,9 @@ export const api = {
   branches: () => apiFetch("/branches/"),
   createBranch: (payload: Record<string, unknown>) =>
       apiFetch("/branches/", { method: "POST", body: JSON.stringify(payload) }),
+  supportTickets: () => apiFetch("/support-tickets/"),
+  createSupportTicket: (payload: Record<string, unknown>) =>
+      apiFetch("/support-tickets/", { method: "POST", body: JSON.stringify(payload) }),
   users: (params = "") => apiFetch(`/users/${params}`),
   createUser: (payload: Record<string, unknown>) =>
       apiFetch("/users/", { method: "POST", body: JSON.stringify(payload) }),

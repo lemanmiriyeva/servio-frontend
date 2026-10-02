@@ -1,10 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Save, Plus, MapPin, Eye, EyeOff } from "lucide-react";
+import { Save, Plus, MapPin, Eye, EyeOff, LifeBuoy, Send } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { getBlurProfitDefault, setBlurProfitDefault } from "@/lib/prefs";
 import { Loader } from "@/components/Loader";
+
+type SupportTicket = {
+    id: number; subject: string; message: string; status: string; status_display: string; created_at: string;
+};
+const TICKET_STATUS_BADGE: Record<string, string> = { open: "b-amber", in_progress: "b-blue", closed: "b-gray" };
 
 type ShopSettings = {
     name: string; owner_full_name: string; owner_phone: string; owner_email: string;
@@ -30,13 +35,43 @@ export default function SettingsPage() {
 
     const [blurDefault, setBlurDefault] = useState(() => getBlurProfitDefault());
 
+    const [tickets, setTickets] = useState<SupportTicket[] | null>(null);
+    const [ticketSubject, setTicketSubject] = useState("");
+    const [ticketMessage, setTicketMessage] = useState("");
+    const [sendingTicket, setSendingTicket] = useState(false);
+    const [ticketSent, setTicketSent] = useState(false);
+
+    function loadTickets() {
+        api.supportTickets().then((d) => {
+            const data = d as { results?: SupportTicket[] } | SupportTicket[];
+            setTickets(Array.isArray(data) ? data : data.results ?? []);
+        }).catch(() => {});
+    }
+
     useEffect(() => {
         api.myShop().then((d) => setForm(d as ShopSettings)).catch(() => setError("Mağaza məlumatı yüklənmədi."));
         api.branches().then((d) => {
             const data = d as { results?: Branch[] } | Branch[];
             setBranches(Array.isArray(data) ? data : data.results ?? []);
         }).catch(() => {});
+        loadTickets();
     }, []);
+
+    async function handleSendTicket() {
+        if (!ticketSubject.trim()) return;
+        setSendingTicket(true); setTicketSent(false);
+        try {
+            await api.createSupportTicket({ subject: ticketSubject.trim(), message: ticketMessage.trim() });
+            setTicketSubject(""); setTicketMessage("");
+            setTicketSent(true);
+            setTimeout(() => setTicketSent(false), 2500);
+            loadTickets();
+        } catch {
+            setError("Müraciət göndərilmədi, yenidən cəhd edin.");
+        } finally {
+            setSendingTicket(false);
+        }
+    }
 
     function update<K extends keyof ShopSettings>(key: K, value: ShopSettings[K]) {
         setForm((f) => (f ? { ...f, [key]: value } : f));
@@ -235,6 +270,38 @@ export default function SettingsPage() {
                                 {blurDefault ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                         </div>
+                    </div>
+
+                    <div className="card flex flex-col gap-3">
+                        <h3 className="text-base font-semibold flex items-center gap-2"><LifeBuoy size={17} />Dəstək</h3>
+                        <p className="text-xs text-muted -mt-1">Sualın və ya probleminiz var? Baş Admin-ə birbaşa yazın.</p>
+                        <div className="fld">
+                            <label>Mövzu</label>
+                            <div className="inp"><input value={ticketSubject} onChange={(e) => setTicketSubject(e.target.value)} placeholder="Qısaca nə ilə bağlıdır?" /></div>
+                        </div>
+                        <div className="fld">
+                            <label>Mesaj (istəyə bağlı)</label>
+                            <div className="inp ta" style={{ height: 80 }}>
+                                <textarea className="w-full h-full outline-none bg-transparent resize-none pt-0"
+                                          value={ticketMessage} onChange={(e) => setTicketMessage(e.target.value)}
+                                          placeholder="Ətraflı izah edin…" />
+                            </div>
+                        </div>
+                        <button className="btn pri self-start" disabled={sendingTicket || !ticketSubject.trim()} onClick={handleSendTicket}>
+                            <Send size={16} /><span>{sendingTicket ? "Göndərilir…" : ticketSent ? "Göndərildi ✓" : "Göndər"}</span>
+                        </button>
+
+                        {tickets && tickets.length > 0 && (
+                            <div className="flex flex-col gap-2 mt-1 pt-3 border-t border-line">
+                                <span className="text-xs font-semibold text-muted">Keçmiş müraciətlər</span>
+                                {tickets.map((t) => (
+                                    <div key={t.id} className="flex items-start justify-between gap-2 text-sm">
+                                        <span className="truncate">{t.subject}</span>
+                                        <span className={`badge ${TICKET_STATUS_BADGE[t.status] || "b-gray"} flex-none`}><i />{t.status_display}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div className="card flex flex-col gap-2">
