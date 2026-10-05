@@ -193,8 +193,8 @@ export const api = {
       apiFetch(`/suppliers/${id}/`, { method: "PATCH", body: JSON.stringify(payload) }),
   addSupplierPurchase: (id: number | string, payload: Record<string, unknown>) =>
       apiFetch(`/suppliers/${id}/purchases/`, { method: "POST", body: JSON.stringify(payload) }),
-  updateSupplierPurchase: (id: number | string, purchaseId: number | string, description: string) =>
-      apiFetch(`/suppliers/${id}/purchases/${purchaseId}/`, { method: "PATCH", body: JSON.stringify({ description }) }),
+  updateSupplierPurchase: (id: number | string, purchaseId: number | string, payload: { description?: string; amount?: number }) =>
+      apiFetch(`/suppliers/${id}/purchases/${purchaseId}/`, { method: "PATCH", body: JSON.stringify(payload) }),
   paySupplier: (id: number | string, amount: number, method = "cash") =>
       apiFetch(`/suppliers/${id}/pay/`, { method: "POST", body: JSON.stringify({ amount, method }) }),
   createWarrantyReturn: (repairId: number | string, payload: Record<string, unknown>) =>

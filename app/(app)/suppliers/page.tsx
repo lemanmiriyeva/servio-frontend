@@ -59,9 +59,10 @@ export default function SuppliersPage() {
     const [editPhone, setEditPhone] = useState("");
     const [editNote, setEditNote] = useState("");
 
-    // Bir alışın təsvirinin redaktəsi (məbləğ/ödəniş toxunulmaz qalır — FIFO balansını qorumaq üçün).
+    // Bir alışın təsvir VƏ məbləğinin redaktəsi (artıq ödənilmiş hissədən az ola bilməz — bax backend).
     const [editPurchaseId, setEditPurchaseId] = useState<number | null>(null);
     const [editPurchaseDesc, setEditPurchaseDesc] = useState("");
+    const [editPurchaseAmount, setEditPurchaseAmount] = useState("");
 
     const [busy, setBusy] = useState(false);
 
@@ -147,16 +148,20 @@ export default function SuppliersPage() {
     }
 
     function openEditPurchase(p: Purchase) {
-        setEditPurchaseId(p.id); setEditPurchaseDesc(p.description);
+        setEditPurchaseId(p.id); setEditPurchaseDesc(p.description); setEditPurchaseAmount(String(p.amount));
     }
 
     async function saveEditPurchase(supplierId: number) {
         if (editPurchaseId === null || !editPurchaseDesc.trim()) return;
+        const amt = parseFloat(editPurchaseAmount);
+        if (!amt || amt <= 0) return;
         setBusy(true);
         try {
-            await api.updateSupplierPurchase(supplierId, editPurchaseId, editPurchaseDesc);
+            await api.updateSupplierPurchase(supplierId, editPurchaseId, { description: editPurchaseDesc, amount: amt });
             setEditPurchaseId(null);
             load();
+        } catch {
+            setError("Alış yenilənmədi — ola bilsin məbləğ artıq ödənilmiş hissədən azdır.");
         } finally { setBusy(false); }
     }
 
@@ -362,9 +367,12 @@ export default function SuppliersPage() {
                                             <div className="flex items-start justify-between gap-3 flex-wrap">
                                                 <div className="min-w-0 flex-1">
                                                     {editPurchaseId === p.id ? (
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-2 flex-wrap">
                                                             <div className="inp !h-9 flex-1 min-w-[160px]">
-                                                                <input autoFocus value={editPurchaseDesc} onChange={(e) => setEditPurchaseDesc(e.target.value)} />
+                                                                <input autoFocus value={editPurchaseDesc} onChange={(e) => setEditPurchaseDesc(e.target.value)} placeholder="Təsvir" />
+                                                            </div>
+                                                            <div className="inp !h-9 w-[110px]">
+                                                                <input type="number" value={editPurchaseAmount} onChange={(e) => setEditPurchaseAmount(e.target.value)} placeholder="Məbləğ" />
                                                             </div>
                                                             <button className="btn sm pri" disabled={busy || !editPurchaseDesc.trim()} onClick={() => saveEditPurchase(s.id)}><Check size={14} /></button>
                                                             <button className="btn sm" onClick={() => setEditPurchaseId(null)}><X size={14} /></button>

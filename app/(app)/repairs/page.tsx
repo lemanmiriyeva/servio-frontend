@@ -11,8 +11,14 @@ type RepairListItem = {
   device_brand: string; device_model: string; issue_description: string;
   status: string; payment_status: string; sale_price: number;
   warranty_days_left: number | null;
-  received_at: string; delivered_at: string | null;
+  received_at: string; delivered_at: string | null; last_status_at: string | null;
 };
+
+function fmtDate(s: string | null): string {
+  if (!s) return "—";
+  const d = new Date(s);
+  return d.toLocaleDateString("az-AZ", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
 
 const STATUS_TABS = [
   { key: "", label: "Hamısı" },
@@ -123,12 +129,13 @@ export default function RepairsPage() {
 
         <div className="card !p-2">
           <div className="overflow-x-auto">
-            <div className="min-w-[860px]">
+            <div className="min-w-[964px]">
               <div className="tr h">
                 <div className="flex-none w-[132px]">Təmir №</div>
                 <div className="flex-1">Müştəri</div>
                 <div className="flex-[1.4]">Cihaz və görülən iş</div>
                 <div className="flex-none w-[156px]">Vəziyyət</div>
+                <div className="flex-none w-[104px]">Tarix</div>
                 <div className="flex-none w-[76px] text-right">Məbləğ</div>
                 <div className="flex-none w-[150px]">Ödəniş</div>
                 <div className="flex-none w-[92px]">Zəmanət</div>
@@ -151,6 +158,7 @@ export default function RepairsPage() {
                       <div className="flex-none w-[156px]">
                         <span className={`badge ${STATUS_BADGE[r.status] || "b-gray"}`}><i />{STATUS_LABEL[r.status] || r.status}</span>
                       </div>
+                      <div className="flex-none w-[104px] text-xs text-ink2">{fmtDate(r.last_status_at)}</div>
                       <div className="flex-none w-[76px] text-right font-semibold">
                         {r.status === "cancelled" ? <span className="mut">—</span> : Math.round(r.sale_price)}
                       </div>

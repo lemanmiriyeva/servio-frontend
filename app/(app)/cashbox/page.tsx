@@ -11,7 +11,7 @@ type Summary = {
 type Transaction = {
     id: number; type: string; amount: number; method: string;
     description: string; expense_category: string; created_at: string;
-    supplier_name?: string | null;
+    supplier_name?: string | null; repair?: number | null; supplier?: number | null;
 };
 
 const TYPE_LABEL: Record<string, string> = { income: "Kassa", expense: "Xərc", supplier_payment: "Təchizatçı ödənişi" };
@@ -42,22 +42,36 @@ export default function CashboxPage() {
     const [editDescription, setEditDescription] = useState("");
     const [editMethod, setEditMethod] = useState("cash");
     const [editCategory, setEditCategory] = useState("");
+    const [editAmount, setEditAmount] = useState("");
     const [savingEdit, setSavingEdit] = useState(false);
+
+    // Məbləğ yalnız bu əməliyyat heç bir təmirə/təchizatçıya BAĞLI DEYİLSƏ redaktə edilə bilər —
+    // bağlı olanlar (məs. təmir ödənişi, təchizatçı borc ödənişi) başqa qeydin əks nüsxəsidir.
+    function amountEditable(t: Transaction) {
+        return !t.repair && !t.supplier && t.type !== "supplier_payment";
+    }
 
     function openEdit(t: Transaction) {
         setEditing(t);
         setEditDescription(t.description);
         setEditMethod(t.method);
         setEditCategory(t.expense_category);
+        setEditAmount(String(t.amount));
     }
 
     async function saveEdit() {
         if (!editing) return;
         setSavingEdit(true);
         try {
-            await api.updateCashTransaction(editing.id, {
+            const payload: Record<string, unknown> = {
                 description: editDescription, method: editMethod, expense_category: editCategory,
-            });
+            };
+            if (amountEditable(editing)) {
+                const amt = parseFloat(editAmount);
+                if (!amt || amt <= 0) { setError("Məbləğ düzgün deyil."); setSavingEdit(false); return; }
+                payload.amount = amt;
+            }
+            await api.updateCashTransaction(editing.id, payload);
             setEditing(null);
             load();
         } catch {
@@ -212,6 +226,12 @@ export default function CashboxPage() {
             {editing && (
                 <Modal title="Əməliyyatı redaktə et" onClose={() => setEditing(null)} maxWidth="max-w-lg">
                     <div className="flex flex-col gap-3">
+                        {amountEditable(editing) && (
+                            <div className="fld">
+                                <label>Məbləğ (AZN)</label>
+                                <div className="inp"><input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} /></div>
+                            </div>
+                        )}
                         <div className="fld">
                             <label>Təsvir</label>
                             <div className="inp"><input value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="Qısa izah" /></div>
@@ -230,7 +250,9 @@ export default function CashboxPage() {
                                 <div className="inp"><input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} placeholder="İcarə, Elektrik, Maaş və s." /></div>
                             </div>
                         )}
-                        <p className="text-xs text-muted">Məbləğ və növ redaktə edilmir — bunlar başqa qeydlərlə (təmir ödənişi, təchizatçı borcu) bağlıdır. Səhv məbləğ üçün yeni düzəliş əməliyyatı əlavə edin.</p>
+                        {!amountEditable(editing) && (
+                            <p className="text-xs text-muted">Bu əməliyyatın məbləği redaktə edilmir — başqa bir qeydlə (təmir ödənişi, təchizatçı borcu) bağlıdır. Səhv məbləğ üçün yeni düzəliş əməliyyatı əlavə edin.</p>
+                        )}
                         <button className="btn pri self-start" disabled={savingEdit} onClick={saveEdit}>
                             {savingEdit ? "Saxlanılır…" : "Yadda saxla"}
                         </button>
