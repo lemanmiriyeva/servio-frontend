@@ -37,11 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = (await api.login(username, password)) as { access: string; refresh: string; user: Me };
     setTokens(data.access, data.refresh);
     setUser(data.user);
-    // Daxil olandan sonra birbaşa idarəetmə panelinə aparır (ictimai sayt ana səhifəsinə yox):
-    // Platform Super Admin və mağaza admini → /platform (öz idarəetmə paneli),
-    // adi işçi istifadəçi → /dashboard (servis paneli).
-    const goesToKapitan = data.user.is_superadmin || (!!data.user.shop && data.user.is_shop_admin);
-    router.push(goesToKapitan ? "/platform" : "/dashboard");
+    // Daxil olan HƏR KƏS birbaşa /dashboard-a aparılır (əvvəllər Super Admin/mağaza admini
+    // "Müştəri bazası"na yönləndirilirdi — bu, onu adi iş axınından ayırırdı). Sidebar-dakı
+    // "Müştəri bazası" linki ilə ora həmişə bir kliklə keçmək mümkündür.
+    router.push("/dashboard");
   }
 
   function logout() {
