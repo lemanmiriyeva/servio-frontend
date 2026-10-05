@@ -103,7 +103,7 @@ export default function DashboardPage() {
         {/* Hero bench */}
         <div className="rounded-[14px] p-7 flex flex-col sm:flex-row items-start sm:items-center gap-6 bg-side text-white">
           <div>
-            <div className="text-[13px] text-[#8FA9B2]">Bu ayın gəliri</div>
+            <div className="text-[13px] text-[#8FA9B2]">Kassa</div>
             <div className="text-[40px] md:text-[48px] font-semibold tracking-tight leading-[1.05] mt-1.5">
               {data ? (data.month_income === null ? "•••••" : mask(fmt(data.month_income))) : "—"}
               <small className="text-lg font-semibold text-[#8FA9B2] ml-2">AZN</small>
