@@ -46,7 +46,7 @@ export default function ShopDetailPage() {
     return (
         <>
             <div className="flex items-center gap-2 text-sm">
-                <Link href="/kapitan" className="flex items-center gap-1.5 text-ink2 hover:text-ink"><ArrowLeft size={16} />Müştəri bazası</Link>
+                <Link href="/platform" className="flex items-center gap-1.5 text-ink2 hover:text-ink"><ArrowLeft size={16} />Müştəri bazası</Link>
             </div>
 
             <div className="card flex items-center justify-between flex-wrap gap-4">

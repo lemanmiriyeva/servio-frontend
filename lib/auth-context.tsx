@@ -38,10 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokens(data.access, data.refresh);
     setUser(data.user);
     // Daxil olandan sonra birbaşa idarəetmə panelinə aparır (ictimai sayt ana səhifəsinə yox):
-    // Platform Super Admin və mağaza admini → /kapitan (öz idarəetmə paneli),
+    // Platform Super Admin və mağaza admini → /platform (öz idarəetmə paneli),
     // adi işçi istifadəçi → /dashboard (servis paneli).
     const goesToKapitan = data.user.is_superadmin || (!!data.user.shop && data.user.is_shop_admin);
-    router.push(goesToKapitan ? "/kapitan" : "/dashboard");
+    router.push(goesToKapitan ? "/platform" : "/dashboard");
   }
 
   function logout() {

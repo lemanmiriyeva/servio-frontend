@@ -48,6 +48,11 @@ export default function UsersPage() {
 
     const [showNewRole, setShowNewRole] = useState(false);
     const [newRoleName, setNewRoleName] = useState("");
+    // Rol yaradılan ANDA icazələri də seçmək üçün — əvvəllər rolu yaratmaq və icazələrini seçmək
+    // İKİ ayrı addım idi (yarat → siyahıdan tap → aç → toggle et → saxla); indi eyni modalda.
+    const [newRolePerms, setNewRolePerms] = useState<Record<string, boolean>>(
+        Object.fromEntries(MODULES.map((m) => [m.key, ["repairs", "customers", "inventory", "marketplace", "suppliers"].includes(m.key)])),
+    );
 
     function loadUsers() {
         api.users("?page_size=100").then((d) => {
@@ -102,7 +107,11 @@ export default function UsersPage() {
         setBusy(true);
         try {
             const role = (await api.createRole({ name: newRoleName })) as Role;
-            setNewRoleName(""); setShowNewRole(false);
+            const permissions = MODULES.map((m) => ({ module: m.key, is_allowed: newRolePerms[m.key] ?? false }));
+            await api.updateRolePermissions(role.id, permissions);
+            setNewRoleName("");
+            setNewRolePerms(Object.fromEntries(MODULES.map((m) => [m.key, ["repairs", "customers", "inventory", "marketplace", "suppliers"].includes(m.key)])));
+            setShowNewRole(false);
             loadRoles();
             setSelectedRoleId(role.id);
         } catch {
@@ -248,8 +257,28 @@ export default function UsersPage() {
                 <div className="flex flex-col lg:flex-row gap-5 items-start">
                     <div className="w-full lg:w-[260px] flex-none flex flex-col gap-2">
                         {showNewRole && (
-                            <Modal title="Yeni rol" onClose={() => setShowNewRole(false)} maxWidth="max-w-sm">
+                            <Modal title="Yeni rol" onClose={() => setShowNewRole(false)} maxWidth="max-w-md">
                                 <div className="fld"><label>Rol adı</label><div className="inp"><input autoFocus value={newRoleName} onChange={(e) => setNewRoleName(e.target.value)} placeholder="Kassir" /></div></div>
+                                <div className="fld">
+                                    <label>Hansı bölmələrə icazəli olsun?</label>
+                                    <div className="grid grid-cols-1 gap-1.5 mt-1">
+                                        {MODULES.map((m) => {
+                                            const allowed = newRolePerms[m.key] ?? false;
+                                            return (
+                                                <label key={m.key} className="flex items-center gap-2 py-1 text-sm cursor-pointer select-none">
+                                                    <span className={`w-5 h-5 rounded-md border flex items-center justify-center flex-none ${allowed ? "bg-side border-side" : "border-line bg-white"}`}>
+                                                        {allowed && <Check size={13} strokeWidth={3} className="text-side" style={{ color: "white" }} />}
+                                                    </span>
+                                                    <input
+                                                        type="checkbox" className="hidden" checked={allowed}
+                                                        onChange={(e) => setNewRolePerms((cur) => ({ ...cur, [m.key]: e.target.checked }))}
+                                                    />
+                                                    {m.label}
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                                 <button className="btn pri self-start" disabled={busy || !newRoleName.trim()} onClick={createRole}>Əlavə et</button>
                             </Modal>
                         )}

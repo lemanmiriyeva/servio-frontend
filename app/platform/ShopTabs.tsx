@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { usePlatform } from "@/lib/platform-context";
 import { ResourceView } from "./[resource]/page";
+import { Loader } from "@/components/Loader";
 
 // Bir mağazanın "Ətraflı" səhifəsində tab kimi açılan bölmələr — backend `SHOP_DETAIL_TABS`
 // (platform_admin/resources.py) ilə eyni açarlarla. Platform Super Admin bunu istənilən mağaza
@@ -30,7 +31,7 @@ export function ShopTabs({ shopId }: { shopId: string | number }) {
     const availableTabs = useMemo(() => SHOP_TABS.filter((t) => resources?.some((r) => r.key === t.key)), [resources]);
 
     if (error) return <div className="card" style={{ color: "var(--red)" }}>{error}</div>;
-    if (!resources) return <div className="text-center text-muted text-sm py-10">Yüklənir…</div>;
+    if (!resources) return <Loader />;
 
     return (
         <>

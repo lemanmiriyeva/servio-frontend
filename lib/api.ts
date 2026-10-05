@@ -243,6 +243,14 @@ export const api = {
       apiFetchMultipart(`/platform/r/${key}/`, "POST", formData),
   platformUpdateMultipart: (key: string, id: string | number, formData: FormData) =>
       apiFetchMultipart(`/platform/r/${key}/${id}/`, "PATCH", formData),
+  // Rol icazələri — Kapitan panelindən istənilən mağazanın rolu üçün (bax platform_admin/views.py:
+  // RolePermissionsAdminView — generic `role-permissions` resursundan fərqli olaraq, bir rolun BÜTÜN
+  // modullarını birdən oxuyub/yazır, əl ilə sətir-sətir əlavə etməyə ehtiyac qalmır).
+  platformRoleModules: () => apiFetch("/platform/role-modules/") as Promise<{ key: string; label: string; is_default: boolean }[]>,
+  platformGetRolePermissions: (roleId: string | number) =>
+      apiFetch(`/platform/roles/${roleId}/permissions/`) as Promise<{ module: string; label: string; is_allowed: boolean }[]>,
+  platformSetRolePermissions: (roleId: string | number, permissions: { module: string; is_allowed: boolean }[]) =>
+      apiFetch(`/platform/roles/${roleId}/permissions/`, { method: "PATCH", body: JSON.stringify({ permissions }) }),
 };
 
 export const STATUS_LABELS: Record<string, string> = {

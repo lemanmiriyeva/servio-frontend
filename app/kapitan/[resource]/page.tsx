@@ -1,14 +1,14 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, X, Search, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, ChevronLeft, ChevronRight, Eye, Check } from "lucide-react";
 import { api, ApiError, type PlatformField, type PlatformResource } from "@/lib/api";
 import { usePlatform } from "@/lib/platform-context";
 import { useDialog } from "@/lib/dialog-context";
 import { Loader } from "@/components/Loader";
 
 type Row = Record<string, unknown> & { id: string | number };
-export type Option = { value: string; label: string };
+export type Option = { value: string; label: string; shop?: string };
 const PAGE_SIZE = 20;
 const TEXT_LIKE = ["text", "textarea", "email"];
 
@@ -65,7 +65,12 @@ export function useRelatedOptions(res: PlatformResource): Record<string, Option[
     useEffect(() => {
         relatedKeys.forEach((k) => {
             api.platformList(k, "?page_size=1000").then((d) => {
-                const list = listOf(d).map((r) => ({ value: String(r.id), label: String(r.display ?? r.id) }));
+                // `shop` sahəsi varsa saxlanılır (məs. "roles") — bu sayədə məsələn İstifadəçi
+                // formunda "Mağaza" seçiləndə "Rol" siyahısı YALNIZ o mağazanın rollarına filtrlənə bilir.
+                const list = listOf(d).map((r) => ({
+                    value: String(r.id), label: String(r.display ?? r.id),
+                    shop: r.shop !== undefined && r.shop !== null ? String(r.shop) : undefined,
+                }));
                 setOptions((o) => ({ ...o, [k]: list }));
             }).catch(() => { /* seçim siyahısı yüklənməsə də səhifə işləməlidir */ });
         });
@@ -109,8 +114,42 @@ export function RecordForm({ res, row, options, presetValues, onClose, onSaved }
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState("");
 
+    // "Rollar" resursu üçün XÜSUSİ HAL: əvvəllər rol yaradılandan sonra hər modulu ayrıca
+    // "Rol icazələri" generic resursunda bir-bir əlavə etmək lazım gəlirdi — çox əlverişsiz idi.
+    // İndi həmin modal İÇƏRİSİNDƏ, ad/mağaza ilə YANAŞI, bütün modulların aç/bağla düymələri
+    // göstərilir; "Yadda saxla" basanda həm rol, həm də seçilmiş icazələr bir əməliyyatda saxlanır.
+    const isRoleForm = res.key === "roles";
+    const [roleModules, setRoleModules] = useState<{ key: string; label: string; is_default: boolean }[]>([]);
+    const [rolePerms, setRolePerms] = useState<Record<string, boolean>>({});
+    useEffect(() => {
+        if (!isRoleForm) return;
+        api.platformRoleModules().then((mods) => {
+            setRoleModules(mods);
+            if (row) {
+                // Redaktə: mövcud rolun real icazələrini oxu.
+                api.platformGetRolePermissions(row.id).then((perms) => {
+                    setRolePerms(Object.fromEntries(perms.map((p) => [p.module, p.is_allowed])));
+                }).catch(() => {});
+            } else {
+                // Yeni rol: defolt açıq olan bölmələri əvvəlcədən işarələnmiş göstər (yaradılanda
+                // backend də elə bunları açır — bax accounts/signals.py create_default_permissions).
+                setRolePerms(Object.fromEntries(mods.map((m) => [m.key, m.is_default])));
+            }
+        }).catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRoleForm, row?.id]);
+
+    const roleIsOwner = isRoleForm && Boolean(values["is_owner_role"]);
+
     function set(name: string, v: string | boolean) {
-        setValues((cur) => ({ ...cur, [name]: v }));
+        setValues((cur) => {
+            const next = { ...cur, [name]: v };
+            // İstifadəçi formunda "Mağaza" dəyişəndə, əvvəl seçilmiş "Rol" artıq başqa mağazaya
+            // aid ola bilər — qarışıqlığın qarşısını almaq üçün sıfırlanır (aşağıda, filtrlənmiş
+            // siyahıda görünməyən rol seçili qalmasın deyə).
+            if (res.key === "users" && name === "shop" && "role" in next) next.role = "";
+            return next;
+        });
     }
 
     function buildPayload(): Record<string, unknown> {
@@ -144,12 +183,21 @@ export function RecordForm({ res, row, options, presetValues, onClose, onSaved }
         setSaving(true); setErr("");
         try {
             const hasFiles = Object.keys(files).length > 0;
+            let savedRow: Row | undefined;
             if (row) {
-                if (hasFiles) await api.platformUpdateMultipart(res.key, row.id, buildFormData());
-                else await api.platformUpdate(res.key, row.id, buildPayload());
+                savedRow = hasFiles
+                    ? await api.platformUpdateMultipart(res.key, row.id, buildFormData()) as Row
+                    : await api.platformUpdate(res.key, row.id, buildPayload()) as Row;
             } else {
-                if (hasFiles) await api.platformCreateMultipart(res.key, buildFormData());
-                else await api.platformCreate(res.key, buildPayload());
+                savedRow = hasFiles
+                    ? await api.platformCreateMultipart(res.key, buildFormData()) as Row
+                    : await api.platformCreate(res.key, buildPayload()) as Row;
+            }
+            // Rol formu: ad/mağaza qeyd olunandan dərhal sonra, seçilmiş modul icazələrini də
+            // tək bir əlavə sorğu ilə yazırıq (Sahib rolu istisna — onun həmişə hər şeyə icazəsi var).
+            if (isRoleForm && !roleIsOwner && savedRow) {
+                const permissions = roleModules.map((m) => ({ module: m.key, is_allowed: Boolean(rolePerms[m.key]) }));
+                await api.platformSetRolePermissions(savedRow.id, permissions);
             }
             onSaved();
         } catch (e) {
@@ -196,15 +244,22 @@ export function RecordForm({ res, row, options, presetValues, onClose, onSaved }
         }
         if (f.type === "choice" || f.type === "related") {
             let opts: Option[] = f.type === "choice" ? (f.choices ?? []) : (f.related ? options[f.related] ?? [] : []);
+            // "Rol" sahəsi seçilmiş "Mağaza"ya görə filtrlənir — başqa mağazanın rolu bura düşməsin
+            // deyə (hər mağaza öz rollarını qurur). Mağaza hələ seçilməyibsə, siyahı boş qalır.
+            if (f.type === "related" && f.related === "roles" && "shop" in values) {
+                const shopVal = String(values["shop"] ?? "");
+                opts = shopVal ? opts.filter((o) => o.shop === shopVal) : [];
+            }
             const cur = String(v ?? "");
             const locked = !isEdit && !!presetValues && f.name in presetValues;
             if (f.type === "related" && cur && !opts.some((o) => o.value === cur)) {
                 const lockedLabel = locked ? opts.find((o) => o.value === cur)?.label : undefined;
                 opts = [{ value: cur, label: lockedLabel ?? String(row?.[`${f.name}_display`] ?? cur) }, ...opts];
             }
+            const noShopYet = f.type === "related" && f.related === "roles" && "shop" in values && !values["shop"];
             return (
-                <select className="inp" value={cur} disabled={locked} onChange={(e) => set(f.name, e.target.value)}>
-                    <option value="">{f.required ? "Seçin…" : "—"}</option>
+                <select className="inp" value={cur} disabled={locked || noShopYet} onChange={(e) => set(f.name, e.target.value)}>
+                    <option value="">{noShopYet ? "Əvvəlcə mağaza seçin…" : f.required ? "Seçin…" : "—"}</option>
                     {opts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
             );
@@ -254,6 +309,36 @@ export function RecordForm({ res, row, options, presetValues, onClose, onSaved }
                         </div>
                     ))}
                 </div>
+
+                {isRoleForm && (
+                    <div className="border-t border-line pt-3.5">
+                        <label className="mb-2 block">Bu rol hansı bölmələrə icazəlidir?</label>
+                        {roleIsOwner ? (
+                            <p className="text-sm text-muted">Sahib rolu həmişə bütün bölmələrə icazəlidir — ayrıca seçim lazım deyil.</p>
+                        ) : roleModules.length === 0 ? (
+                            <p className="text-sm text-muted">Yüklənir…</p>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                {roleModules.map((m) => {
+                                    const allowed = Boolean(rolePerms[m.key]);
+                                    return (
+                                        <label key={m.key} className="flex items-center gap-2 py-1 text-sm cursor-pointer select-none">
+                                            <span className={`w-5 h-5 rounded-md border flex items-center justify-center flex-none ${allowed ? "bg-side border-side" : "border-line bg-white"}`}>
+                                                {allowed && <Check size={13} strokeWidth={3} className="text-white" />}
+                                            </span>
+                                            <input
+                                                type="checkbox" className="hidden"
+                                                checked={allowed}
+                                                onChange={(e) => setRolePerms((cur) => ({ ...cur, [m.key]: e.target.checked }))}
+                                            />
+                                            {m.label}
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="flex gap-2.5 justify-end">
                     <button type="button" className="btn" onClick={onClose}>Ləğv et</button>

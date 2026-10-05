@@ -46,13 +46,13 @@ export function Sidebar() {
 
         <nav className="flex flex-col gap-0.5 px-3 flex-1 overflow-y-auto">
           {user?.is_superadmin && (
-              <Link href="/kapitan" className={`ni ${pathname.startsWith("/kapitan") ? "on" : ""}`}>
+              <Link href="/platform" className={`ni ${pathname.startsWith("/platform") ? "on" : ""}`}>
                 <Crown size={20} />
                 <span>Platforma (Super Admin)</span>
               </Link>
           )}
           {!user?.is_superadmin && user?.is_shop_admin && (
-              <Link href="/kapitan" className={`ni ${pathname.startsWith("/kapitan") ? "on" : ""}`}>
+              <Link href="/platform" className={`ni ${pathname.startsWith("/platform") ? "on" : ""}`}>
                 <Crown size={20} />
                 <span>Platforma (Mağaza admini)</span>
               </Link>

@@ -50,7 +50,7 @@ export default function LoginPage() {
             </svg>
 
             <div className="relative z-10 flex items-center">
-              <div className="bg-white rounded-xl px-3 py-1.5 inline-flex w-fit"><Logo dark height={40} /></div>
+              <div className="rounded-xl px-3 py-1.5 inline-flex w-fit"><Logo  height={50} /></div>
             </div>
 
             <div className="relative z-10 flex flex-col gap-5">

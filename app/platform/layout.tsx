@@ -39,7 +39,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen bg-bg flex flex-col">
             <header className="h-16 bg-side text-white flex items-center gap-3 px-4 md:px-6 flex-none">
                 <Link
-                    href="/kapitan"
+                    href="/platform"
                     title="Ana səhifə"
                     className="w-9 h-9 rounded-[9px] bg-white flex items-center justify-center flex-none"
                 >
@@ -59,7 +59,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
             <div className="flex flex-1 min-h-0">
                 <aside className="hidden md:flex w-[248px] flex-none flex-col gap-4 p-3 border-r border-line bg-white overflow-y-auto">
-                    <Link href="/kapitan" className={linkCls(pathname === "/kapitan")}>
+                    <Link href="/platform" className={linkCls(pathname === "/platform")}>
                         <LayoutDashboard size={18} /><span>Ümumi baxış</span>
                     </Link>
                     {sections.map((s) => (
@@ -75,7 +75,7 @@ function Shell({ children }: { children: React.ReactNode }) {
                                         <span className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{g.name}</span>
                                     )}
                                     {g.items.map((it) => (
-                                        <Link key={it.key} href={`/kapitan/${it.key}`} className={linkCls(pathname === `/kapitan/${it.key}`)}>
+                                        <Link key={it.key} href={`/platform/${it.key}`} className={linkCls(pathname === `/platform/${it.key}`)}>
                                             <span className="truncate">{it.label}</span>
                                         </Link>
                                     ))}
@@ -92,9 +92,9 @@ function Shell({ children }: { children: React.ReactNode }) {
                             value={pathname}
                             onChange={(e) => router.push(e.target.value)}
                         >
-                            <option value="/kapitan">Ümumi baxış</option>
+                            <option value="/platform">Ümumi baxış</option>
                             {isSuperadmin && (resources ?? []).filter((r) => !r.hidden).map((r) => (
-                                <option key={r.key} value={`/kapitan/${r.key}`}>{r.section} — {r.group} — {r.label}</option>
+                                <option key={r.key} value={`/platform/${r.key}`}>{r.section} — {r.group} — {r.label}</option>
                             ))}
                         </select>
                     </div>
@@ -110,7 +110,7 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
     const router = useRouter();
     // Platform Super Admin — hər yerə. Mağaza admini (`is_shop_admin=True`, Rol sistemindən
     // tamam ayrı bir bayraq) — "platforma"ya daxil ola bilər, amma yalnız öz mağazasını görür
-    // (bax: `/kapitan/page.tsx`-dəki mağaza admini budağı).
+    // (bax: `/platform/page.tsx`-dəki mağaza admini budağı).
     const isShopOwner = !!(user?.shop && user?.is_shop_admin);
     const allowed = !!user?.is_superadmin || isShopOwner;
 

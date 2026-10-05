@@ -193,14 +193,14 @@ export default function PlatformPage() {
                             const urgency = URGENCY_STYLE[s.payment_urgency] ?? URGENCY_STYLE.ok;
                             return (
                                 <div key={s.id} className="tr" style={{ alignItems: "flex-start" }}>
-                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-[1.7] flex items-center gap-2.5 min-w-0">
+                                    <Link href={`/platform/shops/${s.id}`} className="flex-[1.7] flex items-center gap-2.5 min-w-0">
                                         <div className={`av ${AV[i % AV.length]}`}>{s.logo_initials || s.name.slice(0, 2).toUpperCase()}</div>
                                         <div className="min-w-0"><b className="block truncate">{s.name}</b><span className="text-xs text-muted truncate block">{s.owner_full_name}{s.city ? ` · ${s.city}` : ""}</span></div>
                                     </Link>
-                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[100px]">{s.plan ? <span className={`badge ${s.plan.name.toLowerCase() === "pro" ? "b-purple" : "b-blue"}`}><i />{s.plan.name}</span> : <span className="mut">—</span>}</Link>
-                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[70px] text-center">{s.branch_count}</Link>
-                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[90px] text-center">{s.user_count}</Link>
-                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[170px]">
+                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[100px]">{s.plan ? <span className={`badge ${s.plan.name.toLowerCase() === "pro" ? "b-purple" : "b-blue"}`}><i />{s.plan.name}</span> : <span className="mut">—</span>}</Link>
+                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[70px] text-center">{s.branch_count}</Link>
+                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[90px] text-center">{s.user_count}</Link>
+                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[170px]">
                                         <span className={`badge ${st.badge}`}><i />{st.label}</span>
                                         {left !== null && left >= 0 && (
                                             <span className="block text-[11px] mt-1 text-muted truncate">{left} gün qalıb</span>
@@ -209,7 +209,7 @@ export default function PlatformPage() {
                                             <span className="block text-[11px] mt-1 text-muted truncate" title={s.disabled_reason}>{s.disabled_reason}</span>
                                         )}
                                     </Link>
-                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[140px] text-sm font-medium" style={{ color: urgency.text }}>
+                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[140px] text-sm font-medium" style={{ color: urgency.text }}>
                                         <span className="inline-flex items-center gap-1.5">
                                             <span className="w-2 h-2 rounded-full flex-none" style={{ background: urgency.dot }} />
                                             {s.next_payment_at ?? "—"}
@@ -220,7 +220,7 @@ export default function PlatformPage() {
                                             </span>
                                         )}
                                     </Link>
-                                    <Link href={`/kapitan/shops/${s.id}`} className="flex-none w-[90px] text-right font-semibold">{s.plan && s.status !== "trial" ? `${fmt(s.plan.price_monthly)} AZN` : "—"}</Link>
+                                    <Link href={`/platform/shops/${s.id}`} className="flex-none w-[90px] text-right font-semibold">{s.plan && s.status !== "trial" ? `${fmt(s.plan.price_monthly)} AZN` : "—"}</Link>
                                     <div className="flex-none w-[70px] flex justify-center">
                                         <button
                                             type="button"
