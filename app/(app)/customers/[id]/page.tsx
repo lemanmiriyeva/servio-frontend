@@ -9,6 +9,7 @@ import { Modal } from "@/components/Modal";
 type Customer = {
     id: number; full_name: string; phone: string; email: string; note: string;
     initials: string; repair_count: number; total_spent: number; total_debt: number;
+    total_profit: number | null;
 };
 type RepairRow = {
     id: number; number: string; device_brand: string; device_model: string;
@@ -130,7 +131,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 </Modal>
             )}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className={`grid grid-cols-2 gap-4 ${customer.total_profit !== null ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Ümumi təmir</span>
                     <div className="text-[28px] font-semibold tracking-tight mt-1.5">{customer.repair_count}</div>
@@ -149,6 +150,14 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     <span className="text-ink2 text-[13px] font-medium">Aktiv zəmanət</span>
                     <div className="text-[28px] font-semibold tracking-tight mt-1.5">{activeWarranties}</div>
                 </div>
+                {customer.total_profit !== null && (
+                    <div className="card">
+                        <span className="text-ink2 text-[13px] font-medium">Mənfəət</span>
+                        <div className="text-[28px] font-semibold tracking-tight mt-1.5 pos">
+                            {Math.round(customer.total_profit)} <small className="text-sm text-muted">AZN</small>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-col lg:flex-row gap-5 items-start">
@@ -156,12 +165,13 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     <div className="card !p-2">
                         <h3 className="text-base font-semibold px-3 pt-2 pb-3.5">Təmir tarixçəsi</h3>
                         <div className="overflow-x-auto">
-                            <div className="min-w-[600px]">
+                            <div className="min-w-[700px]">
                                 <div className="tr h">
                                     <div className="flex-none w-[120px]">Təmir №</div>
                                     <div className="flex-1">Cihaz / iş</div>
                                     <div className="flex-none w-[150px]">Vəziyyət</div>
                                     <div className="flex-none w-[80px] text-right">Məbləğ</div>
+                                    <div className="flex-none w-[100px] text-right">Qalıq borc</div>
                                 </div>
                                 {(repairs ?? []).map((r) => (
                                     <Link key={r.id} href={`/repairs/${r.id}`} className="tr hover:bg-gray-50/60 cursor-pointer">
@@ -174,6 +184,9 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                                             <span className={`badge ${STATUS_BADGE[r.status] || "b-gray"}`}><i />{STATUS_LABEL[r.status] || r.status}</span>
                                         </div>
                                         <div className="flex-none w-[80px] text-right font-semibold">{Math.round(r.sale_price)}</div>
+                                        <div className="flex-none w-[100px] text-right font-semibold">
+                                            {r.remaining_debt > 0 ? <span className="neg">{Math.round(r.remaining_debt)} AZN</span> : <span className="mut">—</span>}
+                                        </div>
                                     </Link>
                                 ))}
                                 {repairs && repairs.length === 0 && (

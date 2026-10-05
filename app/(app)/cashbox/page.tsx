@@ -145,7 +145,7 @@ export default function CashboxPage() {
                     <div className="text-2xl font-semibold tracking-tight mt-1.5">{summary ? fmt(summary.opening_balance) : "—"}</div>
                 </div>
                 <div className="card">
-                    <span className="text-ink2 text-[13px] font-medium">Kassa</span>
+                    <span className="text-ink2 text-[13px] font-medium">Mədaxil</span>
                     <div className="text-2xl font-semibold tracking-tight mt-1.5 pos">{summary ? `+${fmt(summary.income)}` : "—"}</div>
                 </div>
                 <div className="card">
@@ -159,7 +159,7 @@ export default function CashboxPage() {
                     </div>
                 </div>
                 <div className="card" style={{ background: "var(--side)" }}>
-                    <span className="text-[13px] font-medium text-[#8FA9B2]">Cari balans</span>
+                    <span className="text-[13px] font-medium text-[#8FA9B2]">Kassa balansı</span>
                     <div className="text-2xl font-semibold tracking-tight mt-1.5 text-white">{summary ? fmt(summary.current_balance) : "—"}</div>
                 </div>
             </div>

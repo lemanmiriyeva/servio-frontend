@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Pencil, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { Modal } from "@/components/Modal";
 import { Loader } from "@/components/Loader";
@@ -22,6 +22,13 @@ export default function CustomersPage() {
     const [newPhone, setNewPhone] = useState("");
     const [newEmail, setNewEmail] = useState("");
     const [saving, setSaving] = useState(false);
+
+    // Siyahıdan birbaşa (detal səhifəsinə getmədən) müştəri redaktəsi.
+    const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+    const [editName, setEditName] = useState("");
+    const [editPhone, setEditPhone] = useState("");
+    const [editEmail, setEditEmail] = useState("");
+    const [savingEdit, setSavingEdit] = useState(false);
 
     function load() {
         api.customers("?page_size=200").then((d) => {
@@ -49,6 +56,25 @@ export default function CustomersPage() {
             setError("Müştəri yaradıla bilmədi.");
         } finally {
             setSaving(false);
+        }
+    }
+
+    function openEdit(e: React.MouseEvent, c: Customer) {
+        e.preventDefault(); e.stopPropagation();
+        setEditingCustomer(c); setEditName(c.full_name); setEditPhone(c.phone); setEditEmail(c.email ?? "");
+    }
+
+    async function saveEdit() {
+        if (!editingCustomer || !editName.trim() || !editPhone.trim()) return;
+        setSavingEdit(true);
+        try {
+            await api.updateCustomer(editingCustomer.id, { full_name: editName, phone: editPhone, email: editEmail });
+            setEditingCustomer(null);
+            load();
+        } catch {
+            setError("Müştəri yenilənmədi.");
+        } finally {
+            setSavingEdit(false);
         }
     }
 
@@ -88,6 +114,28 @@ export default function CustomersPage() {
                 </Modal>
             )}
 
+            {editingCustomer && (
+                <Modal title="Müştərini redaktə et" onClose={() => setEditingCustomer(null)} maxWidth="max-w-2xl">
+                    <div className="flex gap-3 flex-wrap">
+                        <div className="fld flex-1 min-w-[180px]">
+                            <label>Ad Soyad</label>
+                            <div className="inp"><input value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
+                        </div>
+                        <div className="fld flex-1 min-w-[180px]">
+                            <label>Telefon</label>
+                            <div className="inp"><input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} /></div>
+                        </div>
+                        <div className="fld flex-1 min-w-[180px]">
+                            <label>E-poçt (istəyə bağlı)</label>
+                            <div className="inp"><input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} /></div>
+                        </div>
+                    </div>
+                    <button className="btn pri self-start" disabled={savingEdit} onClick={saveEdit}>
+                        <Check size={16} /><span>{savingEdit ? "Yadda saxlanılır…" : "Yadda saxla"}</span>
+                    </button>
+                </Modal>
+            )}
+
             <div className="flex gap-3 flex-wrap">
                 <div className="flex-1 min-w-[240px] h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 text-ink2 max-w-md">
                     <Search size={18} className="text-muted flex-none" />
@@ -109,6 +157,7 @@ export default function CustomersPage() {
                             <div className="flex-none w-[100px] text-right">Təmir sayı</div>
                             <div className="flex-none w-[110px] text-right">Ümumi xərc</div>
                             <div className="flex-none w-[100px] text-right">Borc</div>
+                            <div className="flex-none w-[44px]" />
                         </div>
 
                         {filtered.map((c, i) => (
@@ -122,6 +171,11 @@ export default function CustomersPage() {
                                 <div className="flex-none w-[110px] text-right font-semibold">{Math.round(c.total_spent)} AZN</div>
                                 <div className="flex-none w-[100px] text-right font-semibold">
                                     {c.total_debt > 0 ? <span className="neg">{Math.round(c.total_debt)} AZN</span> : <span className="mut">—</span>}
+                                </div>
+                                <div className="flex-none w-[44px] flex justify-end">
+                                    <button onClick={(e) => openEdit(e, c)} className="text-muted hover:text-ink flex-none" title="Redaktə et">
+                                        <Pencil size={15} />
+                                    </button>
                                 </div>
                             </Link>
                         ))}

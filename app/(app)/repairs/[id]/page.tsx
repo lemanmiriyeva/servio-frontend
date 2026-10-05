@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState, use as usePromise } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, ShieldCheck, RotateCcw, X, FileDown, Mail } from "lucide-react";
+import { ArrowLeft, Plus, ShieldCheck, RotateCcw, X, FileDown, Mail, Pencil } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useDialog } from "@/lib/dialog-context";
 import { Loader } from "@/components/Loader";
+import { Modal } from "@/components/Modal";
 
 type WarrantyReturn = {
   id: number; reason: string; refund_amount: number | null;
@@ -59,6 +60,17 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [busy, setBusy] = useState(false);
 
+  // Cihaz/xidmət sahələrinin (marka, model, IMEI, problem, görülən iş, qiymət) redaktəsi.
+  const [editingDevice, setEditingDevice] = useState(false);
+  const [editBrand, setEditBrand] = useState("");
+  const [editModel, setEditModel] = useState("");
+  const [editImei, setEditImei] = useState("");
+  const [editSerial, setEditSerial] = useState("");
+  const [editIssue, setEditIssue] = useState("");
+  const [editWorkDone, setEditWorkDone] = useState("");
+  const [editSalePrice, setEditSalePrice] = useState("");
+  const [savingDevice, setSavingDevice] = useState(false);
+
   const [showReturnForm, setShowReturnForm] = useState(false);
   const [returnReason, setReturnReason] = useState("");
   const [returnRefund, setReturnRefund] = useState("");
@@ -98,6 +110,36 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
       setError("Ödəniş qeydə alınmadı — məbləği yoxlayın.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  function openEditDevice() {
+    if (!data) return;
+    setEditBrand(data.device_brand); setEditModel(data.device_model);
+    setEditImei(data.device_imei ?? ""); setEditSerial(data.device_serial ?? "");
+    setEditIssue(data.issue_description); setEditWorkDone(data.work_done_note ?? "");
+    setEditSalePrice(String(data.sale_price));
+    setEditingDevice(true);
+  }
+
+  async function saveDevice() {
+    if (!editBrand.trim() || !editModel.trim() || !editIssue.trim()) return;
+    const price = parseFloat(editSalePrice);
+    if (!price || price <= 0) return;
+    setSavingDevice(true);
+    try {
+      await api.updateRepair(id, {
+        device_brand: editBrand, device_model: editModel,
+        device_imei: editImei, device_serial: editSerial,
+        issue_description: editIssue, work_done_note: editWorkDone,
+        sale_price: price,
+      });
+      setEditingDevice(false);
+      load();
+    } catch {
+      await alert("Yenilənmədi — sahələri yoxlayın.", { title: "Xəta" });
+    } finally {
+      setSavingDevice(false);
     }
   }
 
@@ -208,7 +250,10 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
         <div className="flex flex-col lg:flex-row gap-5 items-start">
           <div className="flex-1 min-w-0 w-full flex flex-col gap-4">
             <div className="card">
-              <h3 className="text-base font-semibold mb-3">Cihaz və iş</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-semibold">Cihaz və iş</h3>
+                <button onClick={openEditDevice} className="text-muted flex-none" title="Redaktə et"><Pencil size={15} /></button>
+              </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="mut block text-xs mb-1">Marka / Model</span><b>{data.device_brand} {data.device_model}</b></div>
                 <div><span className="mut block text-xs mb-1">IMEI / Seriya</span><b>{data.device_imei || data.device_serial || "—"}</b></div>
@@ -219,8 +264,36 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
                 {data.work_done_note && (
                     <div className="col-span-2"><span className="mut block text-xs mb-1">Görülən iş qeydi</span><span>{data.work_done_note}</span></div>
                 )}
+                <div><span className="mut block text-xs mb-1">Xidmət qiyməti</span><b>{data.sale_price} AZN</b></div>
               </div>
             </div>
+
+            {editingDevice && (
+                <Modal title="Cihaz və işi redaktə et" onClose={() => setEditingDevice(false)} maxWidth="max-w-lg">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="fld"><label>Marka</label><div className="inp"><input value={editBrand} onChange={(e) => setEditBrand(e.target.value)} /></div></div>
+                    <div className="fld"><label>Model</label><div className="inp"><input value={editModel} onChange={(e) => setEditModel(e.target.value)} /></div></div>
+                    <div className="fld"><label>IMEI</label><div className="inp"><input value={editImei} onChange={(e) => setEditImei(e.target.value)} /></div></div>
+                    <div className="fld"><label>Seriya</label><div className="inp"><input value={editSerial} onChange={(e) => setEditSerial(e.target.value)} /></div></div>
+                  </div>
+                  <div className="fld">
+                    <label>Problem / iş</label>
+                    <textarea className="inp !h-auto py-2.5" rows={2} value={editIssue} onChange={(e) => setEditIssue(e.target.value)} />
+                  </div>
+                  <div className="fld">
+                    <label>Görülən iş qeydi</label>
+                    <textarea className="inp !h-auto py-2.5" rows={2} value={editWorkDone} onChange={(e) => setEditWorkDone(e.target.value)} />
+                  </div>
+                  <div className="fld" style={{ maxWidth: 180 }}>
+                    <label>Xidmət qiyməti (AZN)</label>
+                    <div className="inp"><input type="number" value={editSalePrice} onChange={(e) => setEditSalePrice(e.target.value)} /></div>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-1">
+                    <button className="btn" onClick={() => setEditingDevice(false)}>Ləğv et</button>
+                    <button className="btn pri" disabled={savingDevice} onClick={saveDevice}>Yadda saxla</button>
+                  </div>
+                </Modal>
+            )}
 
             <div className="card">
               <div className="flex items-center justify-between mb-3">

@@ -22,6 +22,7 @@ type DashboardData = {
   customer_debt_total: number;
   supplier_debt_total: number;
   overdue_repairs_count: number;
+  cash_balance: number | null;
   recent_repairs: {
     id: number; number: string; customer_name: string; customer_initials: string;
     device: string; work: string; status: string; status_label: string; sale_price: number;
@@ -109,19 +110,28 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex-1" />
-          <div className="w-full sm:w-[250px] bg-white/[0.07] rounded-xl p-4.5 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[13px] text-[#8FA9B2]">Bu ayın qazancı</span>
-              {canSeeProfit && (
-                  <button onClick={() => setShowProfit((s) => !s)} className="w-8 h-8 rounded-lg bg-brand text-brand-ink flex items-center justify-center flex-none">
-                    {showProfit ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-              )}
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="w-full sm:w-[250px] bg-white/[0.07] rounded-xl p-4.5 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] text-[#8FA9B2]">Bu ayın qazancı</span>
+                {canSeeProfit && (
+                    <button onClick={() => setShowProfit((s) => !s)} className="w-8 h-8 rounded-lg bg-brand text-brand-ink flex items-center justify-center flex-none">
+                      {showProfit ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                )}
+              </div>
+              <div className="text-2xl font-semibold tracking-tight">
+                {canSeeProfit && showProfit && profit !== null ? mask(`${fmt(profit)} AZN`) : "••••• AZN"}
+              </div>
+              <div className="text-xs text-[#8FA9B2]">{canSeeProfit ? "Göstərmək üçün göz işarəsinə klik edin" : "Bu rol üçün gizlədilib"}</div>
             </div>
-            <div className="text-2xl font-semibold tracking-tight">
-              {canSeeProfit && showProfit && profit !== null ? mask(`${fmt(profit)} AZN`) : "••••• AZN"}
+            <div className="w-full sm:w-[250px] bg-white/[0.07] rounded-xl p-4.5 flex flex-col gap-2">
+              <span className="text-[13px] text-[#8FA9B2]">Kassa balansı</span>
+              <div className="text-2xl font-semibold tracking-tight">
+                {data ? (data.cash_balance === null ? "•••••" : mask(`${fmt(data.cash_balance)} AZN`)) : "—"}
+              </div>
+              <div className="text-xs text-[#8FA9B2]">{data?.cash_balance === null ? "Bu rol üçün gizlədilib" : "Xərc və təchizatçı ödənişi düşülüb"}</div>
             </div>
-            <div className="text-xs text-[#8FA9B2]">{canSeeProfit ? "Göstərmək üçün göz işarəsinə klik edin" : "Bu rol üçün gizlədilib"}</div>
           </div>
         </div>
 

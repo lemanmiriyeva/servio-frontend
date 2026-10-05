@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, X, MoreHorizontal } from "lucide-react";
+import { Search, X, Pencil, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { Loader } from "@/components/Loader";
+import { Modal } from "@/components/Modal";
 
 type RepairListItem = {
   id: number; number: string; customer: number;
@@ -53,12 +54,79 @@ export default function RepairsPage() {
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  // Siyahıdan birbaşa (detal səhifəsinə getmədən) sürətli redaktə. Siyahının öz sətri
+  // IMEI/seriya/görülən iş qeydini daşımır (yüngül list serializer) — modal açılanda
+  // tam qeydi ayrıca yükləyirik.
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editBrand, setEditBrand] = useState("");
+  const [editModel, setEditModel] = useState("");
+  const [editImei, setEditImei] = useState("");
+  const [editSerial, setEditSerial] = useState("");
+  const [editIssue, setEditIssue] = useState("");
+  const [editWorkDone, setEditWorkDone] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [editStatus, setEditStatus] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  function load() {
     api.repairs("?page_size=200").then((d) => {
       const data = d as { results?: RepairListItem[] } | RepairListItem[];
       setAll(Array.isArray(data) ? data : data.results ?? []);
     }).catch(() => setError("Siyahı yüklənmədi."));
-  }, []);
+  }
+
+  async function openEdit(e: React.MouseEvent, id: number) {
+    e.preventDefault(); e.stopPropagation();
+    setEditingId(id);
+    setEditLoading(true);
+    try {
+      const d = (await api.repair(id)) as {
+        device_brand: string; device_model: string; device_imei: string; device_serial: string;
+        issue_description: string; work_done_note: string; sale_price: number; status: string;
+      };
+      setEditBrand(d.device_brand); setEditModel(d.device_model);
+      setEditImei(d.device_imei ?? ""); setEditSerial(d.device_serial ?? "");
+      setEditIssue(d.issue_description); setEditWorkDone(d.work_done_note ?? "");
+      setEditPrice(String(d.sale_price)); setEditStatus(d.status);
+    } catch {
+      setError("Təmir məlumatı yüklənmədi.");
+      setEditingId(null);
+    } finally {
+      setEditLoading(false);
+    }
+  }
+
+  async function saveEdit() {
+    if (editingId === null || !editBrand.trim() || !editModel.trim() || !editIssue.trim()) return;
+    const price = parseFloat(editPrice);
+    if (!price || price <= 0) return;
+    setSavingEdit(true);
+    try {
+      await api.updateRepair(editingId, {
+        device_brand: editBrand, device_model: editModel,
+        device_imei: editImei, device_serial: editSerial,
+        issue_description: editIssue, work_done_note: editWorkDone,
+        sale_price: price,
+      });
+      // Status AYRICA, xüsusi "/status" endpoint-i ilə dəyişdirilir (sadə PATCH yox) —
+      // çünki status dəyişəndə backend-də əlavə məntiq işləyir (status tarixçəsi qeydə
+      // alınır, "Təhvil verildi"də zəmanət başlanğıcı təyin olunur, ödəniş statusu
+      // yenidən hesablanır). Bunu burda təkrarlamaq əvəzinə eyni endpoint-dən istifadə edirik.
+      const current = all?.find((r) => r.id === editingId);
+      if (editStatus && current && editStatus !== current.status) {
+        await api.setRepairStatus(editingId, editStatus);
+      }
+      setEditingId(null);
+      load();
+    } catch {
+      setError("Yenilənmədi — sahələri yoxlayın.");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  useEffect(() => { load(); }, []);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -176,7 +244,11 @@ export default function RepairsPage() {
                             <span className="mut">{r.warranty_days_left} gün</span>
                         )}
                       </div>
-                      <div className="flex-none w-6 text-muted"><MoreHorizontal size={18} /></div>
+                      <div className="flex-none w-6 flex justify-end">
+                        <button onClick={(e) => openEdit(e, r.id)} className="text-muted hover:text-ink flex-none" title="Redaktə et">
+                          <Pencil size={15} />
+                        </button>
+                      </div>
                     </Link>
                 );
               })}
@@ -196,6 +268,49 @@ export default function RepairsPage() {
               </div>
           )}
         </div>
+
+        {editingId !== null && (
+            <Modal title="Cihaz və işi redaktə et" onClose={() => setEditingId(null)} maxWidth="max-w-lg">
+              {editLoading ? (
+                  <Loader />
+              ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="fld"><label>Marka</label><div className="inp"><input value={editBrand} onChange={(e) => setEditBrand(e.target.value)} /></div></div>
+                      <div className="fld"><label>Model</label><div className="inp"><input value={editModel} onChange={(e) => setEditModel(e.target.value)} /></div></div>
+                      <div className="fld"><label>IMEI</label><div className="inp"><input value={editImei} onChange={(e) => setEditImei(e.target.value)} /></div></div>
+                      <div className="fld"><label>Seriya</label><div className="inp"><input value={editSerial} onChange={(e) => setEditSerial(e.target.value)} /></div></div>
+                    </div>
+                    <div className="fld">
+                      <label>Problem / iş</label>
+                      <textarea className="inp !h-auto py-2.5" rows={2} value={editIssue} onChange={(e) => setEditIssue(e.target.value)} />
+                    </div>
+                    <div className="fld">
+                      <label>Görülən iş qeydi</label>
+                      <textarea className="inp !h-auto py-2.5" rows={2} value={editWorkDone} onChange={(e) => setEditWorkDone(e.target.value)} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="fld" style={{ maxWidth: 180 }}>
+                        <label>Xidmət qiyməti (AZN)</label>
+                        <div className="inp"><input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} /></div>
+                      </div>
+                      <div className="fld">
+                        <label>Vəziyyət</label>
+                        <select className="inp" value={editStatus} onChange={(e) => setEditStatus(e.target.value)}>
+                          {STATUS_TABS.filter((t) => t.key).map((t) => (
+                              <option key={t.key} value={t.key}>{t.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 mt-1">
+                      <button className="btn" onClick={() => setEditingId(null)}>Ləğv et</button>
+                      <button className="btn pri" disabled={savingEdit} onClick={saveEdit}><Check size={16} /><span>Yadda saxla</span></button>
+                    </div>
+                  </>
+              )}
+            </Modal>
+        )}
       </>
   );
 }

@@ -64,6 +64,12 @@ export default function SuppliersPage() {
     const [editPurchaseDesc, setEditPurchaseDesc] = useState("");
     const [editPurchaseAmount, setEditPurchaseAmount] = useState("");
 
+    // Konkret bir ödəniş qeydinin (alışın "Ödəniş tarixçəsi" sətirlərindən biri) məbləğinin
+    // redaktəsi — köhnə (SupplierPurchasePayment yaradılmazdan əvvəlki) sintetik qeydlərin
+    // id-si olmur, onlar redaktə oluna bilməz (bax: SupplierPurchaseSerializer.get_payments).
+    const [editPaymentKey, setEditPaymentKey] = useState<string | null>(null);
+    const [editPaymentAmount, setEditPaymentAmount] = useState("");
+
     const [busy, setBusy] = useState(false);
 
     function load(q = search) {
@@ -162,6 +168,24 @@ export default function SuppliersPage() {
             load();
         } catch {
             setError("Alış yenilənmədi — ola bilsin məbləğ artıq ödənilmiş hissədən azdır.");
+        } finally { setBusy(false); }
+    }
+
+    function openEditPayment(purchaseId: number, pay: PurchasePayment) {
+        setEditPaymentKey(`${purchaseId}:${pay.id}`);
+        setEditPaymentAmount(String(pay.amount));
+    }
+
+    async function saveEditPayment(supplierId: number, purchaseId: number, paymentId: number) {
+        const amt = parseFloat(editPaymentAmount);
+        if (!amt || amt <= 0) return;
+        setBusy(true);
+        try {
+            await api.updateSupplierPurchasePayment(supplierId, purchaseId, paymentId, amt);
+            setEditPaymentKey(null);
+            load();
+        } catch {
+            setError("Ödəniş yenilənmədi — ola bilsin alışın ödənilmiş məbləğini aşır.");
         } finally { setBusy(false); }
     }
 
@@ -409,12 +433,37 @@ export default function SuppliersPage() {
                                             {p.payments.length > 0 && (
                                                 <div className="pt-2 border-t border-line flex flex-col gap-1">
                                                     <span className="text-xs text-muted">Ödəniş tarixçəsi</span>
-                                                    {p.payments.map((pay, idx) => (
-                                                        <div key={pay.id ?? idx} className="flex items-center justify-between text-sm">
-                                                            <span className="text-ink2">{fmtDateTime(pay.paid_at)}</span>
-                                                            <b className="neg">-{fmt(pay.amount)} AZN</b>
-                                                        </div>
-                                                    ))}
+                                                    {p.payments.map((pay, idx) => {
+                                                        const key = `${p.id}:${pay.id}`;
+                                                        const editing = editPaymentKey === key;
+                                                        return (
+                                                            <div key={pay.id ?? idx} className="flex items-center justify-between text-sm gap-2">
+                                                                <span className="text-ink2">{fmtDateTime(pay.paid_at)}</span>
+                                                                {editing ? (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <div className="inp !h-8 w-[100px]">
+                                                                            <input autoFocus type="number" value={editPaymentAmount}
+                                                                                   onChange={(e) => setEditPaymentAmount(e.target.value)} />
+                                                                        </div>
+                                                                        <button className="btn sm pri" disabled={busy}
+                                                                                onClick={() => saveEditPayment(s.id, p.id, pay.id!)}><Check size={13} /></button>
+                                                                        <button className="btn sm" onClick={() => setEditPaymentKey(null)}><X size={13} /></button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <b className="neg">-{fmt(pay.amount)} AZN</b>
+                                                                        {/* Köhnə sintetik qeydlərin (pay.id === null) redaktəsi mümkün deyil —
+                                                                            onlar faktiki SupplierPurchasePayment sətri deyil. */}
+                                                                        {pay.id !== null && (
+                                                                            <button onClick={() => openEditPayment(p.id, pay)} className="text-muted flex-none" title="Ödənişi redaktə et">
+                                                                                <Pencil size={12} />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             )}
                                         </div>
