@@ -45,11 +45,12 @@ export default function NewRepairPage() {
   // Step 3 — money
   const [costPrice, setCostPrice] = useState("");
   const [salePrice, setSalePrice] = useState("");
-  // Detal mənbəyi (könüllü): heç biri / təchizatçıdan borcla / nağd
-  const [partMode, setPartMode] = useState<"none" | "credit" | "cash">("none");
+  // Detal mənbəyi (könüllü): heç biri / təchizatçıdan borcla / nağd / xarici ustaya göndərilib
+  const [partMode, setPartMode] = useState<"none" | "credit" | "cash" | "technician">("none");
   const [supplierList, setSupplierList] = useState<{ id: number; name: string }[]>([]);
   const [supplierId, setSupplierId] = useState("");
   const [partName, setPartName] = useState("");
+  const [technicianName, setTechnicianName] = useState("");
 
   // Step 4 — warranty & payment
   const [warrantyDays, setWarrantyDays] = useState(user?.shop?.default_warranty_days ?? 14);
@@ -118,7 +119,7 @@ export default function NewRepairPage() {
   }
 
   useEffect(() => {
-    if (partMode === "none" || supplierList.length > 0) return;
+    if (partMode === "none" || partMode === "technician" || supplierList.length > 0) return;
     api.suppliers().then((d) => {
       const data = d as { results?: { id: number; name: string }[] } | { id: number; name: string }[];
       setSupplierList(Array.isArray(data) ? data : data.results ?? []);
@@ -139,6 +140,7 @@ export default function NewRepairPage() {
         cost_price: costPrice || 0,
         sale_price: salePrice,
         warranty_days: effectiveWarranty,
+        technician_name: partMode === "technician" ? technicianName : "",
       })) as { id: number; number?: string };
 
       // Təchizatçıdan alınan detal: borc kimi (və ya ödənilmiş) təchizatçı hesabına yazılır
@@ -338,13 +340,14 @@ export default function NewRepairPage() {
                     {[
                       { k: "credit", l: "Təchizatçıdan — borc yaradılsın" },
                       { k: "cash", l: "Nağd aldım — borcsuz" },
+                      { k: "technician", l: "Servisə göndərildi" },
                       { k: "none", l: "Detal istifadə olunmayıb" },
                     ].map((o) => (
                         <button key={o.k} type="button" onClick={() => setPartMode(o.k as typeof partMode)} className={`chip ${partMode === o.k ? "on" : ""}`}>{o.l}</button>
                     ))}
                   </div>
                 </div>
-                {partMode !== "none" && (
+                {(partMode === "credit" || partMode === "cash") && (
                     <>
                       <div className="frow flex gap-4">
                         <div className="fld flex-1">
@@ -365,6 +368,13 @@ export default function NewRepairPage() {
                           </div>
                       )}
                     </>
+                )}
+                {partMode === "technician" && (
+                    <div className="fld">
+                      <label>Usta adı</label>
+                      <div className="inp"><input value={technicianName} onChange={(e) => setTechnicianName(e.target.value)} placeholder="Elşən usta" /></div>
+                      <span className="mut text-xs">Cihaz hazırda bu ustadadır — təmirin təfərrüatlarında görünəcək.</span>
+                    </div>
                 )}
                 {costPrice && salePrice && (
                     <div className="prof rounded-[10px] px-4 py-3.5 flex justify-between items-center" style={{ background: "var(--green-s)", color: "var(--green)" }}>

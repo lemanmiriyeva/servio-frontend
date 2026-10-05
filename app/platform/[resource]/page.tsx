@@ -4,9 +4,11 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, X, Search, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { api, ApiError, type PlatformField, type PlatformResource } from "@/lib/api";
 import { usePlatform } from "@/lib/platform-context";
+import { useDialog } from "@/lib/dialog-context";
+import { Loader } from "@/components/Loader";
 
 type Row = Record<string, unknown> & { id: string | number };
-export type Option = { value: string; label: string };
+export type Option = { value: string; label: string; shop?: string };
 const PAGE_SIZE = 20;
 const TEXT_LIKE = ["text", "textarea", "email"];
 
@@ -63,7 +65,12 @@ export function useRelatedOptions(res: PlatformResource): Record<string, Option[
     useEffect(() => {
         relatedKeys.forEach((k) => {
             api.platformList(k, "?page_size=1000").then((d) => {
-                const list = listOf(d).map((r) => ({ value: String(r.id), label: String(r.display ?? r.id) }));
+                // `shop` sahəsi varsa saxlanılır (məs. "roles") — bu sayədə məsələn İstifadəçi
+                // formunda "Mağaza" seçiləndə "Rol" siyahısı YALNIZ o mağazanın rollarına filtrlənə bilir.
+                const list = listOf(d).map((r) => ({
+                    value: String(r.id), label: String(r.display ?? r.id),
+                    shop: r.shop !== undefined && r.shop !== null ? String(r.shop) : undefined,
+                }));
                 setOptions((o) => ({ ...o, [k]: list }));
             }).catch(() => { /* seçim siyahısı yüklənməsə də səhifə işləməlidir */ });
         });
@@ -108,7 +115,14 @@ export function RecordForm({ res, row, options, presetValues, onClose, onSaved }
     const [err, setErr] = useState("");
 
     function set(name: string, v: string | boolean) {
-        setValues((cur) => ({ ...cur, [name]: v }));
+        setValues((cur) => {
+            const next = { ...cur, [name]: v };
+            // İstifadəçi formunda "Mağaza" dəyişəndə, əvvəl seçilmiş "Rol" artıq başqa mağazaya
+            // aid ola bilər — qarışıqlığın qarşısını almaq üçün sıfırlanır (aşağıda, filtrlənmiş
+            // siyahıda görünməyən rol seçili qalmasın deyə).
+            if (res.key === "users" && name === "shop" && "role" in next) next.role = "";
+            return next;
+        });
     }
 
     function buildPayload(): Record<string, unknown> {
@@ -194,25 +208,32 @@ export function RecordForm({ res, row, options, presetValues, onClose, onSaved }
         }
         if (f.type === "choice" || f.type === "related") {
             let opts: Option[] = f.type === "choice" ? (f.choices ?? []) : (f.related ? options[f.related] ?? [] : []);
+            // "Rol" sahəsi seçilmiş "Mağaza"ya görə filtrlənir — başqa mağazanın rolu bura düşməsin
+            // deyə (hər mağaza öz rollarını qurur). Mağaza hələ seçilməyibsə, siyahı boş qalır.
+            if (f.type === "related" && f.related === "roles" && "shop" in values) {
+                const shopVal = String(values["shop"] ?? "");
+                opts = shopVal ? opts.filter((o) => o.shop === shopVal) : [];
+            }
             const cur = String(v ?? "");
             const locked = !isEdit && !!presetValues && f.name in presetValues;
             if (f.type === "related" && cur && !opts.some((o) => o.value === cur)) {
                 const lockedLabel = locked ? opts.find((o) => o.value === cur)?.label : undefined;
                 opts = [{ value: cur, label: lockedLabel ?? String(row?.[`${f.name}_display`] ?? cur) }, ...opts];
             }
+            const noShopYet = f.type === "related" && f.related === "roles" && "shop" in values && !values["shop"];
             return (
-                <select className="inp" value={cur} disabled={locked} onChange={(e) => set(f.name, e.target.value)}>
-                    <option value="">{f.required ? "Seçin…" : "—"}</option>
+                <select className="inp" value={cur} disabled={locked || noShopYet} onChange={(e) => set(f.name, e.target.value)}>
+                    <option value="">{noShopYet ? "Əvvəlcə mağaza seçin…" : f.required ? "Seçin…" : "—"}</option>
                     {opts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
             );
         }
         const type =
             f.write_only ? "password" :
-            f.type === "integer" || f.type === "decimal" ? "number" :
-            f.type === "date" ? "date" :
-            f.type === "datetime" ? "datetime-local" :
-            f.type === "email" ? "email" : "text";
+                f.type === "integer" || f.type === "decimal" ? "number" :
+                    f.type === "date" ? "date" :
+                        f.type === "datetime" ? "datetime-local" :
+                            f.type === "email" ? "email" : "text";
         return (
             <div className="inp">
                 <input
@@ -283,6 +304,7 @@ export function ResourceView({ res, fixedFilters, hiddenColumns }: {
     const [editing, setEditing] = useState<Row | "new" | null>(null);
     const options = useRelatedOptions(res);
     const router = useRouter();
+    const { confirm } = useDialog();
 
     const columns = useMemo(
         () => res.columns
@@ -325,7 +347,8 @@ export function ResourceView({ res, fixedFilters, hiddenColumns }: {
     useEffect(() => { load(); }, [load]);
 
     async function remove(row: Row) {
-        if (!window.confirm(`“${String(row.display ?? row.id)}” silinsin?`)) return;
+        const ok = await confirm(`“${String(row.display ?? row.id)}” silinsin?`, { title: "Silinsin?", confirmLabel: "Sil", danger: true });
+        if (!ok) return;
         try {
             await api.platformDelete(res.key, row.id);
             if (rows.length === 1 && page > 1) setPage(page - 1);
@@ -384,14 +407,14 @@ export function ResourceView({ res, fixedFilters, hiddenColumns }: {
                                 ))}
                                 <div className="flex-none w-[118px] flex gap-1.5 justify-end">
                                     {res.key === "shops" && (
-                                        <button className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2" title="Ətraflı (mağazanın məlumatları)" onClick={() => router.push(`/platform/shops/${row.id}`)}><Eye size={15} /></button>
+                                        <button className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2" title="Ətraflı (mağazanın məlumatları)" onClick={() => router.push(`/kapitan/shops/${row.id}`)}><Eye size={15} /></button>
                                     )}
                                     <button className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2" title="Redaktə" onClick={() => setEditing(row)}><Pencil size={15} /></button>
                                     <button className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center" style={{ color: "var(--red)" }} title="Sil" onClick={() => remove(row)}><Trash2 size={15} /></button>
                                 </div>
                             </div>
                         ))}
-                        {loading && <div className="text-center text-muted text-sm py-10">Yüklənir…</div>}
+                        {loading && <Loader />}
                         {!loading && rows.length === 0 && !error && <div className="text-center text-muted text-sm py-10">Qeyd tapılmadı.</div>}
                     </div>
                 </div>
@@ -424,7 +447,7 @@ export default function ResourcePage() {
     const { resources, error } = usePlatform();
 
     if (error) return <div className="card" style={{ color: "var(--red)" }}>{error}</div>;
-    if (!resources) return <div className="text-center text-muted text-sm py-10">Yüklənir…</div>;
+    if (!resources) return <Loader />;
     const res = resources.find((r) => r.key === params.resource);
     if (!res) return <div className="card text-center text-muted text-sm py-10">Belə bölmə yoxdur.</div>;
     return <ResourceView key={res.key} res={res} />;

@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
-import { getBlurProfitDefault } from "@/lib/prefs";
+import { getBlurProfitDefault, getHideAmountsDefault, setHideAmountsDefault } from "@/lib/prefs";
 
 type DashboardData = {
   date: string;
@@ -55,6 +55,16 @@ export default function DashboardPage() {
   // FIX: Use lazy initialization to avoid setting state inside an effect on mount
   const [showProfit, setShowProfit] = useState(() => !getBlurProfitDefault());
 
+  // Ümumi baxışdakı BÜTÜN məbləğləri (gəlir, borc və s.) birdən gizlədən master-düymə — kimsə
+  // ekrana baxa bilən yerdə işləyəndə rəqəmləri tez gizlətmək üçün. Seçim brauzerdə yadda qalır.
+  const [showAmounts, setShowAmounts] = useState(() => !getHideAmountsDefault());
+  function toggleShowAmounts() {
+    setShowAmounts((s) => { setHideAmountsDefault(s); return !s; });
+  }
+  function mask(text: string) {
+    return showAmounts ? text : "•••••";
+  }
+
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -79,6 +89,9 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex gap-2.5">
+            <button className="btn" onClick={toggleShowAmounts} title={showAmounts ? "Məbləğləri gizlət" : "Məbləğləri göstər"}>
+              {showAmounts ? <EyeOff size={18} /> : <Eye size={18} />}<span>{showAmounts ? "Məbləğləri gizlət" : "Məbləğləri göstər"}</span>
+            </button>
             <button className="btn"><Calendar size={18} /><span>Bu gün</span></button>
             <Link href="/reports" className="btn"><BarChart3 size={18} /><span>Hesabata keç</span></Link>
           </div>
@@ -91,7 +104,7 @@ export default function DashboardPage() {
           <div>
             <div className="text-[13px] text-[#8FA9B2]">Bu ayın gəliri</div>
             <div className="text-[40px] md:text-[48px] font-semibold tracking-tight leading-[1.05] mt-1.5">
-              {data ? (data.month_income === null ? "•••••" : fmt(data.month_income)) : "—"}
+              {data ? (data.month_income === null ? "•••••" : mask(fmt(data.month_income))) : "—"}
               <small className="text-lg font-semibold text-[#8FA9B2] ml-2">AZN</small>
             </div>
           </div>
@@ -106,7 +119,7 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="text-2xl font-semibold tracking-tight">
-              {canSeeProfit && showProfit && profit !== null ? `${fmt(profit)} AZN` : "••••• AZN"}
+              {canSeeProfit && showProfit && profit !== null ? mask(`${fmt(profit)} AZN`) : "••••• AZN"}
             </div>
             <div className="text-xs text-[#8FA9B2]">{canSeeProfit ? "Göstərmək üçün göz işarəsinə klik edin" : "Bu rol üçün gizlədilib"}</div>
           </div>
@@ -142,7 +155,7 @@ export default function DashboardPage() {
               <span className="t-green w-[38px] h-[38px] rounded-[10px] flex items-center justify-center"><Banknote size={20} /></span>
             </div>
             <div className="text-[32px] font-semibold tracking-tight leading-none">
-              {data ? (data.today_income === null ? "•••••" : fmt(data.today_income)) : "—"}<small className="text-sm font-semibold text-muted ml-1.5">AZN</small>
+              {data ? (data.today_income === null ? "•••••" : mask(fmt(data.today_income))) : "—"}<small className="text-sm font-semibold text-muted ml-1.5">AZN</small>
             </div>
             <div className="text-xs text-muted">{data?.today_payments_count === null ? "Bu rol üçün gizlədilib" : `${data?.today_payments_count ?? 0} ödəniş qəbul edildi`}</div>
           </div>
@@ -188,7 +201,7 @@ export default function DashboardPage() {
                         <div className="flex-none w-[140px]">
                           <span className={`badge ${STATUS_BADGE[r.status] || "b-gray"}`}><i /> {r.status_label}</span>
                         </div>
-                        <div className="flex-none w-20 text-right font-semibold">{fmt(r.sale_price)} AZN</div>
+                        <div className="flex-none w-20 text-right font-semibold">{mask(fmt(r.sale_price))} AZN</div>
                       </div>
                   ))}
                   {data && data.recent_repairs.length === 0 && (
@@ -207,11 +220,11 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center justify-between py-3.5 border-b border-line">
                 <span className="text-[13px] text-ink2 font-medium">Müştərilərdən alınacaq</span>
-                <b className="amb text-xl">{data ? fmt(data.customer_debt_total) : "—"} AZN</b>
+                <b className="amb text-xl">{data ? mask(fmt(data.customer_debt_total)) : "—"} AZN</b>
               </div>
               <div className="flex items-center justify-between py-3.5">
                 <span className="text-[13px] text-ink2 font-medium">Təchizatçılara ödəniləcək</span>
-                <b className="text-xl" style={{ color: "var(--purple)" }}>{data ? fmt(data.supplier_debt_total) : "—"} AZN</b>
+                <b className="text-xl" style={{ color: "var(--purple)" }}>{data ? mask(fmt(data.supplier_debt_total)) : "—"} AZN</b>
               </div>
             </div>
 
@@ -223,8 +236,8 @@ export default function DashboardPage() {
               <div className="flex flex-col">
                 <AlertRow icon={<ShieldCheck size={18} />} tone="t-amber" title="Zəmanəti tezliklə bitən" sub={`${data?.warranty_ending_soon_count ?? 0} təmir`} />
                 <AlertRow icon={<Clock3 size={18} />} tone="t-red" title="Gecikmiş təmirlər" sub={`${data?.overdue_repairs_count ?? 0} təmir, gözlənilən tarix keçib`} />
-                <AlertRow icon={<CreditCard size={18} />} tone="t-red" title="Ödənilməmiş müştəri borcları" sub={`${fmt(data?.customer_debt_total ?? 0)} AZN`} />
-                <AlertRow icon={<Truck size={18} />} tone="t-purple" title="Təchizatçı borcu" sub={`${fmt(data?.supplier_debt_total ?? 0)} AZN`} last />
+                <AlertRow icon={<CreditCard size={18} />} tone="t-red" title="Ödənilməmiş müştəri borcları" sub={mask(`${fmt(data?.customer_debt_total ?? 0)} AZN`)} />
+                <AlertRow icon={<Truck size={18} />} tone="t-purple" title="Təchizatçı borcu" sub={mask(`${fmt(data?.supplier_debt_total ?? 0)} AZN`)} last />
               </div>
             </div>
           </div>

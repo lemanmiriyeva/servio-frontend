@@ -50,7 +50,7 @@ export default function LoginPage() {
             </svg>
 
             <div className="relative z-10 flex items-center">
-              <div className="bg-white rounded-xl px-3 py-1.5 inline-flex w-fit"><Logo height={40} /></div>
+              <div className="bg-white rounded-xl px-3 py-1.5 inline-flex w-fit"><Logo dark height={40} /></div>
             </div>
 
             <div className="relative z-10 flex flex-col gap-5">
@@ -67,7 +67,7 @@ export default function LoginPage() {
           <div className="flex-1 flex items-center justify-center bg-bg px-6 py-12">
             <form onSubmit={handleSubmit} className="w-full max-w-[400px] flex flex-col gap-5">
               <div className="md:hidden flex items-center mb-2">
-                <Logo height={36} />
+                <Logo dark height={36} />
               </div>
 
               <div>
@@ -81,7 +81,7 @@ export default function LoginPage() {
                   <User size={18} className="text-muted flex-none" />
                   <input
                       className="pl"
-                      placeholder="elvin.techfix"
+                      placeholder="Sizin istifadəçi adınız"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       autoComplete="username"

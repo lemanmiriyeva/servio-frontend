@@ -18,6 +18,7 @@ type RepairDetail = {
   id: number; number: string;
   customer: { id: number; full_name: string; phone: string; email: string; initials: string };
   device_brand: string; device_model: string; device_imei: string; device_serial: string;
+  technician_name: string;
   issue_description: string; work_done_note: string;
   cost_price: number | null; sale_price: number; profit: number | null;
   status: string; payment_status: string; debt_due_date: string | null;
@@ -27,6 +28,7 @@ type RepairDetail = {
   paid_amount: number; remaining_debt: number;
   supplier_purchases?: { id: number; supplier: string; description: string; amount: number; paid_amount: number; remaining: number }[];
   warranty_returns?: WarrantyReturn[];
+  status_history?: { status: string; status_display: string; changed_at: string }[];
 };
 
 const RETURN_STATUS_LABEL: Record<string, string> = {
@@ -210,6 +212,9 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="mut block text-xs mb-1">Marka / Model</span><b>{data.device_brand} {data.device_model}</b></div>
                 <div><span className="mut block text-xs mb-1">IMEI / Seriya</span><b>{data.device_imei || data.device_serial || "—"}</b></div>
+                {data.technician_name && (
+                    <div className="col-span-2"><span className="mut block text-xs mb-1">Servisə göndərilib — usta</span><b>{data.technician_name}</b></div>
+                )}
                 <div className="col-span-2"><span className="mut block text-xs mb-1">Problem / iş</span><b>{data.issue_description}</b></div>
                 {data.work_done_note && (
                     <div className="col-span-2"><span className="mut block text-xs mb-1">Görülən iş qeydi</span><span>{data.work_done_note}</span></div>
@@ -265,6 +270,24 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
                         <div key={sp.id} className="flex justify-between gap-3">
                           <div className="min-w-0"><b className="block truncate">{sp.supplier}</b><span className="text-xs text-muted truncate block">{sp.description}</span></div>
                           <span className={`badge flex-none ${sp.remaining > 0 ? "b-red" : "b-green"}`}><i />{sp.remaining > 0 ? `${sp.remaining} AZN borc` : "Ödənilib"}</span>
+                        </div>
+                    ))}
+                  </div>
+                </div>
+            )}
+
+            {data.status_history && data.status_history.length > 0 && (
+                <div className="card">
+                  <h3 className="text-base font-semibold mb-3">Status tarixçəsi</h3>
+                  <div className="flex flex-col gap-2.5 text-sm">
+                    {data.status_history.map((h, i) => (
+                        <div key={i} className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`badge ${STATUS_BADGE[h.status] || "b-gray"} flex-none`}><i />{h.status_display}</span>
+                          </div>
+                          <span className="text-xs text-muted flex-none text-right">
+                      {new Date(h.changed_at).toLocaleString("az-AZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
                         </div>
                     ))}
                   </div>

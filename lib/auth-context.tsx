@@ -13,6 +13,13 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Fəaliyyətsizlik (inactivity) session timeout — 10 dəqiqə heç bir hərəkət olmasa, avtomatik
+// çıxış edilib yenidən login səhifəsinə yönləndirilir. `localStorage`-da saxlanılır ki, bir neçə
+// tab açıq olanda BİRİNDƏ fəaliyyət olsa, digərləri də "aktiv" sayılsın (vaxtından əvvəl atılmasın).
+const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000; // 10 dəqiqə
+const LAST_ACTIVITY_KEY = "scrm_last_activity";
+const ACTIVITY_EVENTS = ["mousedown", "keydown", "touchstart", "scroll", "wheel"] as const;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,16 +37,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = (await api.login(username, password)) as { access: string; refresh: string; user: Me };
     setTokens(data.access, data.refresh);
     setUser(data.user);
-    // Yalnız platforma admini (mağazasız) birbaşa /platform-a düşür; mağazası olan hesab servis panelində qalır, Platforma sol menyudadır
-    // Daxil olandan sonra ana səhifəyə qayıdır; oradan "İdarəetmə paneli" düyməsi ilə panelə keçilir
-    router.push("/");
+    // Daxil olandan sonra birbaşa idarəetmə panelinə aparır (ictimai sayt ana səhifəsinə yox):
+    // Platform Super Admin və mağaza admini → /kapitan (öz idarəetmə paneli),
+    // adi işçi istifadəçi → /dashboard (servis paneli).
+    const goesToKapitan = data.user.is_superadmin || (!!data.user.shop && data.user.is_shop_admin);
+    router.push(goesToKapitan ? "/kapitan" : "/dashboard");
   }
 
   function logout() {
     clearTokens();
+    if (typeof window !== "undefined") localStorage.removeItem(LAST_ACTIVITY_KEY);
     setUser(null);
     router.push("/login");
   }
+
+  // Giriş olunduqdan sonra fəaliyyətsizliyi izləyir — 10 dəq ərzində heç bir klik/klaviatura/skrol
+  // olmasa, istifadəçi təhlükəsizlik üçün avtomatik çıxış edilib login səhifəsinə atılır.
+  useEffect(() => {
+    if (!user || typeof window === "undefined") return;
+
+    function touch() {
+      localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+    }
+    touch();
+    ACTIVITY_EVENTS.forEach((ev) => window.addEventListener(ev, touch, { passive: true }));
+
+    const check = setInterval(() => {
+      const last = Number(localStorage.getItem(LAST_ACTIVITY_KEY) || Date.now());
+      if (Date.now() - last >= INACTIVITY_TIMEOUT_MS) {
+        clearInterval(check);
+        logout();
+      }
+    }, 15_000);
+
+    return () => {
+      ACTIVITY_EVENTS.forEach((ev) => window.removeEventListener(ev, touch));
+      clearInterval(check);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   function hasModule(module: string) {
     if (!user) return false;

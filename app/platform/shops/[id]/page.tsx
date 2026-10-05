@@ -8,11 +8,12 @@ import { usePlatform } from "@/lib/platform-context";
 import { RecordForm, useRelatedOptions } from "../../[resource]/page";
 import { ShopTabs } from "../../ShopTabs";
 import type { PlatformResource } from "@/lib/api";
+import { Loader } from "@/components/Loader";
 
 type ShopRow = Record<string, unknown> & {
     id: string | number; name: string; code: string; owner_full_name?: string;
     city?: string; status?: string; next_payment_at?: string | null;
-    plan_display?: string;
+    plan_display?: string; days_to_payment?: number | null;
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -40,12 +41,12 @@ export default function ShopDetailPage() {
     useEffect(load, [shopId]);
 
     if (error) return <div className="card" style={{ color: "var(--red)" }}>{error}</div>;
-    if (!shop || !resources) return <div className="text-center text-muted text-sm py-10">Yüklənir…</div>;
+    if (!shop || !resources) return <Loader />;
 
     return (
         <>
             <div className="flex items-center gap-2 text-sm">
-                <Link href="/platform" className="flex items-center gap-1.5 text-ink2 hover:text-ink"><ArrowLeft size={16} />Mağazalar</Link>
+                <Link href="/kapitan" className="flex items-center gap-1.5 text-ink2 hover:text-ink"><ArrowLeft size={16} />Müştəri bazası</Link>
             </div>
 
             <div className="card flex items-center justify-between flex-wrap gap-4">
@@ -61,6 +62,16 @@ export default function ShopDetailPage() {
                     <p className="text-ink2 mt-1 text-sm">
                         {shop.code ? `Kod: ${shop.code}` : ""}{shop.owner_full_name ? ` · Sahib: ${shop.owner_full_name}` : ""}
                         {shop.city ? ` · ${shop.city}` : ""}{shop.plan_display ? ` · Plan: ${shop.plan_display}` : ""}
+                        {shop.next_payment_at && (
+                            <>
+                                {` · Növbəti ödəniş: ${shop.next_payment_at}`}
+                                {typeof shop.days_to_payment === "number" && (
+                                    <b className={shop.days_to_payment < 0 ? "neg ml-1" : "ml-1"}>
+                                        ({shop.days_to_payment >= 0 ? `${shop.days_to_payment} gün qalıb` : `${Math.abs(shop.days_to_payment)} gün gecikib`})
+                                    </b>
+                                )}
+                            </>
+                        )}
                     </p>
                 </div>
                 <button className="btn" onClick={() => setEditing(true)}><Pencil size={16} /><span>Mağazanı redaktə et</span></button>

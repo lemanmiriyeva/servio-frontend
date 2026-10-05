@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Plus, ArrowDownCircle, ArrowUpCircle, Pencil } from "lucide-react";
 import { api } from "@/lib/api";
 import { Modal } from "@/components/Modal";
 
@@ -14,7 +14,7 @@ type Transaction = {
     supplier_name?: string | null;
 };
 
-const TYPE_LABEL: Record<string, string> = { income: "Gəlir", expense: "Xərc", supplier_payment: "Təchizatçı ödənişi" };
+const TYPE_LABEL: Record<string, string> = { income: "Kassa", expense: "Xərc", supplier_payment: "Təchizatçı ödənişi" };
 const METHOD_LABEL: Record<string, string> = { cash: "Nağd", card: "Kart", bank_transfer: "Bank köçürməsi" };
 
 function fmt(n: number) {
@@ -35,6 +35,37 @@ export default function CashboxPage() {
     const [supplierId, setSupplierId] = useState("");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+
+    // Mövcud əməliyyatın redaktəsi — YALNIZ təsvir/üsul/kateqoriya (məbləğ/növ dəyişmir, çünki
+    // bəzi qeydlər başqa yerlərin (təmir ödənişi, təchizatçı borcu) əks nüsxəsidir).
+    const [editing, setEditing] = useState<Transaction | null>(null);
+    const [editDescription, setEditDescription] = useState("");
+    const [editMethod, setEditMethod] = useState("cash");
+    const [editCategory, setEditCategory] = useState("");
+    const [savingEdit, setSavingEdit] = useState(false);
+
+    function openEdit(t: Transaction) {
+        setEditing(t);
+        setEditDescription(t.description);
+        setEditMethod(t.method);
+        setEditCategory(t.expense_category);
+    }
+
+    async function saveEdit() {
+        if (!editing) return;
+        setSavingEdit(true);
+        try {
+            await api.updateCashTransaction(editing.id, {
+                description: editDescription, method: editMethod, expense_category: editCategory,
+            });
+            setEditing(null);
+            load();
+        } catch {
+            setError("Əməliyyat yenilənmədi.");
+        } finally {
+            setSavingEdit(false);
+        }
+    }
 
     function load() {
         api.cashboxSummary().then((d) => setSummary(d as Summary)).catch(() => setError("Xülasə yüklənmədi."));
@@ -100,7 +131,7 @@ export default function CashboxPage() {
                     <div className="text-2xl font-semibold tracking-tight mt-1.5">{summary ? fmt(summary.opening_balance) : "—"}</div>
                 </div>
                 <div className="card">
-                    <span className="text-ink2 text-[13px] font-medium">Gəlir</span>
+                    <span className="text-ink2 text-[13px] font-medium">Kassa</span>
                     <div className="text-2xl font-semibold tracking-tight mt-1.5 pos">{summary ? `+${fmt(summary.income)}` : "—"}</div>
                 </div>
                 <div className="card">
@@ -123,7 +154,7 @@ export default function CashboxPage() {
                 <Modal title="Yeni əməliyyat" onClose={() => setShowForm(false)} maxWidth="max-w-xl">
                     <div className="flex gap-2">
                         <button onClick={() => setFormType("income")} className={`chip ${formType === "income" ? "on" : ""}`}>
-                            <ArrowUpCircle size={16} />Gəlir
+                            <ArrowUpCircle size={16} />Kassa
                         </button>
                         <button onClick={() => setFormType("expense")} className={`chip ${formType === "expense" ? "on" : ""}`}>
                             <ArrowDownCircle size={16} />Xərc
@@ -178,8 +209,37 @@ export default function CashboxPage() {
                 </Modal>
             )}
 
+            {editing && (
+                <Modal title="Əməliyyatı redaktə et" onClose={() => setEditing(null)} maxWidth="max-w-lg">
+                    <div className="flex flex-col gap-3">
+                        <div className="fld">
+                            <label>Təsvir</label>
+                            <div className="inp"><input value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="Qısa izah" /></div>
+                        </div>
+                        <div className="fld">
+                            <label>Üsul</label>
+                            <select className="inp" value={editMethod} onChange={(e) => setEditMethod(e.target.value)}>
+                                <option value="cash">Nağd</option>
+                                <option value="card">Kart</option>
+                                <option value="bank_transfer">Bank köçürməsi</option>
+                            </select>
+                        </div>
+                        {editing.type === "expense" && (
+                            <div className="fld">
+                                <label>Kateqoriya</label>
+                                <div className="inp"><input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} placeholder="İcarə, Elektrik, Maaş və s." /></div>
+                            </div>
+                        )}
+                        <p className="text-xs text-muted">Məbləğ və növ redaktə edilmir — bunlar başqa qeydlərlə (təmir ödənişi, təchizatçı borcu) bağlıdır. Səhv məbləğ üçün yeni düzəliş əməliyyatı əlavə edin.</p>
+                        <button className="btn pri self-start" disabled={savingEdit} onClick={saveEdit}>
+                            {savingEdit ? "Saxlanılır…" : "Yadda saxla"}
+                        </button>
+                    </div>
+                </Modal>
+            )}
+
             <div className="flex gap-2 flex-wrap">
-                {[{ k: "", l: "Hamısı" }, { k: "income", l: "Gəlir" }, { k: "expense", l: "Xərc" }, { k: "supplier_payment", l: "Təchizatçı" }].map((t) => (
+                {[{ k: "", l: "Hamısı" }, { k: "income", l: "Kassa" }, { k: "expense", l: "Xərc" }, { k: "supplier_payment", l: "Təchizatçı" }].map((t) => (
                     <button
                         key={t.k}
                         onClick={() => setTypeFilter(t.k)}
@@ -192,13 +252,14 @@ export default function CashboxPage() {
 
             <div className="card !p-2">
                 <div className="overflow-x-auto">
-                    <div className="min-w-[680px]">
+                    <div className="min-w-[720px]">
                         <div className="tr h">
                             <div className="flex-none w-[150px]">Tarix</div>
                             <div className="flex-1">Təsvir</div>
                             <div className="flex-none w-[150px]">Növ</div>
                             <div className="flex-none w-[120px]">Üsul</div>
                             <div className="flex-none w-[90px] text-right">Məbləğ</div>
+                            <div className="flex-none w-[44px]" />
                         </div>
                         {(transactions ?? []).map((t) => (
                             <div key={t.id} className="tr">
@@ -213,6 +274,11 @@ export default function CashboxPage() {
                                 <div className="flex-none w-[120px] text-ink2 text-sm truncate">{METHOD_LABEL[t.method]}</div>
                                 <div className={`flex-none w-[90px] text-right font-semibold ${t.type === "income" ? "pos" : "neg"}`}>
                                     {t.type === "income" ? "+" : "-"}{fmt(t.amount)}
+                                </div>
+                                <div className="flex-none w-[44px] flex justify-end">
+                                    <button onClick={() => openEdit(t)} className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2" title="Redaktə et">
+                                        <Pencil size={14} />
+                                    </button>
                                 </div>
                             </div>
                         ))}

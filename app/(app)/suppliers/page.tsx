@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, X, ChevronDown, ChevronUp, Truck, RotateCcw, Search, Wrench, User } from "lucide-react";
+import { Plus, X, ChevronDown, ChevronUp, Truck, RotateCcw, Search, Wrench, User, Pencil, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { Modal } from "@/components/Modal";
 import { useDialog } from "@/lib/dialog-context";
@@ -52,6 +52,16 @@ export default function SuppliersPage() {
 
     const [payForm, setPayForm] = useState<number | null>(null);
     const [payAmount, setPayAmount] = useState("");
+
+    // Təchizatçının özünün (ad/telefon/qeyd) redaktəsi.
+    const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
+    const [editName, setEditName] = useState("");
+    const [editPhone, setEditPhone] = useState("");
+    const [editNote, setEditNote] = useState("");
+
+    // Bir alışın təsvirinin redaktəsi (məbləğ/ödəniş toxunulmaz qalır — FIFO balansını qorumaq üçün).
+    const [editPurchaseId, setEditPurchaseId] = useState<number | null>(null);
+    const [editPurchaseDesc, setEditPurchaseDesc] = useState("");
 
     const [busy, setBusy] = useState(false);
 
@@ -122,6 +132,34 @@ export default function SuppliersPage() {
         } finally { setBusy(false); }
     }
 
+    function openEditSupplier(s: Supplier) {
+        setEditSupplier(s); setEditName(s.name); setEditPhone(s.phone); setEditNote(s.note ?? "");
+    }
+
+    async function saveEditSupplier() {
+        if (!editSupplier || !editName.trim()) return;
+        setBusy(true);
+        try {
+            await api.updateSupplier(editSupplier.id, { name: editName, phone: editPhone, note: editNote });
+            setEditSupplier(null);
+            load();
+        } finally { setBusy(false); }
+    }
+
+    function openEditPurchase(p: Purchase) {
+        setEditPurchaseId(p.id); setEditPurchaseDesc(p.description);
+    }
+
+    async function saveEditPurchase(supplierId: number) {
+        if (editPurchaseId === null || !editPurchaseDesc.trim()) return;
+        setBusy(true);
+        try {
+            await api.updateSupplierPurchase(supplierId, editPurchaseId, editPurchaseDesc);
+            setEditPurchaseId(null);
+            load();
+        } finally { setBusy(false); }
+    }
+
     async function resolveReturn(returnId: number, decision: "accepted" | "rejected") {
         const note = decision === "rejected"
             ? ((await prompt("Rədd səbəbi (məs. fiziki zədə, ləkə):", { title: "Rədd səbəbi" })) ?? "")
@@ -146,6 +184,29 @@ export default function SuppliersPage() {
             </div>
 
             {error && <div className="card" style={{ color: "var(--red)" }}>{error}</div>}
+
+            {editSupplier && (
+                <Modal title={`${editSupplier.name} — redaktə et`} onClose={() => setEditSupplier(null)}>
+                    <div className="flex gap-3 flex-wrap">
+                        <div className="fld flex-1 min-w-[160px]">
+                            <label>Ad</label>
+                            <div className="inp"><input autoFocus value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
+                        </div>
+                        <div className="fld flex-1 min-w-[160px]">
+                            <label>Telefon</label>
+                            <div className="inp"><input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} /></div>
+                        </div>
+                    </div>
+                    <div className="fld">
+                        <label>Qeyd (istəyə bağlı)</label>
+                        <div className="inp"><input value={editNote} onChange={(e) => setEditNote(e.target.value)} /></div>
+                    </div>
+                    <div className="flex gap-2 justify-end pt-1">
+                        <button className="btn" onClick={() => setEditSupplier(null)}>Ləğv et</button>
+                        <button className="btn pri" disabled={busy || !editName.trim()} onClick={saveEditSupplier}>Yadda saxla</button>
+                    </div>
+                </Modal>
+            )}
 
             <div className="flex items-center gap-3 flex-wrap">
                 <div className="h-11 px-3.5 rounded-[10px] bg-white border border-line flex items-center gap-2.5 text-ink2 w-full max-w-md">
@@ -204,6 +265,13 @@ export default function SuppliersPage() {
                                 <span className="text-xs text-muted block">Qalıq borc</span>
                                 <b className={s.total_debt > 0 ? "neg" : "pos"}>{fmt(s.total_debt)} AZN</b>
                             </div>
+                            <span
+                                onClick={(e) => { e.stopPropagation(); openEditSupplier(s); }}
+                                className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2 flex-none"
+                                title="Təchizatçını redaktə et"
+                            >
+                                <Pencil size={14} />
+                            </span>
                             {expanded === s.id ? <ChevronUp size={18} className="text-muted" /> : <ChevronDown size={18} className="text-muted" />}
                         </button>
 
@@ -292,8 +360,21 @@ export default function SuppliersPage() {
                                     {s.purchases.map((p) => (
                                         <div key={p.id} className="rounded-[10px] border border-line p-3 flex flex-col gap-2">
                                             <div className="flex items-start justify-between gap-3 flex-wrap">
-                                                <div className="min-w-0">
-                                                    <span className="font-semibold block truncate">{p.description}</span>
+                                                <div className="min-w-0 flex-1">
+                                                    {editPurchaseId === p.id ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="inp !h-9 flex-1 min-w-[160px]">
+                                                                <input autoFocus value={editPurchaseDesc} onChange={(e) => setEditPurchaseDesc(e.target.value)} />
+                                                            </div>
+                                                            <button className="btn sm pri" disabled={busy || !editPurchaseDesc.trim()} onClick={() => saveEditPurchase(s.id)}><Check size={14} /></button>
+                                                            <button className="btn sm" onClick={() => setEditPurchaseId(null)}><X size={14} /></button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="font-semibold block truncate">{p.description}</span>
+                                                            <button onClick={() => openEditPurchase(p)} className="text-muted flex-none" title="Təsviri redaktə et"><Pencil size={13} /></button>
+                                                        </div>
+                                                    )}
                                                     <span className="text-xs text-muted">{fmtDateTime(p.purchased_at)} tarixində alınıb</span>
                                                 </div>
                                                 <div className="flex gap-4 text-sm flex-none">

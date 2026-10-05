@@ -32,10 +32,8 @@ export function Sidebar() {
       <aside className="w-[264px] flex-none bg-side text-white py-6 pb-5 flex flex-col gap-6 h-screen sticky top-0">
         <div className="flex items-center gap-3 px-2">
           <Link
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Saytı yeni pəncərədə aç"
+              href="/dashboard"
+              title="Ana səhifə"
               className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center flex-none"
           >
             <LogoMark size={26} />
@@ -48,13 +46,13 @@ export function Sidebar() {
 
         <nav className="flex flex-col gap-0.5 px-3 flex-1 overflow-y-auto">
           {user?.is_superadmin && (
-              <Link href="/platform" className={`ni ${pathname.startsWith("/platform") ? "on" : ""}`}>
+              <Link href="/kapitan" className={`ni ${pathname.startsWith("/kapitan") ? "on" : ""}`}>
                 <Crown size={20} />
                 <span>Platforma (Super Admin)</span>
               </Link>
           )}
           {!user?.is_superadmin && user?.is_shop_admin && (
-              <Link href="/platform" className={`ni ${pathname.startsWith("/platform") ? "on" : ""}`}>
+              <Link href="/kapitan" className={`ni ${pathname.startsWith("/kapitan") ? "on" : ""}`}>
                 <Crown size={20} />
                 <span>Platforma (Mağaza admini)</span>
               </Link>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Phone, Mail, Pencil, Check, X, Plus } from "lucide-react";
 import { api } from "@/lib/api";
 import { Loader } from "@/components/Loader";
+import { Modal } from "@/components/Modal";
 
 type Customer = {
     id: number; full_name: string; phone: string; email: string; note: string;
@@ -34,6 +35,13 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     const [noteDraft, setNoteDraft] = useState("");
     const [saving, setSaving] = useState(false);
 
+    // Müştərinin özünün (ad, telefon, e-poçt) redaktəsi üçün.
+    const [editingInfo, setEditingInfo] = useState(false);
+    const [nameDraft, setNameDraft] = useState("");
+    const [phoneDraft, setPhoneDraft] = useState("");
+    const [emailDraft, setEmailDraft] = useState("");
+    const [savingInfo, setSavingInfo] = useState(false);
+
     function load() {
         api.customer(id).then((d) => { setCustomer(d as Customer); setNoteDraft((d as Customer).note); })
             .catch(() => setError("Müştəri tapılmadı."));
@@ -43,6 +51,24 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         }).catch(() => {});
     }
     useEffect(() => { load(); }, [id]);
+
+    function openEditInfo() {
+        if (!customer) return;
+        setNameDraft(customer.full_name); setPhoneDraft(customer.phone); setEmailDraft(customer.email ?? "");
+        setEditingInfo(true);
+    }
+
+    async function saveInfo() {
+        if (!nameDraft.trim() || !phoneDraft.trim()) return;
+        setSavingInfo(true);
+        try {
+            await api.updateCustomer(id, { full_name: nameDraft, phone: phoneDraft, email: emailDraft });
+            setEditingInfo(false);
+            load();
+        } finally {
+            setSavingInfo(false);
+        }
+    }
 
     async function saveNote() {
         setSaving(true);
@@ -68,7 +94,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 </Link>
                 <div className="av lg a1">{customer.initials}</div>
                 <div className="flex-1">
-                    <h1 className="text-xl font-semibold">{customer.full_name}</h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-xl font-semibold">{customer.full_name}</h1>
+                        <button onClick={openEditInfo} className="text-muted" title="Müştərini redaktə et"><Pencil size={15} /></button>
+                    </div>
                     <div className="flex items-center gap-4 text-ink2 text-sm mt-1">
                         <span className="flex items-center gap-1.5"><Phone size={14} />{customer.phone}</span>
                         {customer.email && <span className="flex items-center gap-1.5"><Mail size={14} />{customer.email}</span>}
@@ -78,6 +107,28 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     <Plus size={18} /><span>Yeni xidmət</span>
                 </Link>
             </div>
+
+            {editingInfo && (
+                <Modal title="Müştərini redaktə et" onClose={() => setEditingInfo(false)} maxWidth="max-w-lg">
+                    <div className="flex flex-col gap-3">
+                        <div className="fld">
+                            <label>Ad Soyad</label>
+                            <div className="inp"><input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} /></div>
+                        </div>
+                        <div className="fld">
+                            <label>Telefon</label>
+                            <div className="inp"><input value={phoneDraft} onChange={(e) => setPhoneDraft(e.target.value)} /></div>
+                        </div>
+                        <div className="fld">
+                            <label>E-poçt (istəyə bağlı)</label>
+                            <div className="inp"><input type="email" value={emailDraft} onChange={(e) => setEmailDraft(e.target.value)} /></div>
+                        </div>
+                        <button className="btn pri self-start" disabled={savingInfo || !nameDraft.trim() || !phoneDraft.trim()} onClick={saveInfo}>
+                            {savingInfo ? "Saxlanılır…" : "Yadda saxla"}
+                        </button>
+                    </div>
+                </Modal>
+            )}
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="card">

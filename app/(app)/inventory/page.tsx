@@ -96,7 +96,10 @@ export default function InventoryPage() {
     useEffect(() => {
         if (tab !== "market" || query.trim().length < 2) return;
         const t = setTimeout(() => {
-            api.marketplaceSearch(query).then((d) => setMarketResults(d as MarketProduct[])).catch(() => {});
+            api.marketplaceSearch(query).then((d) => {
+                const data = d as { results?: MarketProduct[] } | MarketProduct[];
+                setMarketResults(Array.isArray(data) ? data : data.results ?? []);
+            }).catch(() => setMarketResults([]));
         }, 300);
         return () => clearTimeout(t);
     }, [query, tab]);

@@ -6,6 +6,7 @@ import { LogOut, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { PlatformProvider, usePlatform } from "@/lib/platform-context";
 import { LogoMark } from "@/components/site/Logo";
+import { Loader } from "@/components/Loader";
 
 function Shell({ children }: { children: React.ReactNode }) {
     const { user, logout } = useAuth();
@@ -14,7 +15,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const isSuperadmin = !!user?.is_superadmin;
 
-    // İki səviyyəli naviqasiya: Bölmə (section, məs. "Mağazalar", "Sayt məzmunu") → onun daxilində
+    // İki səviyyəli naviqasiya: Bölmə (section, məs. "Müştəri bazası", "Sayt məzmunu") → onun daxilində
     // qruplar (group) → hər qrupun elementləri. `hidden` olan resurslar (bir mağazaya aid, "Ətraflı"
     // səhifəsində tab kimi açılanlar) burada göstərilmir — yalnız öz API-ları ilə işləyir.
     // Mağaza sahibi (owner rolu) üçün heç bir qrup göstərilmir — onun üçün "platforma" elə öz
@@ -38,10 +39,8 @@ function Shell({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen bg-bg flex flex-col">
             <header className="h-16 bg-side text-white flex items-center gap-3 px-4 md:px-6 flex-none">
                 <Link
-                    href="/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Saytı yeni pəncərədə aç"
+                    href="/kapitan"
+                    title="Ana səhifə"
                     className="w-9 h-9 rounded-[9px] bg-white flex items-center justify-center flex-none"
                 >
                     <LogoMark size={22} />
@@ -60,19 +59,23 @@ function Shell({ children }: { children: React.ReactNode }) {
 
             <div className="flex flex-1 min-h-0">
                 <aside className="hidden md:flex w-[248px] flex-none flex-col gap-4 p-3 border-r border-line bg-white overflow-y-auto">
-                    <Link href="/platform" className={linkCls(pathname === "/platform")}>
+                    <Link href="/kapitan" className={linkCls(pathname === "/kapitan")}>
                         <LayoutDashboard size={18} /><span>Ümumi baxış</span>
                     </Link>
                     {sections.map((s) => (
                         <div key={s.name} className="flex flex-col gap-2 pt-2 border-t border-line first:border-t-0 first:pt-0">
-                            <span className="px-3 text-[12px] font-bold uppercase tracking-wide text-ink">{s.name}</span>
+                            {/* "Platforma" sözü sidebarda görünmür — müştəri üçün qarışıq, texniki termindir;
+                                digər bölmə adları (Müştəri bazası, Sayt məzmunu, Planlar) faydalı olduğu üçün qalır. */}
+                            {s.name !== "Platforma" && (
+                                <span className="px-3 text-[12px] font-bold uppercase tracking-wide text-ink">{s.name}</span>
+                            )}
                             {s.groups.map((g) => (
                                 <div key={g.name} className="flex flex-col gap-0.5">
                                     {s.groups.length > 1 && (
                                         <span className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted">{g.name}</span>
                                     )}
                                     {g.items.map((it) => (
-                                        <Link key={it.key} href={`/platform/${it.key}`} className={linkCls(pathname === `/platform/${it.key}`)}>
+                                        <Link key={it.key} href={`/kapitan/${it.key}`} className={linkCls(pathname === `/kapitan/${it.key}`)}>
                                             <span className="truncate">{it.label}</span>
                                         </Link>
                                     ))}
@@ -89,9 +92,9 @@ function Shell({ children }: { children: React.ReactNode }) {
                             value={pathname}
                             onChange={(e) => router.push(e.target.value)}
                         >
-                            <option value="/platform">Ümumi baxış</option>
+                            <option value="/kapitan">Ümumi baxış</option>
                             {isSuperadmin && (resources ?? []).filter((r) => !r.hidden).map((r) => (
-                                <option key={r.key} value={`/platform/${r.key}`}>{r.section} — {r.group} — {r.label}</option>
+                                <option key={r.key} value={`/kapitan/${r.key}`}>{r.section} — {r.group} — {r.label}</option>
                             ))}
                         </select>
                     </div>
@@ -107,7 +110,7 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
     const router = useRouter();
     // Platform Super Admin — hər yerə. Mağaza admini (`is_shop_admin=True`, Rol sistemindən
     // tamam ayrı bir bayraq) — "platforma"ya daxil ola bilər, amma yalnız öz mağazasını görür
-    // (bax: `/platform/page.tsx`-dəki mağaza admini budağı).
+    // (bax: `/kapitan/page.tsx`-dəki mağaza admini budağı).
     const isShopOwner = !!(user?.shop && user?.is_shop_admin);
     const allowed = !!user?.is_superadmin || isShopOwner;
 
@@ -118,7 +121,7 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
     }, [loading, user, isShopOwner, router]);
 
     if (loading || !allowed) {
-        return <div className="min-h-screen flex items-center justify-center bg-bg text-muted text-sm">Yüklənir…</div>;
+        return <Loader fullScreen size={44} />;
     }
     return (
         <PlatformProvider>

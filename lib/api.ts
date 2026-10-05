@@ -6,6 +6,7 @@ export type Shop = {
   currency: string; default_warranty_days: number; status: string;
   address?: string; phone?: string; work_hours?: string; tax_id?: string; receipt_terms?: string;
   owner_full_name?: string; owner_phone?: string; owner_email?: string;
+  next_payment_at?: string | null; days_to_payment?: number | null;
 };
 export type Branch = { id: number; name: string; address: string; is_main: boolean };
 export type Role = { id: number; name: string; is_owner_role: boolean; permissions: { module: string; is_allowed: boolean }[] };
@@ -171,6 +172,8 @@ export const api = {
   stockMovements: (params = "") => apiFetch(`/inventory/movements/${params}`),
   createStockMovement: (payload: Record<string, unknown>) =>
       apiFetch("/inventory/movements/", { method: "POST", body: JSON.stringify(payload) }),
+  submitContactInquiry: (payload: { full_name: string; phone: string; message: string }) =>
+      apiFetch("/platform/public-contact/", { method: "POST", body: JSON.stringify(payload) }),
   marketplaceSearch: (q: string) => apiFetch(`/marketplace/search/?search=${encodeURIComponent(q)}`),
   marketplaceOrders: (params = "") => apiFetch(`/marketplace/orders/${params}`),
   createMarketplaceOrder: (payload: Record<string, unknown>) =>
@@ -181,11 +184,17 @@ export const api = {
   cashTransactions: (params = "") => apiFetch(`/cashbox/transactions/${params}`),
   createCashTransaction: (payload: Record<string, unknown>) =>
       apiFetch("/cashbox/transactions/", { method: "POST", body: JSON.stringify(payload) }),
+  updateCashTransaction: (id: number | string, payload: Record<string, unknown>) =>
+      apiFetch(`/cashbox/transactions/${id}/`, { method: "PATCH", body: JSON.stringify(payload) }),
   suppliers: (params = "") => apiFetch(`/suppliers/${params}`),
   createSupplier: (payload: Record<string, unknown>) =>
       apiFetch("/suppliers/", { method: "POST", body: JSON.stringify(payload) }),
+  updateSupplier: (id: number | string, payload: Record<string, unknown>) =>
+      apiFetch(`/suppliers/${id}/`, { method: "PATCH", body: JSON.stringify(payload) }),
   addSupplierPurchase: (id: number | string, payload: Record<string, unknown>) =>
       apiFetch(`/suppliers/${id}/purchases/`, { method: "POST", body: JSON.stringify(payload) }),
+  updateSupplierPurchase: (id: number | string, purchaseId: number | string, description: string) =>
+      apiFetch(`/suppliers/${id}/purchases/${purchaseId}/`, { method: "PATCH", body: JSON.stringify({ description }) }),
   paySupplier: (id: number | string, amount: number, method = "cash") =>
       apiFetch(`/suppliers/${id}/pay/`, { method: "POST", body: JSON.stringify({ amount, method }) }),
   createWarrantyReturn: (repairId: number | string, payload: Record<string, unknown>) =>

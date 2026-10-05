@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, UserPlus, ShieldCheck, Check } from "lucide-react";
+import { Plus, UserPlus, ShieldCheck, Check, CheckCheck, Square, Save } from "lucide-react";
 import { api } from "@/lib/api";
 import { Modal } from "@/components/Modal";
 
@@ -34,6 +34,10 @@ export default function UsersPage() {
     const [users, setUsers] = useState<User[] | null>(null);
     const [roles, setRoles] = useState<Role[] | null>(null);
     const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
+    // Rol icazələri: dəyişikliklər birbaşa saxlanmır — bir neçə modulu birdən seçib,
+    // sonra TƏK düymə ilə yadda saxlamaq üçün "draft" (hələ saxlanmamış) vəziyyət.
+    const [permDraft, setPermDraft] = useState<Record<string, boolean> | null>(null);
+    const [savingPerms, setSavingPerms] = useState(false);
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
 
@@ -106,21 +110,47 @@ export default function UsersPage() {
         } finally { setBusy(false); }
     }
 
-    async function togglePermission(role: Role, moduleKey: string) {
-        if (role.is_owner_role) return;
-        const current = role.permissions.find((p) => p.module === moduleKey)?.is_allowed ?? false;
-        const nextPerms = MODULES.map((m) => ({
-            module: m.key,
-            is_allowed: m.key === moduleKey ? !current : (role.permissions.find((p) => p.module === m.key)?.is_allowed ?? false),
-        }));
-        setBusy(true);
-        try {
-            await api.updateRolePermissions(role.id, nextPerms);
-            loadRoles();
-        } finally { setBusy(false); }
+    const selectedRole = roles?.find((r) => r.id === selectedRoleId) ?? null;
+
+    // Seçili rol üçün hazırkı (draft varsa draft, yoxsa serverdəki) icazə xəritəsi.
+    function effectivePerms(role: Role): Record<string, boolean> {
+        if (permDraft) return permDraft;
+        const map: Record<string, boolean> = {};
+        for (const m of MODULES) map[m.key] = role.permissions.find((p) => p.module === m.key)?.is_allowed ?? false;
+        return map;
     }
 
-    const selectedRole = roles?.find((r) => r.id === selectedRoleId) ?? null;
+    // Bir modulu işarələ/işarəni götür — YALNIZ yaddaşda (draft), serverə hələ getmir.
+    // Bu sayədə istifadəçi bir neçə modulu bir dəfəyə seçib sonra TƏK dəfə "Yadda saxla"ya basa bilir.
+    function toggleDraft(role: Role, moduleKey: string) {
+        if (role.is_owner_role) return;
+        const base = effectivePerms(role);
+        setPermDraft({ ...base, [moduleKey]: !base[moduleKey] });
+    }
+
+    function selectAllDraft(role: Role, value: boolean) {
+        if (role.is_owner_role) return;
+        const map: Record<string, boolean> = {};
+        for (const m of MODULES) map[m.key] = value;
+        setPermDraft(map);
+    }
+
+    function discardDraft() {
+        setPermDraft(null);
+    }
+
+    async function savePermDraft(role: Role) {
+        if (!permDraft) return;
+        setSavingPerms(true);
+        try {
+            const nextPerms = MODULES.map((m) => ({ module: m.key, is_allowed: permDraft[m.key] ?? false }));
+            await api.updateRolePermissions(role.id, nextPerms);
+            setPermDraft(null);
+            loadRoles();
+        } catch {
+            setError("İcazələr saxlanıla bilmədi.");
+        } finally { setSavingPerms(false); }
+    }
 
     return (
         <>
@@ -226,7 +256,7 @@ export default function UsersPage() {
                         {(roles ?? []).map((r) => (
                             <button
                                 key={r.id}
-                                onClick={() => setSelectedRoleId(r.id)}
+                                onClick={() => { setSelectedRoleId(r.id); setPermDraft(null); }}
                                 className={`text-left p-3.5 rounded-[10px] border flex items-center gap-2.5 ${selectedRoleId === r.id ? "bg-side border-side text-white" : "bg-white border-line text-ink"}`}
                             >
                                 <ShieldCheck size={18} className={selectedRoleId === r.id ? "text-brand" : "text-muted"} />
@@ -241,20 +271,32 @@ export default function UsersPage() {
                     <div className="flex-1 w-full min-w-0">
                         {selectedRole ? (
                             <div className="card">
-                                <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
                                     <h3 className="text-base font-semibold">{selectedRole.name} — icazələr</h3>
                                     {selectedRole.is_owner_role && <span className="badge b-gray"><i />Sahib rolu — dəyişdirilə bilməz</span>}
                                 </div>
-                                <p className="text-muted text-sm mb-4">Bu rola sahib istifadəçilər aşağıdakı bölmələrə giriş əldə edir.</p>
+                                <p className="text-muted text-sm mb-1">Bir neçə bölməni birdən seçib, sonra "Yadda saxla"ya basın.</p>
+                                {!selectedRole.is_owner_role && (
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <button type="button" className="btn !h-8 !px-2.5 text-xs" onClick={() => selectAllDraft(selectedRole, true)}>
+                                            <CheckCheck size={14} /><span>Hamısını seç</span>
+                                        </button>
+                                        <button type="button" className="btn !h-8 !px-2.5 text-xs" onClick={() => selectAllDraft(selectedRole, false)}>
+                                            <Square size={14} /><span>Heç birini seçmə</span>
+                                        </button>
+                                        {permDraft && <span className="text-xs text-amber-600 font-medium ml-auto">Saxlanılmamış dəyişikliklər var</span>}
+                                    </div>
+                                )}
                                 <div className="flex flex-col">
                                     {MODULES.map((m) => {
-                                        const allowed = selectedRole.is_owner_role || (selectedRole.permissions.find((p) => p.module === m.key)?.is_allowed ?? false);
+                                        const allowed = selectedRole.is_owner_role || effectivePerms(selectedRole)[m.key];
                                         return (
                                             <div key={m.key} className="flex items-center justify-between py-3 border-b border-line last:border-b-0">
                                                 <span className="text-sm font-medium">{m.label}</span>
                                                 <button
-                                                    disabled={selectedRole.is_owner_role || busy}
-                                                    onClick={() => togglePermission(selectedRole, m.key)}
+                                                    type="button"
+                                                    disabled={selectedRole.is_owner_role || savingPerms}
+                                                    onClick={() => toggleDraft(selectedRole, m.key)}
                                                     className={`w-11 h-6 rounded-full relative transition-colors flex-none ${allowed ? "bg-side" : "bg-line"} ${selectedRole.is_owner_role ? "opacity-60" : ""}`}
                                                 >
                           <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white flex items-center justify-center transition-all ${allowed ? "left-[22px]" : "left-0.5"}`}>
@@ -265,6 +307,14 @@ export default function UsersPage() {
                                         );
                                     })}
                                 </div>
+                                {!selectedRole.is_owner_role && permDraft && (
+                                    <div className="flex gap-2.5 justify-end mt-4 pt-3 border-t border-line">
+                                        <button type="button" className="btn" disabled={savingPerms} onClick={discardDraft}>Ləğv et</button>
+                                        <button type="button" className="btn pri" disabled={savingPerms} onClick={() => savePermDraft(selectedRole)}>
+                                            <Save size={16} /><span>{savingPerms ? "Saxlanılır…" : "Yadda saxla"}</span>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="card text-center text-muted text-sm py-10">Rol seçin.</div>
