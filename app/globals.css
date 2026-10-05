@@ -91,6 +91,8 @@ body {
 .btn.pri { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); @apply font-bold; }
 .btn.pri:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
 .btn.dark { background: var(--side); border-color: var(--side); @apply text-white; }
+.btn.danger { background: var(--red); border-color: var(--red); @apply text-white font-bold; }
+.btn.danger:hover { opacity: .9; }
 .btn.ghost { @apply border-transparent bg-transparent; color: var(--ink2); }
 .btn.block { @apply w-full; }
 .btn.sm { @apply h-9 px-3 text-xs; }
@@ -131,3 +133,13 @@ body {
 .ni.on { background: rgba(17,108,251,.18); @apply text-white font-semibold; }
 .ni.on svg { color: var(--brand); }
 .ni .cnt { @apply ml-auto text-[11px] font-bold rounded-full px-2 py-px; background: var(--brand); color: var(--brand-ink); }
+/* Platforma alt-siyahısı kimi uzun, çox-maddəli naviqasiyalar üçün daha yığcam sətir —
+   eyni rəng/hover davranışı, sadəcə daha az hündürlük və kiçik şrift. */
+.ni-sm { @apply flex items-center px-3 h-8 rounded-lg text-[13px] font-medium; color: #A9BEC5; }
+.ni-sm:hover { @apply bg-white/5; }
+.ni-sm.on { background: rgba(17,108,251,.18); @apply text-white font-semibold; }
+
+/* Skrollu saxlayır, zolağı gizlədir — sidebar (və platforma siyahısı kimi uzun naviqasiyalar üçün)
+   vizual cəhətdən təmiz görünsün deyə, amma mausla/toxunma ilə skroll yenə işləyir. */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }

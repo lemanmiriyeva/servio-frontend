@@ -37,10 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = (await api.login(username, password)) as { access: string; refresh: string; user: Me };
     setTokens(data.access, data.refresh);
     setUser(data.user);
-    // Daxil olan HƏR KƏS birbaşa /dashboard-a aparılır (əvvəllər Super Admin/mağaza admini
-    // "Müştəri bazası"na yönləndirilirdi — bu, onu adi iş axınından ayırırdı). Sidebar-dakı
-    // "Müştəri bazası" linki ilə ora həmişə bir kliklə keçmək mümkündür.
-    router.push("/dashboard");
+    // Mağazaya bağlı olan HƏR KƏS (adi işçi, mağaza admini) birbaşa /dashboard-a aparılır —
+    // "Müştəri bazası"na sidebar-dakı linklə bir kliklə keçmək mümkündür. Mağazaya bağlı OLMAYAN
+    // saf Platform Super Admin üçün isə /dashboard-un göstərəcəyi heç nə yoxdur (heç bir mağazası
+    // yoxdur) — o, birbaşa "Müştəri bazası"na (/platform) aparılır.
+    router.push(data.user.shop ? "/dashboard" : "/platform");
   }
 
   function logout() {

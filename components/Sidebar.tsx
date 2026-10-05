@@ -1,11 +1,14 @@
 "use client";
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutGrid, Users, Wrench, Truck, Boxes, Wallet, Receipt,
   CreditCard, BarChart3, ShieldCheck, UsersRound, Bell, Settings2, LogOut, Crown,
+  ArrowLeft, LayoutDashboard,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { usePlatform } from "@/lib/platform-context";
 import { LogoMark } from "@/components/site/Logo";
 
 const NAV = [
@@ -27,12 +30,34 @@ const NAV = [
 export function Sidebar() {
   const pathname = usePathname();
   const { user, hasModule, logout } = useAuth();
+  const { resources } = usePlatform();
+
+  const inPlatform = pathname.startsWith("/platform");
+  const isSuperadmin = !!user?.is_superadmin;
+  const canUsePlatform = isSuperadmin || !!(user?.shop && user?.is_shop_admin);
+  // Mağazaya bağlı olmayan saf Platform Super Admin üçün "İdarəetmə paneli"nə (adi mağaza
+  // dashboard-u) qayıdışın mənası yoxdur — onun göstəriləcək mağazası yoxdur.
+  const hasDashboard = !!user?.shop;
+
+  // Platforma naviqasiyası YALNIZ Super Admin üçün bölmə/qrup ağacı ilə qurulur (mağaza admini
+  // üçün alt-bölmə yoxdur — onun "Ümumi baxış"ı elə öz mağazasıdır, bax `/platform/page.tsx`).
+  const sections = useMemo(() => {
+    const secs: { name: string; items: { key: string; label: string }[] }[] = [];
+    if (!isSuperadmin) return secs;
+    (resources ?? []).forEach((r) => {
+      if (r.hidden) return;
+      let s = secs.find((x) => x.name === r.section);
+      if (!s) { s = { name: r.section, items: [] }; secs.push(s); }
+      s.items.push({ key: r.key, label: r.label });
+    });
+    return secs;
+  }, [resources, isSuperadmin]);
 
   return (
       <aside className="w-[264px] flex-none bg-side text-white py-6 pb-5 flex flex-col gap-6 h-screen sticky top-0">
         <div className="flex items-center gap-3 px-2">
           <Link
-              href="/dashboard"
+              href={hasDashboard ? "/dashboard" : "/platform"}
               title="Ana səhifə"
               className="w-11 h-11 rounded-[10px] bg-white flex items-center justify-center flex-none"
           >
@@ -44,24 +69,54 @@ export function Sidebar() {
           </div>
         </div>
 
-        <nav className="flex flex-col gap-0.5 px-3 flex-1 overflow-y-auto">
-          {(user?.is_superadmin || user?.is_shop_admin) && (
-              <Link href="/platform" className={`ni ${pathname.startsWith("/platform") ? "on" : ""}`}>
-                <Crown size={20} />
-                <span>Müştəri bazası</span>
-              </Link>
-          )}
-          {NAV.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(item.href + "/");
-            if (item.module && !hasModule(item.module)) return null;
-            const Icon = item.icon;
-            return (
-                <Link key={item.href} href={item.href} className={`ni ${active ? "on" : ""}`}>
-                  <Icon size={20} />
-                  <span>{item.label}</span>
+        <nav className="no-scrollbar flex flex-col gap-0.5 px-3 flex-1 overflow-y-auto">
+          {inPlatform && canUsePlatform ? (
+              <>
+                {hasDashboard && (
+                    <Link href="/dashboard" className="ni mb-1">
+                      <ArrowLeft size={20} />
+                      <span>İdarəetmə panelinə qayıt</span>
+                    </Link>
+                )}
+                <Link href="/platform" className={`ni ${pathname === "/platform" ? "on" : ""}`}>
+                  <LayoutDashboard size={20} />
+                  <span>Ümumi baxış</span>
                 </Link>
-            );
-          })}
+                {sections.map((s) => (
+                    <div key={s.name} className="flex flex-col gap-0.5 mt-3 pt-3 border-t border-white/10 first:mt-1 first:pt-1 first:border-t-0">
+                      {/* "Platforma" sözü sidebarda görünmür — müştəri üçün qarışıq, texniki termindir. */}
+                      {s.name !== "Platforma" && (
+                          <span className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wide text-[#8FA9B2]">{s.name}</span>
+                      )}
+                      {s.items.map((it) => (
+                          <Link key={it.key} href={`/platform/${it.key}`} className={`ni-sm ${pathname === `/platform/${it.key}` ? "on" : ""}`}>
+                            <span className="truncate">{it.label}</span>
+                          </Link>
+                      ))}
+                    </div>
+                ))}
+              </>
+          ) : (
+              <>
+                {canUsePlatform && (
+                    <Link href="/platform" className={`ni ${inPlatform ? "on" : ""}`}>
+                      <Crown size={20} />
+                      <span>Müştəri bazası</span>
+                    </Link>
+                )}
+                {NAV.map((item) => {
+                  const active = pathname === item.href || pathname.startsWith(item.href + "/");
+                  if (item.module && !hasModule(item.module)) return null;
+                  const Icon = item.icon;
+                  return (
+                      <Link key={item.href} href={item.href} className={`ni ${active ? "on" : ""}`}>
+                        <Icon size={20} />
+                        <span>{item.label}</span>
+                      </Link>
+                  );
+                })}
+              </>
+          )}
         </nav>
 
         <div className="mx-3 mt-auto flex gap-2.5 items-center p-3 rounded-[10px] bg-white/[0.07]">
