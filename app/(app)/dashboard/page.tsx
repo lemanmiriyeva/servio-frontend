@@ -105,7 +105,7 @@ export default function DashboardPage() {
           <div>
             <div className="text-[13px] text-[#8FA9B2]">Kassa</div>
             <div className="text-[40px] md:text-[48px] font-semibold tracking-tight leading-[1.05] mt-1.5">
-              {data ? (data.month_income === null ? "•••••" : mask(fmt(data.month_income))) : "—"}
+              {data ? (data.cash_balance == null ? "•••••" : mask(`${fmt(data.cash_balance)}`)) : "—"}
               <small className="text-lg font-semibold text-[#8FA9B2] ml-2">AZN</small>
             </div>
           </div>
@@ -128,9 +128,9 @@ export default function DashboardPage() {
             <div className="w-full sm:w-[250px] bg-white/[0.07] rounded-xl p-4.5 flex flex-col gap-2">
               <span className="text-[13px] text-[#8FA9B2]">Kassa balansı</span>
               <div className="text-2xl font-semibold tracking-tight">
-                {data ? (data.cash_balance === null ? "•••••" : mask(`${fmt(data.cash_balance)} AZN`)) : "—"}
+                {data ? (data.cash_balance == null ? "•••••" : mask(`${fmt(data.cash_balance)} AZN`)) : "—"}
               </div>
-              <div className="text-xs text-[#8FA9B2]">{data?.cash_balance === null ? "Bu rol üçün gizlədilib" : "Xərc və təchizatçı ödənişi düşülüb"}</div>
+              <div className="text-xs text-[#8FA9B2]">{data?.cash_balance == null ? "Bu rol üçün gizlədilib" : "Xərc və təchizatçı ödənişi düşülüb"}</div>
             </div>
           </div>
         </div>

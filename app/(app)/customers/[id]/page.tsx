@@ -131,7 +131,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 </Modal>
             )}
 
-            <div className={`grid grid-cols-2 gap-4 ${customer.total_profit !== null ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
+            <div className={`grid grid-cols-2 gap-4 ${customer.total_profit != null ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Ümumi təmir</span>
                     <div className="text-[28px] font-semibold tracking-tight mt-1.5">{customer.repair_count}</div>
@@ -150,7 +150,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                     <span className="text-ink2 text-[13px] font-medium">Aktiv zəmanət</span>
                     <div className="text-[28px] font-semibold tracking-tight mt-1.5">{activeWarranties}</div>
                 </div>
-                {customer.total_profit !== null && (
+                {customer.total_profit != null && (
                     <div className="card">
                         <span className="text-ink2 text-[13px] font-medium">Mənfəət</span>
                         <div className="text-[28px] font-semibold tracking-tight mt-1.5 pos">
