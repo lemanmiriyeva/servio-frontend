@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CreditCard, Truck } from "lucide-react";
 import { api } from "@/lib/api";
+import { Pagination, paginate } from "@/components/Pagination";
 
 type CustomerDebt = {
     id: number; number: string; customer_name: string; customer_initials: string;
@@ -19,6 +20,8 @@ export default function DebtsPage() {
     const [supplierDebts, setSupplierDebts] = useState<Supplier[] | null>(null);
     const [tab, setTab] = useState<"customer" | "supplier">("customer");
     const [error, setError] = useState("");
+    const [customerPage, setCustomerPage] = useState(1);
+    const [supplierPage, setSupplierPage] = useState(1);
 
     useEffect(() => {
         api.repairDebts().then((d) => setCustomerDebts(d as CustomerDebt[])).catch(() => setError("Borclar yüklənmədi."));
@@ -73,7 +76,7 @@ export default function DebtsPage() {
                                 <div className="flex-none w-[110px]">Son tarix</div>
                                 <div className="flex-none w-[90px] text-right">Məbləğ</div>
                             </div>
-                            {(customerDebts ?? []).map((d) => (
+                            {paginate(customerDebts ?? [], customerPage).map((d) => (
                                 <Link key={d.id} href={`/repairs/${d.id}`} className="tr hover:bg-gray-50/60 cursor-pointer">
                                     <div className="flex-1 flex items-center gap-2.5 font-semibold min-w-0">
                                         <div className="av a2">{d.customer_initials}</div>
@@ -96,13 +99,14 @@ export default function DebtsPage() {
                             )}
                         </div>
                     </div>
+                    <Pagination page={customerPage} totalItems={customerDebts?.length ?? 0} onChange={setCustomerPage} />
                 </div>
             ) : (
                 <div className="card !p-2">
                     <div className="overflow-x-auto">
                         <div className="min-w-[400px]">
                             <div className="tr h"><div className="flex-1">Təchizatçı</div><div className="flex-none w-[110px] text-right">Borc</div></div>
-                            {(supplierDebts ?? []).map((s) => (
+                            {paginate(supplierDebts ?? [], supplierPage).map((s) => (
                                 <Link key={s.id} href="/suppliers" className="tr hover:bg-gray-50/60 cursor-pointer">
                                     <div className="flex-1 flex items-center gap-2.5 font-semibold">
                                         <div className="t-purple w-9 h-9 rounded-[9px] flex items-center justify-center"><Truck size={16} /></div>
@@ -116,6 +120,7 @@ export default function DebtsPage() {
                             )}
                         </div>
                     </div>
+                    <Pagination page={supplierPage} totalItems={supplierDebts?.length ?? 0} onChange={setSupplierPage} />
                 </div>
             )}
         </>

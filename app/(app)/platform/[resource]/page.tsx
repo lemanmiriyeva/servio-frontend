@@ -9,7 +9,7 @@ import { Loader } from "@/components/Loader";
 
 type Row = Record<string, unknown> & { id: string | number };
 export type Option = { value: string; label: string; shop?: string };
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 const TEXT_LIKE = ["text", "textarea", "email"];
 
 function errText(e: unknown, fields: PlatformField[] = []): string {

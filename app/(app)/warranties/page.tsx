@@ -5,6 +5,7 @@ import { ShieldCheck, ShieldAlert, ShieldX, FileDown, Mail } from "lucide-react"
 import { api, ApiError } from "@/lib/api";
 import { useDialog } from "@/lib/dialog-context";
 import { Loader } from "@/components/Loader";
+import { Pagination, paginate } from "@/components/Pagination";
 
 type Warranty = {
     id: number; number: string; customer_id: number; customer_name: string; customer_initials: string;
@@ -27,6 +28,7 @@ export default function WarrantiesPage() {
     const [all, setAll] = useState<Warranty[] | null>(null);
     const [error, setError] = useState("");
     const [tab, setTab] = useState<"active" | "ending" | "expired">("active");
+    const [page, setPage] = useState(1);
     const [busyId, setBusyId] = useState<number | null>(null);
     const { alert, prompt } = useDialog();
 
@@ -98,6 +100,10 @@ export default function WarrantiesPage() {
         if (tab === "expired") return list.filter((w) => (w.warranty_days_left ?? 0) < 0);
         return list.filter((w) => (w.warranty_days_left ?? -1) >= 0);
     }, [all, tab]);
+    // Tab dəyişəndə səhifə 1-ə qayıtsın — render zamanı uyğunlaşdırılır.
+    const [prevTab, setPrevTab] = useState(tab);
+    if (tab !== prevTab) { setPrevTab(tab); if (page !== 1) setPage(1); }
+    const pageItems = useMemo(() => paginate(filtered, page), [filtered, page]);
 
     return (
         <>
@@ -146,7 +152,7 @@ export default function WarrantiesPage() {
                             <div className="flex-none w-[150px]">Vəziyyət</div>
                             <div className="flex-none w-[96px] text-center">Sənəd</div>
                         </div>
-                        {filtered.map((w, i) => {
+                        {pageItems.map((w, i) => {
                             const st = statusFor(w.warranty_days_left);
                             return (
                                 <div key={w.id} className="tr">
@@ -190,6 +196,7 @@ export default function WarrantiesPage() {
                         )}
                     </div>
                 </div>
+                <Pagination page={page} totalItems={filtered.length} onChange={setPage} />
             </div>
         </>
     );

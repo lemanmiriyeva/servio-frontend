@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useDialog } from "@/lib/dialog-context";
 import { ShopTabs } from "./ShopTabs";
 import { Loader } from "@/components/Loader";
+import { Pagination, paginate } from "@/components/Pagination";
 
 type Shop = {
     id: string; name: string; code: string; owner_full_name: string; city: string;
@@ -53,6 +54,7 @@ export default function PlatformPage() {
     const [search, setSearch] = useState("");
     const [error, setError] = useState("");
     const [togglingId, setTogglingId] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
     const { prompt } = useDialog();
 
     async function toggleShopActive(s: Shop) {
@@ -99,6 +101,11 @@ export default function PlatformPage() {
         }
         return list;
     }, [shops, filter, search]);
+    // Filtr/axtarış dəyişəndə səhifə 1-ə qayıtsın — render zamanı uyğunlaşdırılır.
+    const filterKey = `${filter}|${search}`;
+    const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+    if (filterKey !== prevFilterKey) { setPrevFilterKey(filterKey); if (page !== 1) setPage(1); }
+    const pageItems = useMemo(() => paginate(filtered, page), [filtered, page]);
 
     const tabs: { k: "all" | Shop["status"]; l: string }[] = [
         { k: "all", l: "Hamısı" }, { k: "active", l: "Aktiv" }, { k: "trial", l: "Sınaq" },
@@ -187,7 +194,7 @@ export default function PlatformPage() {
                             <div className="flex-none w-[90px] text-right">Aylıq</div>
                             <div className="flex-none w-[70px] text-center">Aktiv</div>
                         </div>
-                        {filtered.map((s, i) => {
+                        {pageItems.map((s, i) => {
                             const st = STATUS[s.status];
                             const left = s.status === "trial" ? trialDaysLeft(s.trial_ends_at) : null;
                             const urgency = URGENCY_STYLE[s.payment_urgency] ?? URGENCY_STYLE.ok;
@@ -243,6 +250,7 @@ export default function PlatformPage() {
                         {!shops && !error && <Loader />}
                     </div>
                 </div>
+                <Pagination page={page} totalItems={filtered.length} onChange={setPage} />
             </div>
         </>
     );

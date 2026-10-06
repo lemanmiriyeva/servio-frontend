@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, use as usePromise } from "react";
+import { Pagination, paginate } from "@/components/Pagination";
 import Link from "next/link";
 import { ArrowLeft, Phone, Mail, Pencil, Check, X, Plus } from "lucide-react";
 import { api } from "@/lib/api";
@@ -42,6 +43,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     const [phoneDraft, setPhoneDraft] = useState("");
     const [emailDraft, setEmailDraft] = useState("");
     const [savingInfo, setSavingInfo] = useState(false);
+    const [repairsPage, setRepairsPage] = useState(1);
 
     function load() {
         api.customer(id).then((d) => { setCustomer(d as Customer); setNoteDraft((d as Customer).note); })
@@ -173,7 +175,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                                     <div className="flex-none w-[80px] text-right">Məbləğ</div>
                                     <div className="flex-none w-[100px] text-right">Qalıq borc</div>
                                 </div>
-                                {(repairs ?? []).map((r) => (
+                                {paginate(repairs ?? [], repairsPage).map((r) => (
                                     <Link key={r.id} href={`/repairs/${r.id}`} className="tr hover:bg-gray-50/60 cursor-pointer">
                                         <div className="flex-none w-[120px]"><span className="mono text-[13px]">{r.number}</span></div>
                                         <div className="flex-1 leading-tight min-w-0">
@@ -194,6 +196,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                                 )}
                             </div>
                         </div>
+                        <Pagination page={repairsPage} totalItems={repairs?.length ?? 0} onChange={setRepairsPage} />
                     </div>
                 </div>
 

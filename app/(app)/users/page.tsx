@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Plus, UserPlus, ShieldCheck, Check, CheckCheck, Square, Save } from "lucide-react";
 import { api } from "@/lib/api";
 import { Modal } from "@/components/Modal";
+import { Pagination, paginate } from "@/components/Pagination";
 
 type RolePerm = { module: string; is_allowed: boolean };
 type Role = { id: number; name: string; is_owner_role: boolean; permissions: RolePerm[]; user_count: number };
@@ -32,6 +33,7 @@ const STATUS_BADGE: Record<string, string> = { active: "b-green", invited: "b-am
 export default function UsersPage() {
     const [tab, setTab] = useState<"users" | "roles">("users");
     const [users, setUsers] = useState<User[] | null>(null);
+    const [usersPage, setUsersPage] = useState(1);
     const [roles, setRoles] = useState<Role[] | null>(null);
     const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
     // Rol icazələri: dəyişikliklər birbaşa saxlanmır — bir neçə modulu birdən seçib,
@@ -213,7 +215,7 @@ export default function UsersPage() {
                                     <div className="flex-none w-[180px]">Rol</div>
                                     <div className="flex-none w-[130px]">Vəziyyət</div>
                                 </div>
-                                {(users ?? []).map((u) => (
+                                {paginate(users ?? [], usersPage).map((u) => (
                                     <div key={u.id} className="tr">
                                         <div className="flex-1 flex items-center gap-2.5 font-semibold min-w-0">
                                             <div className="av a4">{u.initials}</div>
@@ -249,6 +251,7 @@ export default function UsersPage() {
                                 )}
                             </div>
                         </div>
+                        <Pagination page={usersPage} totalItems={users?.length ?? 0} onChange={setUsersPage} />
                     </div>
                 </>
             )}

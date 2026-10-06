@@ -8,6 +8,7 @@ import {
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Modal } from "@/components/Modal";
+import { Pagination, paginate } from "@/components/Pagination";
 
 type Product = {
     id: number; name: string; brand: string; category: string; sku: string;
@@ -52,6 +53,9 @@ export default function InventoryPage() {
 
     // Stock
     const [products, setProducts] = useState<Product[] | null>(null);
+    const [productsPage, setProductsPage] = useState(1);
+    const [marketPage, setMarketPage] = useState(1);
+    const [ordersPage, setOrdersPage] = useState(1);
     const [showNewProduct, setShowNewProduct] = useState(false);
     const [pName, setPName] = useState(""); const [pBrand, setPBrand] = useState("");
     const [pCategory, setPCategory] = useState(""); const [pQty, setPQty] = useState("");
@@ -274,7 +278,7 @@ export default function InventoryPage() {
                                         Marketplace
                                     </div>
                                 </div>
-                                {(products ?? []).map((p) => (
+                                {paginate(products ?? [], productsPage).map((p) => (
                                     <div key={p.id} className="tr">
                                         <div className="flex-1 min-w-0">
                                             <span className="flex items-center gap-1.5 min-w-0">
@@ -303,6 +307,7 @@ export default function InventoryPage() {
                                 )}
                             </div>
                         </div>
+                        <Pagination page={productsPage} totalItems={products?.length ?? 0} onChange={setProductsPage} />
                     </div>
                 </>
             )}
@@ -334,7 +339,7 @@ export default function InventoryPage() {
                     </div>
 
                     <div className="flex flex-col gap-2.5">
-                        {(tab === "market" && query.trim().length >= 2 ? (marketResults ?? []) : []).map((mp) => (
+                        {paginate(tab === "market" && query.trim().length >= 2 ? (marketResults ?? []) : [], marketPage).map((mp) => (
                             <div key={mp.id} className="card flex items-center gap-3">
                                 <div className="t-cyan w-10 h-10 rounded-[10px] flex items-center justify-center flex-none"><Store size={18} /></div>
                                 <div className="flex-1 min-w-0">
@@ -358,6 +363,11 @@ export default function InventoryPage() {
                         {query.trim().length >= 2 && marketResults && marketResults.length === 0 && (
                             <div className="card text-center text-muted text-sm py-8">Bu axtarışa uyğun məhsul tapılmadı.</div>
                         )}
+                        <Pagination
+                            page={marketPage}
+                            totalItems={query.trim().length >= 2 ? (marketResults?.length ?? 0) : 0}
+                            onChange={setMarketPage}
+                        />
                         {query.trim().length < 2 && (
                             <div className="card text-center text-muted text-sm py-8">Axtarış üçün ən azı 2 hərf yazın.</div>
                         )}
@@ -367,7 +377,7 @@ export default function InventoryPage() {
 
             {tab === "orders" && (
                 <div className="flex flex-col gap-2.5">
-                    {(orders ?? []).map((o) => {
+                    {paginate(orders ?? [], ordersPage).map((o) => {
                         const st = ORDER_STATUS[o.status] ?? { label: o.status, badge: "b-gray" };
                         // Mən alıcıyam, yoxsa satıcı? — cəhətə görə fərqli ikon/rəng/mətn, çünki
                         // "kimdən kimə" sualı məhz bunun qarışdırılmasından yaranırdı.
@@ -425,6 +435,7 @@ export default function InventoryPage() {
                     {orders && orders.length === 0 && (
                         <div className="card text-center text-muted text-sm py-10">Hələ marketplace sifarişi yoxdur.</div>
                     )}
+                    <Pagination page={ordersPage} totalItems={orders?.length ?? 0} onChange={setOrdersPage} />
                 </div>
             )}
         </>
