@@ -313,9 +313,9 @@ export default function InventoryPage() {
                         <Info size={18} className="text-muted flex-none mt-0.5" />
                         <p className="text-sm text-ink2">
                             <b className="text-ink">Marketplace nədir?</b> Başqa servislərin anbarında olan, onların
-                            "Marketplace-də göstər" ilə açıq qoyduğu ehtiyat hissələrini bura axtarıb sifariş verə
+                            &quot;Marketplace-də göstər&quot; ilə açıq qoyduğu ehtiyat hissələrini bura axtarıb sifariş verə
                             bilərsiniz — öz anbarınızda olmayan bir hissəni başqa mağazadan əldə etmək üçün. Eyni
-                            şəkildə, sizin "Mənim anbarım" tabında açıq (yaşıl) etdiyiniz məhsulları da başqa
+                            şəkildə, sizin &quot;Mənim anbarım&quot; tabında açıq (yaşıl) etdiyiniz məhsulları da başqa
                             mağazalar burada görüb sizdən sifariş verə bilər.
                         </p>
                     </div>

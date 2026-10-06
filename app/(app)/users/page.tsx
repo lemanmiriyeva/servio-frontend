@@ -304,7 +304,7 @@ export default function UsersPage() {
                                     <h3 className="text-base font-semibold">{selectedRole.name} — icazələr</h3>
                                     {selectedRole.is_owner_role && <span className="badge b-gray"><i />Sahib rolu — dəyişdirilə bilməz</span>}
                                 </div>
-                                <p className="text-muted text-sm mb-1">Bir neçə bölməni birdən seçib, sonra "Yadda saxla"ya basın.</p>
+                                <p className="text-muted text-sm mb-1">Bir neçə bölməni birdən seçib, sonra &quot;Yadda saxla&quot;ya basın.</p>
                                 {!selectedRole.is_owner_role && (
                                     <div className="flex items-center gap-2 mb-3">
                                         <button type="button" className="btn !h-8 !px-2.5 text-xs" onClick={() => selectAllDraft(selectedRole, true)}>

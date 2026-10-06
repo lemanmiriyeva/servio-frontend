@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Plus, ArrowDownCircle, ArrowUpCircle, Pencil } from "lucide-react";
 import { api } from "@/lib/api";
 import { Modal } from "@/components/Modal";
+import { Pagination, paginate } from "@/components/Pagination";
 
 type Summary = {
     opening_balance: number; income: number; expense: number;
@@ -25,6 +26,7 @@ export default function CashboxPage() {
     const [summary, setSummary] = useState<Summary | null>(null);
     const [transactions, setTransactions] = useState<Transaction[] | null>(null);
     const [typeFilter, setTypeFilter] = useState("");
+    const [page, setPage] = useState(1);
     const [showForm, setShowForm] = useState(false);
     const [formType, setFormType] = useState<"income" | "expense">("expense");
     const [amount, setAmount] = useState("");
@@ -90,8 +92,19 @@ export default function CashboxPage() {
             }).catch(() => {});
     }
     useEffect(() => { load(); }, [typeFilter]);
+    // Növ filtri dəyişəndə səhifə 1-ə qayıtsın — effekt əvəzinə render zamanı uyğunlaşdırılır.
+    const [prevTypeFilter, setPrevTypeFilter] = useState(typeFilter);
+    if (typeFilter !== prevTypeFilter) { setPrevTypeFilter(typeFilter); if (page !== 1) setPage(1); }
+    const pageItems = transactions ? paginate(transactions, page) : [];
+    // "Xərc" seçilməyəndə təchizatçı seçimini sıfırlayır — render zamanı uyğunlaşdırılır
+    // ki, effekt daxilində birbaşa setState çağırışı olmasın.
+    const [prevFormType, setPrevFormType] = useState(formType);
+    if (formType !== prevFormType) {
+        setPrevFormType(formType);
+        if (formType !== "expense") setSupplierId("");
+    }
     useEffect(() => {
-        if (formType !== "expense") { setSupplierId(""); return; }
+        if (formType !== "expense") return;
         api.suppliers().then((d) => {
             const data = d as { results?: { id: number; name: string }[] } | { id: number; name: string }[];
             setSuppliers(Array.isArray(data) ? data : data.results ?? []);
@@ -214,7 +227,7 @@ export default function CashboxPage() {
                     {supplierId && (
                         <p className="text-xs text-muted">
                             Bu əməliyyat seçilmiş təchizatçının borcundan (ən köhnə alışdan başlayaraq) avtomatik çıxılacaq
-                            və onun "Ödəniş tarixçəsi"ndə görünəcək.
+                            və onun &quot;Ödəniş tarixçəsi&quot;ndə görünəcək.
                         </p>
                     )}
                     <button className="btn pri self-start" disabled={saving} onClick={handleSubmit}>
@@ -283,7 +296,7 @@ export default function CashboxPage() {
                             <div className="flex-none w-[90px] text-right">Məbləğ</div>
                             <div className="flex-none w-[44px]" />
                         </div>
-                        {(transactions ?? []).map((t) => (
+                        {pageItems.map((t) => (
                             <div key={t.id} className="tr">
                                 <div className="flex-none w-[150px] text-ink2 text-sm">{new Date(t.created_at).toLocaleString("az-AZ")}</div>
                                 <div className="flex-1 min-w-0 truncate">
@@ -309,6 +322,7 @@ export default function CashboxPage() {
                         )}
                     </div>
                 </div>
+                <Pagination page={page} totalItems={transactions?.length ?? 0} onChange={setPage} />
             </div>
         </>
     );

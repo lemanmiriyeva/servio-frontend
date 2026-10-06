@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Receipt } from "lucide-react";
 import { api } from "@/lib/api";
 import { Modal } from "@/components/Modal";
+import { Pagination, paginate } from "@/components/Pagination";
 
 type Transaction = {
     id: number; amount: number; method: string; description: string;
@@ -25,6 +26,7 @@ export default function ExpensesPage() {
     const [method, setMethod] = useState("cash");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [page, setPage] = useState(1);
 
     function load() {
         api.cashTransactions("?type=expense&ordering=-created_at&page_size=200").then((d) => {
@@ -35,6 +37,7 @@ export default function ExpensesPage() {
     useEffect(() => { load(); }, []);
 
     const total = useMemo(() => (expenses ?? []).reduce((s, e) => s + Number(e.amount), 0), [expenses]);
+    const pageItems = useMemo(() => paginate(expenses ?? [], page), [expenses, page]);
 
     const byCategory = useMemo(() => {
         const map: Record<string, number> = {};
@@ -135,7 +138,7 @@ export default function ExpensesPage() {
                             <div className="flex-none w-[120px]">Üsul</div>
                             <div className="flex-none w-[90px] text-right">Məbləğ</div>
                         </div>
-                        {(expenses ?? []).map((e) => (
+                        {pageItems.map((e) => (
                             <div key={e.id} className="tr">
                                 <div className="flex-none w-[150px] text-ink2 text-sm">{new Date(e.created_at).toLocaleString("az-AZ")}</div>
                                 <div className="flex-1 min-w-0 truncate">{e.description}</div>
@@ -152,6 +155,7 @@ export default function ExpensesPage() {
                         )}
                     </div>
                 </div>
+                <Pagination page={page} totalItems={expenses?.length ?? 0} onChange={setPage} />
             </div>
         </>
     );

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { PlatformProvider } from "@/lib/platform-context";
@@ -16,6 +16,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     // məlumatı yoxdur. Ona görə bu istifadəçi YALNIZ "Müştəri bazası" (/platform) bölməsini aça bilir;
     // başqa hər hansı adi səhifəyə getməyə çalışsa, avtomatik /platform-a yönləndirilir.
     const pureSuperadmin = !!user && user.is_superadmin && !user.shop;
+    const [navOpen, setNavOpen] = useState(false);
+
+    // Səhifə dəyişəndə mobil menyu avtomatik bağlansın. Effekt əvəzinə render zamanı
+    // uyğunlaşdırırıq (React-in tövsiyə etdiyi qayda) ki, "setState effekt içində"
+    // xəbərdarlığı/əlavə render dövrü yaranmasın.
+    const [prevPathname, setPrevPathname] = useState(pathname);
+    if (pathname !== prevPathname) {
+        setPrevPathname(pathname);
+        if (navOpen) setNavOpen(false);
+    }
 
     useEffect(() => {
         if (loading) return;
@@ -30,10 +40,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <PlatformProvider>
             <div className="min-h-screen flex bg-bg">
-                <Sidebar />
+                <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
                 <div className="flex-1 flex flex-col min-w-0">
-                    <Topbar />
-                    <main className="flex-1 px-6 md:px-8 py-7 flex flex-col gap-5">{children}</main>
+                    <Topbar onMenuClick={() => setNavOpen(true)} />
+                    <main className="flex-1 px-4 sm:px-6 md:px-8 py-5 md:py-7 flex flex-col gap-5 min-w-0">{children}</main>
                 </div>
             </div>
         </PlatformProvider>

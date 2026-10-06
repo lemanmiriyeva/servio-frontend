@@ -5,6 +5,7 @@ import { Search, Plus, Pencil, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { Modal } from "@/components/Modal";
 import { Loader } from "@/components/Loader";
+import { Pagination, paginate } from "@/components/Pagination";
 
 type Customer = {
     id: number; full_name: string; phone: string; email: string; note: string;
@@ -16,6 +17,7 @@ const AVATAR_COLORS = ["a1", "a2", "a3", "a4", "a5"];
 export default function CustomersPage() {
     const [all, setAll] = useState<Customer[] | null>(null);
     const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
     const [error, setError] = useState("");
     const [showNew, setShowNew] = useState(false);
     const [newName, setNewName] = useState("");
@@ -44,6 +46,10 @@ export default function CustomersPage() {
         const q = search.toLowerCase();
         return all.filter((c) => c.full_name.toLowerCase().includes(q) || c.phone.includes(q));
     }, [all, search]);
+    // Axtarış dəyişəndə səhifə 1-ə qayıtsın — effekt əvəzinə render zamanı uyğunlaşdırılır.
+    const [prevSearch, setPrevSearch] = useState(search);
+    if (search !== prevSearch) { setPrevSearch(search); if (page !== 1) setPage(1); }
+    const pageItems = useMemo(() => paginate(filtered, page), [filtered, page]);
 
     async function handleCreate() {
         if (!newName.trim() || !newPhone.trim()) return;
@@ -160,7 +166,7 @@ export default function CustomersPage() {
                             <div className="flex-none w-[44px]" />
                         </div>
 
-                        {filtered.map((c, i) => (
+                        {pageItems.map((c, i) => (
                             <Link key={c.id} href={`/customers/${c.id}`} className="tr hover:bg-gray-50/60 cursor-pointer">
                                 <div className="flex-1 flex items-center gap-2.5 font-semibold min-w-0">
                                     <div className={`av ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>{c.initials}</div>
@@ -188,6 +194,7 @@ export default function CustomersPage() {
                         )}
                     </div>
                 </div>
+                <Pagination page={page} totalItems={filtered.length} onChange={setPage} />
             </div>
         </>
     );

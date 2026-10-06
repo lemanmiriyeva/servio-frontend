@@ -10,6 +10,7 @@ type Purchase = {
     id: number; description: string; amount: number; paid_amount: number; remaining: number;
     purchased_at: string; repair: number | null; repair_number?: string | null;
     customer_name?: string | null; payments: PurchasePayment[];
+    status: "active" | "cancelled"; status_display: string;
 };
 type PendingReturn = {
     id: number; repair_number: string; customer_name: string; reason: string;
@@ -387,7 +388,7 @@ export default function SuppliersPage() {
                                 <div className="flex flex-col gap-2">
                                     <b className="text-sm px-0.5">Alışlar</b>
                                     {s.purchases.map((p) => (
-                                        <div key={p.id} className="rounded-[10px] border border-line p-3 flex flex-col gap-2">
+                                        <div key={p.id} className={`rounded-[10px] border border-line p-3 flex flex-col gap-2 ${p.status === "cancelled" ? "opacity-60" : ""}`}>
                                             <div className="flex items-start justify-between gap-3 flex-wrap">
                                                 <div className="min-w-0 flex-1">
                                                     {editPurchaseId === p.id ? (
@@ -405,6 +406,9 @@ export default function SuppliersPage() {
                                                         <div className="flex items-center gap-1.5">
                                                             <span className="font-semibold block truncate">{p.description}</span>
                                                             <button onClick={() => openEditPurchase(p)} className="text-muted flex-none" title="Təsviri redaktə et"><Pencil size={13} /></button>
+                                                            {p.status === "cancelled" && (
+                                                                <span className="badge b-red !whitespace-normal"><i />{p.status_display}</span>
+                                                            )}
                                                         </div>
                                                     )}
                                                     <span className="text-xs text-muted">{fmtDateTime(p.purchased_at)} tarixində alınıb</span>

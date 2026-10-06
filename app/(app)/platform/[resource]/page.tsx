@@ -397,7 +397,9 @@ export function ResourceView({ res, fixedFilters, hiddenColumns }: {
         if (search.trim()) q.set("search", search.trim());
         Object.entries(filters).forEach(([k, v]) => { if (v) q.set(k, v); });
         Object.entries(fixedFilters ?? {}).forEach(([k, v]) => q.set(k, String(v)));
-        setLoading(true);
+        // setLoading mikrotapşırığa təxirə salınır ki, effekt daxilində birbaşa (sinxron)
+        // setState çağırışı olmasın (react-hooks/set-state-in-effect) — davranış eyni qalır.
+        Promise.resolve().then(() => setLoading(true));
         api.platformList(res.key, `?${q.toString()}`)
             .then((d) => {
                 const data = d as { count?: number };

@@ -5,6 +5,7 @@ import { Search, X, Pencil, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { Loader } from "@/components/Loader";
 import { Modal } from "@/components/Modal";
+import { Pagination, paginate } from "@/components/Pagination";
 
 type RepairListItem = {
   id: number; number: string; customer: number;
@@ -52,6 +53,7 @@ export default function RepairsPage() {
   const [all, setAll] = useState<RepairListItem[] | null>(null);
   const [activeTab, setActiveTab] = useState<string>("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [error, setError] = useState("");
 
   // Siyahıdan birbaşa (detal səhifəsinə getmədən) sürətli redaktə. Siyahının öz sətri
@@ -147,6 +149,11 @@ export default function RepairsPage() {
     }
     return list;
   }, [all, activeTab, search]);
+  // Filtr/axtarış dəyişəndə səhifə 1-ə qayıtsın — effekt əvəzinə render zamanı uyğunlaşdırılır.
+  const [prevFilterKey, setPrevFilterKey] = useState(`${activeTab}|${search}`);
+  const filterKey = `${activeTab}|${search}`;
+  if (filterKey !== prevFilterKey) { setPrevFilterKey(filterKey); if (page !== 1) setPage(1); }
+  const pageItems = useMemo(() => paginate(filtered, page), [filtered, page]);
 
   return (
       <>
@@ -210,7 +217,7 @@ export default function RepairsPage() {
                 <div className="flex-none w-6" />
               </div>
 
-              {filtered.map((r, i) => {
+              {pageItems.map((r, i) => {
                 const pay = PAYMENT_BADGE[r.payment_status] ?? PAYMENT_BADGE.unpaid;
                 return (
                     <Link key={r.id} href={`/repairs/${r.id}`} className="tr hover:bg-gray-50/60 cursor-pointer">
@@ -263,8 +270,8 @@ export default function RepairsPage() {
           </div>
 
           {all && filtered.length > 0 && (
-              <div className="flex justify-between items-center px-3 pt-4 pb-2 text-ink2 text-[13px]">
-                <span>{filtered.length} xidmətdən {filtered.length} göstərilir</span>
+              <div className="px-3 pt-4 pb-2">
+                <Pagination page={page} totalItems={filtered.length} onChange={setPage} />
               </div>
           )}
         </div>
