@@ -1,6 +1,7 @@
 "use client";
-import { Search, Plus, Bell, Menu } from "lucide-react";
+import { Plus, Bell, Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { GlobalSearch } from "@/components/GlobalSearch";
 
 type TopbarProps = {
     onMenuClick?: () => void;
@@ -17,11 +18,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
             >
                 <Menu size={20} />
             </button>
-            <div className="hidden sm:flex items-center gap-2.5 h-11 w-full max-w-[460px] px-3.5 bg-white border border-line rounded-[10px] text-muted cursor-pointer">
-                <Search size={18} />
-                <span className="text-sm truncate">Müştəri, telefon, IMEI, təmir № üzrə axtar</span>
-                <span className="ml-auto text-xs border border-line rounded-md px-1.5 py-px flex-none">Ctrl K</span>
-            </div>
+            <GlobalSearch />
             <div className="flex-1" />
             <button onClick={() => router.push("/repairs/new")} className="btn pri !px-3 sm:!px-[18px]">
                 <Plus size={18} />

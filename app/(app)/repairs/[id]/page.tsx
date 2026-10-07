@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, use as usePromise } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, ShieldCheck, RotateCcw, X, FileDown, Mail, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, ShieldCheck, ShieldX, RotateCcw, X, FileDown, Mail, Pencil } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useDialog } from "@/lib/dialog-context";
 import { Loader } from "@/components/Loader";
@@ -382,7 +382,11 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
                 <div className="card">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-base font-semibold">Zəmanət</h3>
-                    <span className="badge b-green"><ShieldCheck size={12} />Aktiv</span>
+                    {data.status === "cancelled" ? (
+                        <span className="badge b-gray"><ShieldX size={12} />Etibarsız (ləğv edilib)</span>
+                    ) : (
+                        <span className="badge b-green"><ShieldCheck size={12} />Aktiv</span>
+                    )}
                   </div>
                   <div className="text-sm flex flex-col gap-1.5">
                     <div className="flex justify-between"><span className="mut">Başlama</span><b>{data.warranty_started_at}</b></div>
@@ -390,11 +394,15 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
                     <div className="flex justify-between"><span className="mut">Qalan gün</span><b>{data.warranty_days_left}</b></div>
                   </div>
 
+                  {data.status === "cancelled" && (
+                      <p className="text-xs text-muted mt-3">Xidmət ləğv edildiyi üçün zəmanət etibarsızdır — PDF/email göndərmə deaktivdir.</p>
+                  )}
+
                   <div className="flex gap-2 mt-4">
-                    <button className="btn flex-1 justify-center" disabled={busy} onClick={downloadWarrantyPdf}>
+                    <button className="btn flex-1 justify-center" disabled={busy || data.status === "cancelled"} onClick={downloadWarrantyPdf}>
                       <FileDown size={16} /><span>PDF yüklə</span>
                     </button>
-                    <button className="btn flex-1 justify-center" disabled={busy} onClick={sendWarrantyEmail}>
+                    <button className="btn flex-1 justify-center" disabled={busy || data.status === "cancelled"} onClick={sendWarrantyEmail}>
                       <Mail size={16} /><span>E-poçtla göndər</span>
                     </button>
                   </div>
