@@ -413,20 +413,35 @@ export default function InventoryPage() {
                                     <span className={`badge ${st.badge}`}><i />{st.label}</span>
                                 </div>
                                 <div className="flex gap-2 flex-wrap pl-0 sm:pl-[56px]">
-                                    {o.status === "pending" && (
+                                    {/* Qəbul/rədd/ödəniş/göndərmə YALNIZ satıcının işidir, "təhvil aldım"
+                                        isə YALNIZ alıcının — əvvəllər bu fərq qoyulmurdu və istənilən tərəf
+                                        istənilən düyməni görüb basa bilirdi (backend də indi bunu yoxlayır). */}
+                                    {o.status === "pending" && !iBuy && (
                                         <>
                                             <button disabled={busy} onClick={() => runOrderAction(o, "accept")} className="btn sm t-green !border-current"><Check size={16} /><span>Qəbul et</span></button>
                                             <button disabled={busy} onClick={() => runOrderAction(o, "reject")} className="btn sm t-red !border-current"><Ban size={16} /><span>Rədd et</span></button>
                                         </>
                                     )}
-                                    {o.status === "accepted" && (
+                                    {o.status === "pending" && iBuy && (
+                                        <span className="text-xs text-muted py-1.5">Satıcının qəbul etməsi gözlənilir…</span>
+                                    )}
+                                    {o.status === "accepted" && !iBuy && (
                                         <button disabled={busy} onClick={() => runOrderAction(o, "mark-paid")} className="btn sm t-cyan !border-current"><CircleDollarSign size={16} /><span>Ödənildi</span></button>
                                     )}
-                                    {o.status === "paid" && (
+                                    {o.status === "accepted" && iBuy && (
+                                        <span className="text-xs text-muted py-1.5">Qəbul edilib — ödəniş gözlənilir…</span>
+                                    )}
+                                    {o.status === "paid" && !iBuy && (
                                         <button disabled={busy} onClick={() => runOrderAction(o, "mark-shipped")} className="btn sm t-purple !border-current"><Truck size={16} /><span>Göndərildi</span></button>
                                     )}
-                                    {o.status === "shipped" && (
+                                    {o.status === "paid" && iBuy && (
+                                        <span className="text-xs text-muted py-1.5">Ödənildi — göndərilməsi gözlənilir…</span>
+                                    )}
+                                    {o.status === "shipped" && iBuy && (
                                         <button disabled={busy} onClick={() => runOrderAction(o, "mark-completed")} className="btn sm t-green !border-current"><PackageCheck size={16} /><span>Təhvil aldım</span></button>
+                                    )}
+                                    {o.status === "shipped" && !iBuy && (
+                                        <span className="text-xs text-muted py-1.5">Göndərilib — alıcının təsdiqi gözlənilir…</span>
                                     )}
                                 </div>
                             </div>
