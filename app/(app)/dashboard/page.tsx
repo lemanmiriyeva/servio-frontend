@@ -87,6 +87,18 @@ export default function DashboardPage() {
             <p className="text-ink2 mt-1">
               Salam, {user?.first_name}. Bu gün {today}
               {data ? `, servisdə ${data.active_repairs_count} aktiv təmir var.` : "."}
+              {/* Abunə ödənişinə qalan gün — əvvəllər yalnız "Platform" səhifəsində görünürdü,
+                  gündəlik baxılan Ana səhifədə də göstərmək üçün əlavə olunub. */}
+              {user?.shop?.next_payment_at && (
+                  <>
+                    {` · Növbəti ödəniş: ${user.shop.next_payment_at}`}
+                    {typeof user.shop.days_to_payment === "number" && (
+                        <b className={user.shop.days_to_payment < 0 ? "neg ml-1" : "ml-1"}>
+                          ({user.shop.days_to_payment >= 0 ? `${user.shop.days_to_payment} gün qalıb` : `${Math.abs(user.shop.days_to_payment)} gün gecikib`})
+                        </b>
+                    )}
+                  </>
+              )}
             </p>
           </div>
           <div className="flex gap-2.5">
@@ -103,9 +115,9 @@ export default function DashboardPage() {
         {/* Hero bench */}
         <div className="rounded-[14px] p-7 flex flex-col sm:flex-row items-start sm:items-center gap-6 bg-side text-white">
           <div>
-            <div className="text-[13px] text-[#8FA9B2]">Kassa</div>
+            <div className="text-[13px] text-[#8FA9B2]">Bu ayın gəliri</div>
             <div className="text-[40px] md:text-[48px] font-semibold tracking-tight leading-[1.05] mt-1.5">
-              {data ? (data.cash_balance == null ? "•••••" : mask(`${fmt(data.cash_balance)}`)) : "—"}
+              {data ? (data.month_income === null ? "•••••" : mask(fmt(data.month_income))) : "—"}
               <small className="text-lg font-semibold text-[#8FA9B2] ml-2">AZN</small>
             </div>
           </div>

@@ -152,14 +152,18 @@ export default function CashboxPage() {
 
             {error && <div className="card" style={{ color: "var(--red)" }}>{error}</div>}
 
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Başlanğıc balans</span>
                     <div className="text-2xl font-semibold tracking-tight mt-1.5">{summary ? fmt(summary.opening_balance) : "—"}</div>
                 </div>
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Mədaxil</span>
-                    <div className="text-2xl font-semibold tracking-tight mt-1.5 pos">{summary ? `+${fmt(summary.income)}` : "—"}</div>
+                    {/* Ləğv edilən xidmətlərin geri qaytarması birbaşa Mədaxildən çıxılır ki,
+                        bu rəqəm ləğvdən sonra "dəyişmir" təəssüratı yaratmasın. */}
+                    <div className="text-2xl font-semibold tracking-tight mt-1.5 pos">
+                        {summary ? `+${fmt(summary.income - summary.refund)}` : "—"}
+                    </div>
                 </div>
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Xərc</span>
@@ -170,10 +174,6 @@ export default function CashboxPage() {
                     <div className="text-2xl font-semibold tracking-tight mt-1.5" style={{ color: "var(--purple)" }}>
                         {summary ? `-${fmt(summary.supplier_payment)}` : "—"}
                     </div>
-                </div>
-                <div className="card">
-                    <span className="text-ink2 text-[13px] font-medium">Ləğv edilib (geri qaytarma)</span>
-                    <div className="text-2xl font-semibold tracking-tight mt-1.5 neg">{summary ? `-${fmt(summary.refund)}` : "—"}</div>
                 </div>
                 <div className="card" style={{ background: "var(--side)" }}>
                     <span className="text-[13px] font-medium text-[#8FA9B2]">Kassa balansı</span>

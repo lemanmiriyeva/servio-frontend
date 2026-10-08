@@ -203,7 +203,57 @@ export default function RepairsPage() {
         </div>
 
         <div className="card !p-2">
-          <div className="overflow-x-auto">
+          {/* Mobil: kart görünüşü — müştəri adı və digər sahələr tam genişlikdə görünür,
+            masaüstü cədvəlini üfüqi sürüşdürməyə ehtiyac qalmır. */}
+          <div className="md:hidden flex flex-col gap-2 p-1">
+            {pageItems.map((r, i) => {
+              const pay = PAYMENT_BADGE[r.payment_status] ?? PAYMENT_BADGE.unpaid;
+              return (
+                  <Link key={r.id} href={`/repairs/${r.id}`} className="block rounded-xl border border-line p-3 hover:bg-gray-50/60">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`av flex-none ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>{r.customer_initials}</div>
+                        <span className="font-semibold truncate">{r.customer_name}</span>
+                      </div>
+                      <span className="mono text-[12px] text-muted flex-none">{r.number}</span>
+                    </div>
+                    <div className="mb-2 min-w-0">
+                      <b className="block font-semibold text-sm truncate">{`${r.device_brand} ${r.device_model}`.trim() || "—"}</b>
+                      <span className="text-xs text-muted truncate block">{r.issue_description}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className={`badge ${STATUS_BADGE[r.status] || "b-gray"}`}><i />{STATUS_LABEL[r.status] || r.status}</span>
+                      {r.status === "cancelled" ? (
+                          <span className="mut text-sm">—</span>
+                      ) : (
+                          <span className={`badge ${pay.cls} !whitespace-normal`}><i />{pay.label}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-2 mt-2 text-xs text-ink2">
+                      <span>{fmtDate(r.last_status_at)}</span>
+                      <span className="font-semibold text-ink text-sm">
+                    {r.status === "cancelled" ? "—" : `${Math.round(r.sale_price)} AZN`}
+                  </span>
+                    </div>
+                    {r.status !== "cancelled" && r.warranty_days_left !== null && (
+                        <div className="mt-1 text-xs">
+                          {r.warranty_days_left <= 3 ? (
+                              <span className="amb font-semibold">{r.warranty_days_left} gün qalıb (zəmanət)</span>
+                          ) : (
+                              <span className="mut">{r.warranty_days_left} gün zəmanət</span>
+                          )}
+                        </div>
+                    )}
+                  </Link>
+              );
+            })}
+            {all && filtered.length === 0 && (
+                <div className="text-center text-muted text-sm py-10">Uyğun nəticə tapılmadı.</div>
+            )}
+            {!all && !error && <Loader />}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto">
             <div className="min-w-[964px]">
               <div className="tr h">
                 <div className="flex-none w-[132px]">Təmir №</div>
