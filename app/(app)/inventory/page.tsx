@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import {
     Plus, X, Search, Boxes, Store, ArrowRightLeft, AlertTriangle,
     Check, Ban, Truck, PackageCheck, CircleDollarSign, Info,
-    ArrowDownToLine, ArrowUpFromLine,
+    ArrowDownToLine, ArrowUpFromLine, Clock3,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -423,25 +423,25 @@ export default function InventoryPage() {
                                         </>
                                     )}
                                     {o.status === "pending" && iBuy && (
-                                        <span className="text-xs text-muted py-1.5">Satıcının qəbul etməsi gözlənilir…</span>
+                                        <span className="badge b-amber !whitespace-normal"><Clock3 size={13} />Satıcının qəbul etməsi gözlənilir…</span>
                                     )}
                                     {o.status === "accepted" && !iBuy && (
                                         <button disabled={busy} onClick={() => runOrderAction(o, "mark-paid")} className="btn sm t-cyan !border-current"><CircleDollarSign size={16} /><span>Ödənildi</span></button>
                                     )}
                                     {o.status === "accepted" && iBuy && (
-                                        <span className="text-xs text-muted py-1.5">Qəbul edilib — ödəniş gözlənilir…</span>
+                                        <span className="badge b-amber !whitespace-normal"><Clock3 size={13} />Qəbul edilib — ödəniş gözlənilir (satıcı tərəfdə)</span>
                                     )}
                                     {o.status === "paid" && !iBuy && (
                                         <button disabled={busy} onClick={() => runOrderAction(o, "mark-shipped")} className="btn sm t-purple !border-current"><Truck size={16} /><span>Göndərildi</span></button>
                                     )}
                                     {o.status === "paid" && iBuy && (
-                                        <span className="text-xs text-muted py-1.5">Ödənildi — göndərilməsi gözlənilir…</span>
+                                        <span className="badge b-amber !whitespace-normal"><Clock3 size={13} />Ödənildi — göndərilməsi gözlənilir (satıcı tərəfdə)</span>
                                     )}
                                     {o.status === "shipped" && iBuy && (
                                         <button disabled={busy} onClick={() => runOrderAction(o, "mark-completed")} className="btn sm t-green !border-current"><PackageCheck size={16} /><span>Təhvil aldım</span></button>
                                     )}
                                     {o.status === "shipped" && !iBuy && (
-                                        <span className="text-xs text-muted py-1.5">Göndərilib — alıcının təsdiqi gözlənilir…</span>
+                                        <span className="badge b-amber !whitespace-normal"><Clock3 size={13} />Göndərilib — alıcının təsdiqi gözlənilir (alıcı tərəfdə)</span>
                                     )}
                                 </div>
                             </div>
