@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Plus, ArrowDownCircle, ArrowUpCircle, Pencil } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { Modal } from "@/components/Modal";
 import { Pagination, paginate } from "@/components/Pagination";
 
@@ -131,8 +131,13 @@ export default function CashboxPage() {
             }
             setShowForm(false); setAmount(""); setDescription(""); setCategory(""); setSupplierId("");
             load();
-        } catch {
-            setError("Əməliyyat yadda saxlanılmadı.");
+        } catch (err) {
+            // Backend "Kassada vəsait yoxdur" kimi konkret səbəb qaytarırsa, onu göstəririk —
+            // əvvəllər həmişə ümumi "yadda saxlanılmadı" mesajı çıxırdı, səbəb görünmürdü.
+            const detail = err instanceof ApiError && err.data && typeof err.data === "object" && "detail" in (err.data as Record<string, unknown>)
+                ? String((err.data as { detail: string }).detail)
+                : null;
+            setError(detail || "Əməliyyat yadda saxlanılmadı.");
         } finally {
             setSaving(false);
         }

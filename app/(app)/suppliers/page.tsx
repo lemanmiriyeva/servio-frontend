@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Plus, X, ChevronDown, ChevronUp, Truck, RotateCcw, Search, Wrench, User, Pencil, Check } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { Modal } from "@/components/Modal";
 import { useDialog } from "@/lib/dialog-context";
 
@@ -22,6 +22,14 @@ type Supplier = {
     pending_returns?: PendingReturn[];
 };
 type RepairOption = { id: number; number: string; customer_name: string };
+
+// Backend "Kassada vəsait yoxdur" kimi konkret səbəb qaytarırsa onu çıxarır.
+function apiErrorDetail(err: unknown): string | null {
+    if (err instanceof ApiError && err.data && typeof err.data === "object" && "detail" in (err.data as Record<string, unknown>)) {
+        return String((err.data as { detail: string }).detail);
+    }
+    return null;
+}
 
 function fmt(n: number) {
     return new Intl.NumberFormat("az-AZ").format(Math.round(n));
@@ -49,6 +57,11 @@ export default function SuppliersPage() {
     const [pDesc, setPDesc] = useState("");
     const [pAmount, setPAmount] = useState("");
     const [pRepairId, setPRepairId] = useState("");
+    // "Dərhal ödənildi" — alışı elə yaradılan anda nağd/köçürmə ilə ödəyəndə (məs. iDoctor,
+    // Eyşan Usta kimi xarici ustalara dərhal pul verilən hallar) bunu borc kimi yox, elə
+    // yaradılışda ödənilmiş kimi qeyd etmək üçün. Əvvəllər bu seçim yox idi, hamısı mütləq
+    // əvvəlcə borc kimi yaranır, sonra ayrıca "Borc ödə" ilə bağlanırdı.
+    const [pPaidNow, setPPaidNow] = useState(false);
     const [repairOptions, setRepairOptions] = useState<RepairOption[] | null>(null);
 
     const [payForm, setPayForm] = useState<number | null>(null);
@@ -123,9 +136,12 @@ export default function SuppliersPage() {
             await api.addSupplierPurchase(supplierId, {
                 description: pDesc, amount: amt,
                 ...(pRepairId ? { repair: parseInt(pRepairId, 10) } : {}),
+                ...(pPaidNow ? { paid_amount: amt } : {}),
             });
-            setPurchaseForm(null); setPDesc(""); setPAmount(""); setPRepairId("");
+            setPurchaseForm(null); setPDesc(""); setPAmount(""); setPRepairId(""); setPPaidNow(false);
             load();
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Alış əlavə edilmədi.");
         } finally { setBusy(false); }
     }
 
@@ -137,6 +153,8 @@ export default function SuppliersPage() {
             await api.paySupplier(supplierId, amt);
             setPayForm(null); setPayAmount("");
             load();
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Ödəniş edilmədi.");
         } finally { setBusy(false); }
     }
 
@@ -338,6 +356,10 @@ export default function SuppliersPage() {
                                                     ))}
                                                 </select>
                                             </div>
+                                            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                                                <input type="checkbox" checked={pPaidNow} onChange={(e) => setPPaidNow(e.target.checked)} />
+                                                Dərhal (indicə) ödənildi — borc kimi yaranmasın, Kassadan bu məbləğ düşsün
+                                            </label>
                                         </div>
                                         <div className="flex gap-2 justify-end pt-1">
                                             <button className="btn" onClick={() => setPurchaseForm(null)}>Ləğv et</button>
