@@ -7,7 +7,7 @@ import { Pagination, paginate } from "@/components/Pagination";
 
 type Summary = {
     opening_balance: number; income: number; expense: number;
-    supplier_payment: number; current_balance: number;
+    supplier_payment: number; refund: number; current_balance: number;
 };
 type Transaction = {
     id: number; type: string; amount: number; method: string;
@@ -15,7 +15,7 @@ type Transaction = {
     supplier_name?: string | null; repair?: number | null; supplier?: number | null;
 };
 
-const TYPE_LABEL: Record<string, string> = { income: "Kassa", expense: "Xərc", supplier_payment: "Təchizatçı ödənişi" };
+const TYPE_LABEL: Record<string, string> = { income: "Kassa", expense: "Xərc", supplier_payment: "Təchizatçı ödənişi", refund: "Ləğv edildi" };
 const METHOD_LABEL: Record<string, string> = { cash: "Nağd", card: "Kart", bank_transfer: "Bank köçürməsi" };
 
 function fmt(n: number) {
@@ -152,7 +152,7 @@ export default function CashboxPage() {
 
             {error && <div className="card" style={{ color: "var(--red)" }}>{error}</div>}
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Başlanğıc balans</span>
                     <div className="text-2xl font-semibold tracking-tight mt-1.5">{summary ? fmt(summary.opening_balance) : "—"}</div>
@@ -170,6 +170,10 @@ export default function CashboxPage() {
                     <div className="text-2xl font-semibold tracking-tight mt-1.5" style={{ color: "var(--purple)" }}>
                         {summary ? `-${fmt(summary.supplier_payment)}` : "—"}
                     </div>
+                </div>
+                <div className="card">
+                    <span className="text-ink2 text-[13px] font-medium">Ləğv edilib (geri qaytarma)</span>
+                    <div className="text-2xl font-semibold tracking-tight mt-1.5 neg">{summary ? `-${fmt(summary.refund)}` : "—"}</div>
                 </div>
                 <div className="card" style={{ background: "var(--side)" }}>
                     <span className="text-[13px] font-medium text-[#8FA9B2]">Kassa balansı</span>
@@ -274,7 +278,7 @@ export default function CashboxPage() {
             )}
 
             <div className="flex gap-2 flex-wrap">
-                {[{ k: "", l: "Hamısı" }, { k: "income", l: "Kassa" }, { k: "expense", l: "Xərc" }, { k: "supplier_payment", l: "Təchizatçı" }].map((t) => (
+                {[{ k: "", l: "Hamısı" }, { k: "income", l: "Kassa" }, { k: "expense", l: "Xərc" }, { k: "supplier_payment", l: "Təchizatçı" }, { k: "refund", l: "Ləğv edildi" }].map((t) => (
                     <button
                         key={t.k}
                         onClick={() => setTypeFilter(t.k)}
@@ -304,7 +308,7 @@ export default function CashboxPage() {
                                     {t.expense_category && <span className="text-muted text-xs ml-2">· {t.expense_category}</span>}
                                 </div>
                                 <div className="flex-none w-[150px]">
-                                    <span className={`badge ${t.type === "income" ? "b-green" : t.type === "expense" ? "b-red" : "b-purple"} !whitespace-normal`}><i />{TYPE_LABEL[t.type]}</span>
+                                    <span className={`badge ${t.type === "income" ? "b-green" : t.type === "expense" ? "b-red" : t.type === "refund" ? "b-gray" : "b-purple"} !whitespace-normal`}><i />{TYPE_LABEL[t.type] || t.type}</span>
                                 </div>
                                 <div className="flex-none w-[120px] text-ink2 text-sm truncate">{METHOD_LABEL[t.method]}</div>
                                 <div className={`flex-none w-[90px] text-right font-semibold ${t.type === "income" ? "pos" : "neg"}`}>

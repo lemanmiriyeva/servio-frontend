@@ -27,7 +27,7 @@ type RepairDetail = {
   received_at: string; delivered_at: string | null;
   payments: { id: number; amount: number; method: string; paid_at: string }[];
   paid_amount: number; remaining_debt: number;
-  supplier_purchases?: { id: number; supplier: string; description: string; amount: number; paid_amount: number; remaining: number }[];
+  supplier_purchases?: { id: number; supplier: string; description: string; amount: number; paid_amount: number; remaining: number; status?: string; status_display?: string }[];
   warranty_returns?: WarrantyReturn[];
   status_history?: { status: string; status_display: string; changed_at: string }[];
 };
@@ -340,9 +340,13 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
                   <h3 className="text-base font-semibold mb-3">Təchizatçı borcu</h3>
                   <div className="flex flex-col gap-2 text-sm">
                     {data.supplier_purchases.map((sp) => (
-                        <div key={sp.id} className="flex justify-between gap-3">
+                        <div key={sp.id} className={`flex justify-between gap-3 ${sp.status === "cancelled" ? "opacity-60" : ""}`}>
                           <div className="min-w-0"><b className="block truncate">{sp.supplier}</b><span className="text-xs text-muted truncate block">{sp.description}</span></div>
-                          <span className={`badge flex-none ${sp.remaining > 0 ? "b-red" : "b-green"}`}><i />{sp.remaining > 0 ? `${sp.remaining} AZN borc` : "Ödənilib"}</span>
+                          {sp.status === "cancelled" ? (
+                              <span className="badge flex-none b-gray"><i />Ləğv edildi</span>
+                          ) : (
+                              <span className={`badge flex-none ${sp.remaining > 0 ? "b-red" : "b-green"}`}><i />{sp.remaining > 0 ? `${sp.remaining} AZN borc` : "Ödənilib"}</span>
+                          )}
                         </div>
                     ))}
                   </div>
