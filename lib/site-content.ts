@@ -10,11 +10,16 @@ import { SITE } from "./site-config";
 // NEXT_PUBLIC_API_URL adətən "/api" (nisbi yol) olur, çünki brauzer sorğuları nginx vasitəsilə
 // gedir — amma server tərəfdəki fetch üçün nisbi URL keçərsiz olur, ona görə server üçün ayrıca,
 // mütləq (absolute) bir ünvan lazımdır: ya INTERNAL_API_URL env dəyişəni, ya da (o olmasa)
-// docker-compose.yml-dəki backend servisinin adı ilə birbaşa konteynerlər-arası ünvan.
+// docker-compose.yml-dəki backend konteynerinin HƏQİQİ adı ilə birbaşa konteynerlər-arası
+// ünvan. Bu konteynerin əsl adı "servio-backend"dir (əvvəllər səhvən "backend" yazılmışdı —
+// bu ad Docker şəbəkəsində mövcud olmadığı üçün SSR sorğusu uğursuz olur, səhifə backend-dən
+// heç nə ala bilmədən boş görünürdü). Production-da ən doğrusu INTERNAL_API_URL-i açıq
+// təyin etməkdir (məs. docker-compose.yml-də "INTERNAL_API_URL=http://servio-backend:8000/api")
+// — aşağıdakı defolt yalnız bu env dəyişəni verilməyəndə işə düşən ehtiyat seçimdir.
 const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 const API_URL =
     process.env.INTERNAL_API_URL ||
-    (PUBLIC_API_URL.startsWith("http") ? PUBLIC_API_URL : "http://backend:8000/api");
+    (PUBLIC_API_URL.startsWith("http") ? PUBLIC_API_URL : "http://servio-backend:8000/api");
 
 export type SiteSettingsContent = {
   brand_name: string;
