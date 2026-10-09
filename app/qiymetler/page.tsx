@@ -5,6 +5,11 @@ import { CtaBand, PageHero } from "@/components/site/Sections";
 import { getSiteContent } from "@/lib/site-content";
 
 export const metadata = { title: "Qiymətlər — Servio" };
+// Bu səhifə Baş Admin tərəfindən tez-tez dəyişilən planlara (qiymət, izah) əsaslanır.
+// Statik (build-zamanı) generasiya ediləndə Docker build mərhələsində backend-ə şəbəkə
+// girişi olmadığı üçün FALLBACK məlumat əbədi "donub qalırdı" — real DB dəyişiklikləri
+// heç vaxt görünmürdü. force-dynamic ilə hər sorğuda backend-dən TƏZƏ məlumat çəkilir.
+export const dynamic = "force-dynamic";
 
 export default async function PricingPage() {
     const { plans } = await getSiteContent();
