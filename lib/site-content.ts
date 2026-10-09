@@ -10,8 +10,8 @@ import { FAQ, SITE } from "./site-config";
 // docker-compose.yml-dəki backend servisinin adı ilə birbaşa konteynerlər-arası ünvan.
 const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 const API_URL =
-  process.env.INTERNAL_API_URL ||
-  (PUBLIC_API_URL.startsWith("http") ? PUBLIC_API_URL : "http://backend:8000/api");
+    process.env.INTERNAL_API_URL ||
+    (PUBLIC_API_URL.startsWith("http") ? PUBLIC_API_URL : "http://backend:8000/api");
 
 export type SiteSettingsContent = {
   brand_name: string;
@@ -36,6 +36,7 @@ export type AboutValueEntry = { id: number | string; icon: string; title: string
 export type HomeStepEntry = { id: number | string; number: string; title: string; description: string };
 export type PublicPlan = {
   id: number | string; name: string; price_monthly: string | number;
+  price_yearly?: string | number | null; public_description_yearly?: string;
   max_branches: number; max_users: number; public_description: string;
   features: string[]; is_featured: boolean;
 };
@@ -56,8 +57,8 @@ const FALLBACK: SiteContent = {
     logo: null,
     hero_title: "Servisinizi daha rahat idarə edin.",
     hero_subtitle:
-      "Müştərilər, təmirlər, gəlir-xərc, anbar, borclar və hesabatlar — hamısı bir platformada. " +
-      "Telefon və kompüter servis bizneslər üçün ağıllı idarəetmə sistemi.",
+        "Müştərilər, təmirlər, gəlir-xərc, anbar, borclar və hesabatlar — hamısı bir platformada. " +
+        "Telefon və kompüter servis bizneslər üçün ağıllı idarəetmə sistemi.",
     email: SITE.email, phone: SITE.phone, whatsapp: SITE.whatsapp,
     address: SITE.address, hours: SITE.hours, footer_note: "",
   },
