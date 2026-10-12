@@ -331,7 +331,7 @@ export default function CashboxPage() {
                                 </div>
                                 <div className="flex-none w-[120px] text-ink2 text-sm truncate">{METHOD_LABEL[t.method]}</div>
                                 <div className={`flex-none w-[90px] text-right font-semibold ${t.type === "income" || t.type === "expense_refund" ? "pos" : "neg"}`}>
-                                    {t.type === "income" ? "+" : "-"}{fmt(t.amount)}
+                                    {t.type === "income" || t.type === "expense_refund" ? "+" : "-"}{fmt(t.amount)}
                                 </div>
                                 <div className="flex-none w-[44px] flex justify-end">
                                     <button onClick={() => openEdit(t)} className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2" title="Redaktə et">
