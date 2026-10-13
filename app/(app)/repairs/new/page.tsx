@@ -174,6 +174,28 @@ export default function NewRepairPage() {
           setSaving(false);
           return;
         }
+      } else if (partMode === "cash" && !supplierId && cost > 0) {
+        // DİQQƏT (əsas xəta): "Nağd aldım — borcsuz" seçiləndə, əgər təchizatçı seçilməyibsə,
+        // yuxarıdaki "if" keçilmir və HEÇ BİR kassa yazısı/balans yoxlanışı aparılmırdı —
+        // kassada pul olmasa belə xidmət sakitcə yaradılırdı. İndi təchizatçı seçilməyibsə
+        // belə, bu məbləğ birbaşa Kassaya "Xərc" kimi yazılır (assert_sufficient_balance
+        // backend-də işə düşür, kassada kifayət qədər pul yoxdursa əməliyyat rədd olunur).
+        try {
+          await api.createCashTransaction({
+            type: "expense",
+            amount: cost,
+            method: "cash",
+            description: `${partName || issueDescription || "Detal"} — ${deviceBrand} ${deviceModel}${repair.number ? ` (${repair.number})` : ""}`.trim(),
+            repair: repair.id,
+          });
+        } catch (err) {
+          setError(
+              (apiErrorDetail(err) || "Detal ödənişi qeydə alınmadı") +
+              ` — Təmir ${repair.number ?? ""} artıq yaradılıb, ödənişi Kassa səhifəsindən əlavə edə bilərsiniz.`
+          );
+          setSaving(false);
+          return;
+        }
       }
 
       const amount = parseFloat(paymentAmount);
