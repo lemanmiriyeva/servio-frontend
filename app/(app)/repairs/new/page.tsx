@@ -58,6 +58,9 @@ export default function NewRepairPage() {
   const [supplierList, setSupplierList] = useState<{ id: number; name: string }[]>([]);
   const [supplierId, setSupplierId] = useState("");
   const [partName, setPartName] = useState("");
+  // "Nağd aldım" seçiləndə detal ödənişinin üsulu (əvvəllər həmişə "cash" idi — kartla
+  // ödəsə belə kassa/nağd balansı yoxlanırdı, kart balansında pul olsa belə rədd edirdi).
+  const [partPaymentMethod, setPartPaymentMethod] = useState<"cash" | "card" | "bank_transfer">("cash");
   const [technicianName, setTechnicianName] = useState("");
 
   // Step 4 — warranty & payment
@@ -159,6 +162,7 @@ export default function NewRepairPage() {
         part_mode: (partMode === "credit" || partMode === "cash") && cost > 0 ? partMode : "none",
         part_supplier_id: supplierId ? parseInt(supplierId, 10) : null,
         part_description: partName || issueDescription || "",
+        part_payment_method: partPaymentMethod,
         initial_payment_amount: initialAmount > 0 ? initialAmount : null,
         initial_payment_method: paymentMethod,
       })) as { id: number; number?: string };
@@ -366,6 +370,17 @@ export default function NewRepairPage() {
                       {partMode === "credit" && supplierId && parseFloat(costPrice) > 0 && (
                           <div className="rounded-[10px] px-3.5 py-3 text-sm" style={{ background: "var(--brand-soft)", color: "var(--brand-soft-ink)" }}>
                             Yadda saxlayanda <b>{parseFloat(costPrice).toFixed(2)} AZN</b> avtomatik <b>Təchizatçılar</b> bölməsində seçilmiş təchizatçıya borc kimi əlavə olunacaq. Ödədikdən sonra oradan ödənilmiş kimi işarələyə bilərsiniz.
+                          </div>
+                      )}
+                      {partMode === "cash" && (
+                          <div className="fld">
+                            <label>Ödəniş üsulu (detal üçün)</label>
+                            <select className="inp" value={partPaymentMethod} onChange={(e) => setPartPaymentMethod(e.target.value as typeof partPaymentMethod)}>
+                              <option value="cash">Nağd</option>
+                              <option value="card">Kart</option>
+                              <option value="bank_transfer">Bank köçürməsi</option>
+                            </select>
+                            <span className="mut text-xs">Bu məbləğ seçilmiş üsulun öz balansından (nağd və ya kart/bank) çıxılacaq.</span>
                           </div>
                       )}
                     </>
