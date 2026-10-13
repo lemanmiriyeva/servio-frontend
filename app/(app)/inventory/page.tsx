@@ -281,8 +281,8 @@ export default function InventoryPage() {
                                 <div className="tr h">
                                     <div className="flex-1">Məhsul</div>
                                     <div className="flex-none w-[130px] text-right">Miqdar</div>
-                                    <div className="flex-none w-[90px] text-right">Maya</div>
-                                    <div className="flex-none w-[90px] text-right">Satış</div>
+                                    <div className="flex-none w-[110px] text-right">Maya</div>
+                                    <div className="flex-none w-[110px] text-right">Satış</div>
                                     <div className="flex-none w-[130px] text-center" title="Açıq olsa, bu məhsulu digər mağazalar da Marketplace-də axtararkən görür və sizdən sifariş verə bilər.">
                                         Marketplace
                                     </div>
@@ -302,8 +302,8 @@ export default function InventoryPage() {
                                             <span className={`w-8 text-center font-semibold ${p.is_low_stock ? "amb" : ""}`}>{p.quantity_in_stock}</span>
                                             <button disabled={busy} onClick={() => adjustStock(p, 1)} className="w-6 h-6 rounded-md border border-line flex items-center justify-center text-ink2">+</button>
                                         </div>
-                                        <div className="flex-none w-[90px] text-right text-ink2">{fmt(p.unit_cost)}</div>
-                                        <div className="flex-none w-[90px] text-right font-semibold">{fmt(p.unit_sale_price)}</div>
+                                        <div className="flex-none w-[110px] text-right text-ink2">{fmt(p.unit_cost)} ₼</div>
+                                        <div className="flex-none w-[110px] text-right font-semibold">{fmt(p.unit_sale_price)} ₼</div>
                                         <div className="flex-none w-[130px] flex justify-center">
                                             <button onClick={() => toggleShare(p)} disabled={busy} className={`badge ${p.is_shared_to_marketplace ? "b-green" : "b-gray"}`}>
                                                 <i />{p.is_shared_to_marketplace ? "Açıq" : "Bağlı"}

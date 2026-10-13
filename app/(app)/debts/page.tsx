@@ -74,7 +74,7 @@ export default function DebtsPage() {
                                 <div className="flex-1">Müştəri</div>
                                 <div className="flex-[1.2]">Səbəb</div>
                                 <div className="flex-none w-[110px]">Son tarix</div>
-                                <div className="flex-none w-[90px] text-right">Məbləğ</div>
+                                <div className="flex-none w-[110px] text-right">Məbləğ</div>
                             </div>
                             {paginate(customerDebts ?? [], customerPage).map((d) => (
                                 <Link key={d.id} href={`/repairs/${d.id}`} className="tr hover:bg-gray-50/60 cursor-pointer">
@@ -91,7 +91,7 @@ export default function DebtsPage() {
                                             <span className={isOverdue(d.due_date) ? "neg font-semibold" : "text-ink2"}>{d.due_date}</span>
                                         ) : <span className="mut">—</span>}
                                     </div>
-                                    <div className="flex-none w-[90px] text-right font-semibold amb">{fmt(d.amount)}</div>
+                                    <div className="flex-none w-[110px] text-right font-semibold amb">{fmt(d.amount)} ₼</div>
                                 </Link>
                             ))}
                             {customerDebts && customerDebts.length === 0 && (
@@ -112,7 +112,7 @@ export default function DebtsPage() {
                                         <div className="t-purple w-9 h-9 rounded-[9px] flex items-center justify-center"><Truck size={16} /></div>
                                         {s.name}
                                     </div>
-                                    <div className="flex-none w-[110px] text-right font-semibold" style={{ color: "var(--purple)" }}>{fmt(s.total_debt)}</div>
+                                    <div className="flex-none w-[110px] text-right font-semibold" style={{ color: "var(--purple)" }}>{fmt(s.total_debt)} ₼</div>
                                 </Link>
                             ))}
                             {supplierDebts && supplierDebts.length === 0 && (

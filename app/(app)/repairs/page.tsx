@@ -267,7 +267,7 @@ export default function RepairsPage() {
                 <div className="flex-[1.4]">Cihaz və görülən iş</div>
                 <div className="flex-none w-[156px]">Vəziyyət</div>
                 <div className="flex-none w-[104px]">Tarix</div>
-                <div className="flex-none w-[76px] text-right">Məbləğ</div>
+                <div className="flex-none w-[100px] text-right">Məbləğ</div>
                 <div className="flex-none w-[150px]">Ödəniş</div>
                 <div className="flex-none w-[92px]">Zəmanət</div>
                 <div className="flex-none w-6" />
@@ -290,8 +290,8 @@ export default function RepairsPage() {
                         <span className={`badge ${STATUS_BADGE[r.status] || "b-gray"}`}><i />{STATUS_LABEL[r.status] || r.status}</span>
                       </div>
                       <div className="flex-none w-[104px] text-xs text-ink2">{fmtDate(r.last_status_at)}</div>
-                      <div className="flex-none w-[76px] text-right font-semibold">
-                        {r.status === "cancelled" ? <span className="mut">—</span> : Math.round(r.sale_price)}
+                      <div className="flex-none w-[100px] text-right font-semibold">
+                        {r.status === "cancelled" ? <span className="mut">—</span> : `${Math.round(r.sale_price)} ₼`}
                       </div>
                       <div className="flex-none w-[150px]">
                         {r.status === "cancelled" ? <span className="mut">—</span> : <span className={`badge ${pay.cls} !whitespace-normal`}><i />{pay.label}</span>}

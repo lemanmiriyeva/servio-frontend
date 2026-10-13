@@ -145,7 +145,7 @@ export default function ExpensesPage() {
                             <div className="flex-1">Təsvir</div>
                             <div className="flex-none w-[150px]">Kateqoriya</div>
                             <div className="flex-none w-[120px]">Üsul</div>
-                            <div className="flex-none w-[90px] text-right">Məbləğ</div>
+                            <div className="flex-none w-[110px] text-right">Məbləğ</div>
                         </div>
                         {pageItems.map((e) => (
                             <div key={e.id} className="tr">
@@ -153,7 +153,7 @@ export default function ExpensesPage() {
                                 <div className="flex-1 min-w-0 truncate">{e.description}</div>
                                 <div className="flex-none w-[150px] text-sm text-ink2 truncate" title={e.expense_category || ""}>{e.expense_category || "—"}</div>
                                 <div className="flex-none w-[120px] text-sm text-ink2 truncate">{METHOD_LABEL[e.method]}</div>
-                                <div className="flex-none w-[90px] text-right font-semibold neg">-{fmt(e.amount)}</div>
+                                <div className="flex-none w-[110px] text-right font-semibold neg">-{fmt(e.amount)} ₼</div>
                             </div>
                         ))}
                         {expenses && expenses.length === 0 && (

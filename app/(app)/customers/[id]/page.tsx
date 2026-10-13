@@ -172,7 +172,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                                     <div className="flex-none w-[120px]">Təmir №</div>
                                     <div className="flex-1">Cihaz / iş</div>
                                     <div className="flex-none w-[150px]">Vəziyyət</div>
-                                    <div className="flex-none w-[80px] text-right">Məbləğ</div>
+                                    <div className="flex-none w-[90px] text-right">Məbləğ</div>
                                     <div className="flex-none w-[100px] text-right">Qalıq borc</div>
                                 </div>
                                 {paginate(repairs ?? [], repairsPage).map((r) => (
@@ -185,7 +185,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                                         <div className="flex-none w-[150px]">
                                             <span className={`badge ${STATUS_BADGE[r.status] || "b-gray"}`}><i />{STATUS_LABEL[r.status] || r.status}</span>
                                         </div>
-                                        <div className="flex-none w-[80px] text-right font-semibold">{Math.round(r.sale_price)}</div>
+                                        <div className="flex-none w-[90px] text-right font-semibold">{Math.round(r.sale_price)} ₼</div>
                                         <div className="flex-none w-[100px] text-right font-semibold">
                                             {r.remaining_debt > 0 ? <span className="neg">{Math.round(r.remaining_debt)} AZN</span> : <span className="mut">—</span>}
                                         </div>
