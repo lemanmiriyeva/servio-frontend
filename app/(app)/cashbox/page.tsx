@@ -175,12 +175,12 @@ export default function CashboxPage() {
                 </div>
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Xərc</span>
-                    <div className="text-2xl font-semibold tracking-tight mt-1.5 neg">{summary ? `-${fmt(summary.expense)} AZN` : "—"}</div>
+                    <div className="text-2xl font-semibold tracking-tight mt-1.5 neg">{summary ? `${fmt(summary.expense)} AZN` : "—"}</div>
                 </div>
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Təchizatçı ödənişi</span>
                     <div className="text-2xl font-semibold tracking-tight mt-1.5" style={{ color: "var(--purple)" }}>
-                        {summary ? `-${fmt(summary.supplier_payment)} AZN` : "—"}
+                        {summary ? `${fmt(summary.supplier_payment)} AZN` : "—"}
                     </div>
                 </div>
                 <div className="card">
