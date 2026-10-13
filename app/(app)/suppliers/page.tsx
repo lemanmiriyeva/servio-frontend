@@ -104,6 +104,7 @@ export default function SuppliersPage() {
     }
 
     function openPurchaseForm(supplierId: number) {
+        setError("");
         setPurchaseForm(purchaseForm === supplierId ? null : supplierId);
         if (!repairOptions) {
             api.repairs("?page_size=100&ordering=-created_at").then((d) => {
@@ -125,6 +126,8 @@ export default function SuppliersPage() {
             await api.createSupplier({ name: newName, phone: newPhone });
             closeNewSupplier();
             load();
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Təchizatçı yaradıla bilmədi.");
         } finally { setBusy(false); }
     }
 
@@ -159,6 +162,7 @@ export default function SuppliersPage() {
     }
 
     function openEditSupplier(s: Supplier) {
+        setError("");
         setEditSupplier(s); setEditName(s.name); setEditPhone(s.phone); setEditNote(s.note ?? "");
     }
 
@@ -169,10 +173,13 @@ export default function SuppliersPage() {
             await api.updateSupplier(editSupplier.id, { name: editName, phone: editPhone, note: editNote });
             setEditSupplier(null);
             load();
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Təchizatçı yenilənmədi.");
         } finally { setBusy(false); }
     }
 
     function openEditPurchase(p: Purchase) {
+        setError("");
         setEditPurchaseId(p.id); setEditPurchaseDesc(p.description); setEditPurchaseAmount(String(p.amount));
     }
 
@@ -185,12 +192,13 @@ export default function SuppliersPage() {
             await api.updateSupplierPurchase(supplierId, editPurchaseId, { description: editPurchaseDesc, amount: amt });
             setEditPurchaseId(null);
             load();
-        } catch {
-            setError("Alış yenilənmədi — ola bilsin məbləğ artıq ödənilmiş hissədən azdır.");
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Alış yenilənmədi — ola bilsin məbləğ artıq ödənilmiş hissədən azdır.");
         } finally { setBusy(false); }
     }
 
     function openEditPayment(purchaseId: number, pay: PurchasePayment) {
+        setError("");
         setEditPaymentKey(`${purchaseId}:${pay.id}`);
         setEditPaymentAmount(String(pay.amount));
     }
@@ -203,8 +211,8 @@ export default function SuppliersPage() {
             await api.updateSupplierPurchasePayment(supplierId, purchaseId, paymentId, amt);
             setEditPaymentKey(null);
             load();
-        } catch {
-            setError("Ödəniş yenilənmədi — ola bilsin alışın ödənilmiş məbləğini aşır.");
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Ödəniş yenilənmədi — ola bilsin alışın ödənilmiş məbləğini aşır.");
         } finally { setBusy(false); }
     }
 
@@ -226,7 +234,7 @@ export default function SuppliersPage() {
                     <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Təchizatçılar</h1>
                     <p className="text-ink2 mt-1">Alışlar, hər alışın öz ödəniş tarixçəsi və qalıq borclar.</p>
                 </div>
-                <button className="btn pri" onClick={() => setShowNewSupplier(true)}>
+                <button className="btn pri" onClick={() => { setError(""); setShowNewSupplier(true); }}>
                     <Plus size={18} /><span>Yeni təchizatçı</span>
                 </button>
             </div>
@@ -249,6 +257,7 @@ export default function SuppliersPage() {
                         <label>Qeyd (istəyə bağlı)</label>
                         <div className="inp"><input value={editNote} onChange={(e) => setEditNote(e.target.value)} /></div>
                     </div>
+                    {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                     <div className="flex gap-2 justify-end pt-1">
                         <button className="btn" onClick={() => setEditSupplier(null)}>Ləğv et</button>
                         <button className="btn pri" disabled={busy || !editName.trim()} onClick={saveEditSupplier}>Yadda saxla</button>
@@ -286,6 +295,7 @@ export default function SuppliersPage() {
                             <div className="inp"><input value={newPhone} onChange={(e) => setNewPhone(e.target.value)} placeholder="+994 50 000 00 00" /></div>
                         </div>
                     </div>
+                    {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                     <div className="flex gap-2 justify-end pt-1">
                         <button className="btn" onClick={closeNewSupplier}>Ləğv et</button>
                         <button className="btn pri" disabled={busy || !newName.trim()} onClick={createSupplier}>Əlavə et</button>
@@ -330,7 +340,7 @@ export default function SuppliersPage() {
                                         <Plus size={16} /><span>Alış əlavə et</span>
                                     </button>
                                     {s.total_debt > 0 && (
-                                        <button className="btn pri" onClick={() => setPayForm(payForm === s.id ? null : s.id)}>
+                                        <button className="btn pri" onClick={() => { setError(""); setPayForm(payForm === s.id ? null : s.id); }}>
                                             <span>Borc ödə</span>
                                         </button>
                                     )}
@@ -361,6 +371,7 @@ export default function SuppliersPage() {
                                                 Dərhal (indicə) ödənildi — borc kimi yaranmasın, Kassadan bu məbləğ düşsün
                                             </label>
                                         </div>
+                                        {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                                         <div className="flex gap-2 justify-end pt-1">
                                             <button className="btn" onClick={() => setPurchaseForm(null)}>Ləğv et</button>
                                             <button className="btn pri" disabled={busy} onClick={() => submitPurchase(s.id)}>Əlavə et</button>
@@ -398,6 +409,7 @@ export default function SuppliersPage() {
                                         <p className="text-xs text-muted">
                                             Ödəniş avtomatik ən köhnə açıq alış(lar)a tətbiq olunur (FIFO).
                                         </p>
+                                        {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                                         <div className="flex gap-2 justify-end pt-1">
                                             <button className="btn" onClick={() => setPayForm(null)}>Ləğv et</button>
                                             <button className="btn pri" disabled={busy} onClick={() => submitPayment(s.id)}>Ödə</button>

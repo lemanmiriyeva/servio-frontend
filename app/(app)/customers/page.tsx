@@ -2,7 +2,15 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, Plus, Pencil, Check } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+
+// Backend konkret səbəb qaytarırsa onu çıxarır.
+function apiErrorDetail(err: unknown): string | null {
+    if (err instanceof ApiError && err.data && typeof err.data === "object" && "detail" in (err.data as Record<string, unknown>)) {
+        return String((err.data as { detail: string }).detail);
+    }
+    return null;
+}
 import { Modal } from "@/components/Modal";
 import { Loader } from "@/components/Loader";
 import { Pagination, paginate } from "@/components/Pagination";
@@ -58,8 +66,8 @@ export default function CustomersPage() {
             await api.createCustomer({ full_name: newName, phone: newPhone, email: newEmail });
             setShowNew(false); setNewName(""); setNewPhone(""); setNewEmail("");
             load();
-        } catch {
-            setError("Müştəri yaradıla bilmədi.");
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Müştəri yaradıla bilmədi.");
         } finally {
             setSaving(false);
         }
@@ -67,6 +75,7 @@ export default function CustomersPage() {
 
     function openEdit(e: React.MouseEvent, c: Customer) {
         e.preventDefault(); e.stopPropagation();
+        setError("");
         setEditingCustomer(c); setEditName(c.full_name); setEditPhone(c.phone); setEditEmail(c.email ?? "");
     }
 
@@ -77,8 +86,8 @@ export default function CustomersPage() {
             await api.updateCustomer(editingCustomer.id, { full_name: editName, phone: editPhone, email: editEmail });
             setEditingCustomer(null);
             load();
-        } catch {
-            setError("Müştəri yenilənmədi.");
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Müştəri yenilənmədi.");
         } finally {
             setSavingEdit(false);
         }
@@ -91,7 +100,7 @@ export default function CustomersPage() {
                     <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Müştərilər</h1>
                     <p className="text-ink2 mt-1">{all ? `${all.length} müştəri qeydə alınıb.` : "Yüklənir…"}</p>
                 </div>
-                <button className="btn pri" onClick={() => setShowNew((s) => !s)}>
+                <button className="btn pri" onClick={() => { setError(""); setShowNew((s) => !s); }}>
                     <Plus size={18} /><span>Yeni müştəri</span>
                 </button>
             </div>
@@ -114,6 +123,7 @@ export default function CustomersPage() {
                             <div className="inp"><input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="musteri@example.com" /></div>
                         </div>
                     </div>
+                    {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                     <button className="btn pri self-start" disabled={saving} onClick={handleCreate}>
                         {saving ? "Yadda saxlanılır…" : "Əlavə et"}
                     </button>
@@ -136,6 +146,7 @@ export default function CustomersPage() {
                             <div className="inp"><input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} /></div>
                         </div>
                     </div>
+                    {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                     <button className="btn pri self-start" disabled={savingEdit} onClick={saveEdit}>
                         <Check size={16} /><span>{savingEdit ? "Yadda saxlanılır…" : "Yadda saxla"}</span>
                     </button>

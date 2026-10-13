@@ -5,7 +5,15 @@ import {
     Check, Ban, Truck, PackageCheck, CircleDollarSign, Info,
     ArrowDownToLine, ArrowUpFromLine, Clock3,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+
+// Backend konkret səbəb qaytarırsa onu çıxarır.
+function apiErrorDetail(err: unknown): string | null {
+    if (err instanceof ApiError && err.data && typeof err.data === "object" && "detail" in (err.data as Record<string, unknown>)) {
+        return String((err.data as { detail: string }).detail);
+    }
+    return null;
+}
 import { useAuth } from "@/lib/auth-context";
 import { Modal } from "@/components/Modal";
 import { Pagination, paginate } from "@/components/Pagination";
@@ -126,8 +134,8 @@ export default function InventoryPage() {
             setShowNewProduct(false);
             setPName(""); setPBrand(""); setPCategory(""); setPQty(""); setPCost(""); setPPrice(""); setPShared(false); setPMarketPrice(""); setPUsed(false);
             loadProducts();
-        } catch {
-            setError("Məhsul yaradıla bilmədi.");
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Məhsul yaradıla bilmədi.");
         } finally {
             setBusy(false);
         }
@@ -179,7 +187,7 @@ export default function InventoryPage() {
                     <p className="text-ink2 mt-1">Öz ehtiyat hissələriniz və mağazalararası bazar.</p>
                 </div>
                 {tab === "stock" && (
-                    <button className="btn pri" onClick={() => setShowNewProduct((s) => !s)}>
+                    <button className="btn pri" onClick={() => { setError(""); setShowNewProduct((s) => !s); }}>
                         <Plus size={18} /><span>Yeni məhsul</span>
                     </button>
                 )}
@@ -262,6 +270,7 @@ export default function InventoryPage() {
                             {pShared && (
                                 <div className="fld max-w-[200px]"><label>Marketplace qiyməti (AZN)</label><div className="inp"><input type="number" value={pMarketPrice} onChange={(e) => setPMarketPrice(e.target.value)} placeholder={pPrice || "0"} /></div></div>
                             )}
+                            {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                             <button className="btn pri self-start" disabled={busy} onClick={createProduct}>Əlavə et</button>
                         </Modal>
                     )}

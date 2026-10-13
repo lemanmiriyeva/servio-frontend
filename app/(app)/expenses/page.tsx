@@ -1,7 +1,15 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Receipt } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+
+// Backend konkret səbəb qaytarırsa (məs. "Kassada vəsait yoxdur") onu çıxarır.
+function apiErrorDetail(err: unknown): string | null {
+    if (err instanceof ApiError && err.data && typeof err.data === "object" && "detail" in (err.data as Record<string, unknown>)) {
+        return String((err.data as { detail: string }).detail);
+    }
+    return null;
+}
 import { Modal } from "@/components/Modal";
 import { Pagination, paginate } from "@/components/Pagination";
 
@@ -56,8 +64,8 @@ export default function ExpensesPage() {
             await api.createCashTransaction({ type: "expense", amount: amt, method, description, expense_category: category });
             setShowForm(false); setAmount(""); setDescription(""); setCategory("");
             load();
-        } catch {
-            setError("Xərc yadda saxlanılmadı.");
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Xərc yadda saxlanılmadı.");
         } finally {
             setSaving(false);
         }
@@ -70,7 +78,7 @@ export default function ExpensesPage() {
                     <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Xərclər</h1>
                     <p className="text-ink2 mt-1">Cəmi: <b>{fmt(total)} AZN</b></p>
                 </div>
-                <button className="btn pri" onClick={() => setShowForm((s) => !s)}>
+                <button className="btn pri" onClick={() => { setError(""); setShowForm((s) => !s); }}>
                     <Plus size={18} /><span>Xərc əlavə et</span>
                 </button>
             </div>
@@ -112,6 +120,7 @@ export default function ExpensesPage() {
                         <label>Təsvir</label>
                         <div className="inp"><input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Qısa izah" /></div>
                     </div>
+                    {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                     <button className="btn pri self-start" disabled={saving} onClick={handleSubmit}>
                         {saving ? "Yadda saxlanılır…" : "Yadda saxla"}
                     </button>

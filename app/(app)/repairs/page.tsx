@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, X, Pencil, Check } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { Loader } from "@/components/Loader";
 import { Modal } from "@/components/Modal";
 import { Pagination, paginate } from "@/components/Pagination";
@@ -80,6 +80,7 @@ export default function RepairsPage() {
 
   async function openEdit(e: React.MouseEvent, id: number) {
     e.preventDefault(); e.stopPropagation();
+    setError("");
     setEditingId(id);
     setEditLoading(true);
     try {
@@ -121,8 +122,13 @@ export default function RepairsPage() {
       }
       setEditingId(null);
       load();
-    } catch {
-      setError("Yenilənmədi — sahələri yoxlayın.");
+    } catch (err) {
+      // Backend konkret səbəb qaytarırsa (məs. "Kassada vəsait yoxdur"), onu göstəririk —
+      // əvvəllər həmişə ümumi "sahələri yoxlayın" mesajı çıxırdı, əsl səbəb görünmürdü.
+      const detail = err instanceof ApiError && err.data && typeof err.data === "object" && "detail" in (err.data as Record<string, unknown>)
+          ? String((err.data as { detail: string }).detail)
+          : null;
+      setError(detail || "Yenilənmədi — sahələri yoxlayın.");
     } finally {
       setSavingEdit(false);
     }
@@ -360,6 +366,9 @@ export default function RepairsPage() {
                         </select>
                       </div>
                     </div>
+                    {error && (
+                        <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>
+                    )}
                     <div className="flex justify-end gap-2 mt-1">
                       <button className="btn" onClick={() => setEditingId(null)}>Ləğv et</button>
                       <button className="btn pri" disabled={savingEdit} onClick={saveEdit}><Check size={16} /><span>Yadda saxla</span></button>

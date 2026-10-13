@@ -1,7 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Plus, UserPlus, ShieldCheck, Check, CheckCheck, Square, Save } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+
+// Backend konkret səbəb qaytarırsa onu çıxarır.
+function apiErrorDetail(err: unknown): string | null {
+    if (err instanceof ApiError && err.data && typeof err.data === "object" && "detail" in (err.data as Record<string, unknown>)) {
+        return String((err.data as { detail: string }).detail);
+    }
+    return null;
+}
 import { Modal } from "@/components/Modal";
 import { Pagination, paginate } from "@/components/Pagination";
 
@@ -83,8 +91,8 @@ export default function UsersPage() {
             setShowNewUser(false);
             setUFirst(""); setULast(""); setUUsername(""); setUPassword(""); setURoleId("");
             loadUsers();
-        } catch {
-            setError("İstifadəçi yaradıla bilmədi.");
+        } catch (err) {
+            setError(apiErrorDetail(err) || "İstifadəçi yaradıla bilmədi.");
         } finally { setBusy(false); }
     }
 
@@ -116,8 +124,8 @@ export default function UsersPage() {
             setShowNewRole(false);
             loadRoles();
             setSelectedRoleId(role.id);
-        } catch {
-            setError("Rol yaradıla bilmədi.");
+        } catch (err) {
+            setError(apiErrorDetail(err) || "Rol yaradıla bilmədi.");
         } finally { setBusy(false); }
     }
 
@@ -158,8 +166,8 @@ export default function UsersPage() {
             await api.updateRolePermissions(role.id, nextPerms);
             setPermDraft(null);
             loadRoles();
-        } catch {
-            setError("İcazələr saxlanıla bilmədi.");
+        } catch (err) {
+            setError(apiErrorDetail(err) || "İcazələr saxlanıla bilmədi.");
         } finally { setSavingPerms(false); }
     }
 
@@ -171,9 +179,9 @@ export default function UsersPage() {
                     <p className="text-ink2 mt-1">Komanda üzvləri və hər rolun icazələri.</p>
                 </div>
                 {tab === "users" ? (
-                    <button className="btn pri" onClick={() => setShowNewUser((s) => !s)}><UserPlus size={18} /><span>Yeni istifadəçi</span></button>
+                    <button className="btn pri" onClick={() => { setError(""); setShowNewUser((s) => !s); }}><UserPlus size={18} /><span>Yeni istifadəçi</span></button>
                 ) : (
-                    <button className="btn pri" onClick={() => setShowNewRole((s) => !s)}><Plus size={18} /><span>Yeni rol</span></button>
+                    <button className="btn pri" onClick={() => { setError(""); setShowNewRole((s) => !s); }}><Plus size={18} /><span>Yeni rol</span></button>
                 )}
             </div>
 
@@ -203,6 +211,7 @@ export default function UsersPage() {
                                     {(roles ?? []).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
                                 </select>
                             </div>
+                            {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                             <button className="btn pri self-start" disabled={busy} onClick={createUser}>Əlavə et</button>
                         </Modal>
                     )}
@@ -282,6 +291,7 @@ export default function UsersPage() {
                                         })}
                                     </div>
                                 </div>
+                                {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                                 <button className="btn pri self-start" disabled={busy || !newRoleName.trim()} onClick={createRole}>Əlavə et</button>
                             </Modal>
                         )}
