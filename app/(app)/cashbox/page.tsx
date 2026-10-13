@@ -60,6 +60,7 @@ export default function CashboxPage() {
     }
 
     function openEdit(t: Transaction) {
+        setError("");
         setEditing(t);
         setEditDescription(t.description);
         setEditMethod(t.method);
@@ -156,7 +157,7 @@ export default function CashboxPage() {
                     <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Kassa</h1>
                     <p className="text-ink2 mt-1">Bütün nağd və köçürmə əməliyyatları.</p>
                 </div>
-                <button className="btn pri" onClick={() => setShowForm((s) => !s)}>
+                <button className="btn pri" onClick={() => { setError(""); setShowForm((s) => !s); }}>
                     <Plus size={18} /><span>Əməliyyat əlavə et</span>
                 </button>
             </div>
@@ -253,6 +254,9 @@ export default function CashboxPage() {
                             və onun &quot;Ödəniş tarixçəsi&quot;ndə görünəcək.
                         </p>
                     )}
+                    {error && (
+                        <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>
+                    )}
                     <button className="btn pri self-start" disabled={saving} onClick={handleSubmit}>
                         {saving ? "Yadda saxlanılır…" : "Yadda saxla"}
                     </button>
@@ -288,6 +292,9 @@ export default function CashboxPage() {
                         )}
                         {!amountEditable(editing) && (
                             <p className="text-xs text-muted">Bu əməliyyatın məbləği redaktə edilmir — başqa bir qeydlə (təmir ödənişi, təchizatçı borcu) bağlıdır. Səhv məbləğ üçün yeni düzəliş əməliyyatı əlavə edin.</p>
+                        )}
+                        {error && (
+                            <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>
                         )}
                         <button className="btn pri self-start" disabled={savingEdit} onClick={saveEdit}>
                             {savingEdit ? "Saxlanılır…" : "Yadda saxla"}
@@ -331,7 +338,7 @@ export default function CashboxPage() {
                                 </div>
                                 <div className="flex-none w-[120px] text-ink2 text-sm truncate">{METHOD_LABEL[t.method]}</div>
                                 <div className={`flex-none w-[90px] text-right font-semibold ${t.type === "income" || t.type === "expense_refund" ? "pos" : "neg"}`}>
-                                    {t.type === "income" ? "+" : "-"}{fmt(t.amount)}
+                                    {t.type === "income" || t.type === "expense_refund" ? "+" : "-"}{fmt(t.amount)}
                                 </div>
                                 <div className="flex-none w-[44px] flex justify-end">
                                     <button onClick={() => openEdit(t)} className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2" title="Redaktə et">
