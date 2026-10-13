@@ -139,6 +139,13 @@ export default function NewRepairPage() {
     setSaving(true);
     setError("");
     try {
+      // DİQQƏT (əsas düzəliş): əvvəllər təmir + detal (borc/nağd) + ilkin ödəniş 3 AYRICA
+      // sorğu idi — birinci (təmirin özü) həmişə uğurlu olurdu, sonra hansısa addım kassada
+      // pul çatmadığı üçün rədd edilsə belə, təmir artıq DB-də qalmış olurdu ("error göstərir,
+      // amma yenə də yaradır"). İndi hamısı TƏK sorğu ilə göndərilir, backend bunları bir
+      // tranzaksiyada icra edir — balans çatmazsa HEÇ NƏ (təmir də daxil) yaranmır.
+      const cost = parseFloat(costPrice);
+      const initialAmount = parseFloat(paymentAmount);
       const repair = (await api.createRepair({
         customer_id: selectedCustomer.id,
         device_brand: deviceBrand,
@@ -149,68 +156,13 @@ export default function NewRepairPage() {
         sale_price: salePrice,
         warranty_days: effectiveWarranty,
         technician_name: partMode === "technician" ? technicianName : "",
+        part_mode: (partMode === "credit" || partMode === "cash") && cost > 0 ? partMode : "none",
+        part_supplier_id: supplierId ? parseInt(supplierId, 10) : null,
+        part_description: partName || issueDescription || "",
+        initial_payment_amount: initialAmount > 0 ? initialAmount : null,
+        initial_payment_method: paymentMethod,
       })) as { id: number; number?: string };
 
-      // Təchizatçıdan alınan detal: borc kimi (və ya ödənilmiş) təchizatçı hesabına yazılır
-      const cost = parseFloat(costPrice);
-      if (partMode !== "none" && supplierId && cost > 0) {
-        try {
-          await api.addSupplierPurchase(supplierId, {
-            description: `${partName || issueDescription || "Detal"} — ${deviceBrand} ${deviceModel}${repair.number ? ` (${repair.number})` : ""}`.trim(),
-            amount: cost,
-            paid_amount: partMode === "cash" ? cost : 0,
-            repair: repair.id,
-          });
-        } catch (err) {
-          // DİQQƏT: əvvəllər bu xəta sakitcə udulurdu (heç nə göstərmədən) — "Nağd aldım"
-          // seçiləndə kassada kifayət qədər pul yoxdursa, istifadəçi heç bir xəbərdarlıq
-          // görmədən təmir səhifəsinə yönləndirilirdi, halbuki detal/ödəniş qeydə alınmırdı.
-          // Təmirin özü artıq yaradılıb — onu geri ala bilmirik, amma İSTİFADƏÇİYƏ AÇIQ DEYİRİK
-          // nə baş verdi və naviqasiyanı dayandırırıq ki, görsün və lazım olsa özü düzəltsin.
-          setError(
-              (apiErrorDetail(err) || "Detal/ödəniş qeydə alınmadı") +
-              ` — Təmir ${repair.number ?? ""} artıq yaradılıb, detalı Təchizatçılar səhifəsindən əlavə edə bilərsiniz.`
-          );
-          setSaving(false);
-          return;
-        }
-      } else if (partMode === "cash" && !supplierId && cost > 0) {
-        // DİQQƏT (əsas xəta): "Nağd aldım — borcsuz" seçiləndə, əgər təchizatçı seçilməyibsə,
-        // yuxarıdaki "if" keçilmir və HEÇ BİR kassa yazısı/balans yoxlanışı aparılmırdı —
-        // kassada pul olmasa belə xidmət sakitcə yaradılırdı. İndi təchizatçı seçilməyibsə
-        // belə, bu məbləğ birbaşa Kassaya "Xərc" kimi yazılır (assert_sufficient_balance
-        // backend-də işə düşür, kassada kifayət qədər pul yoxdursa əməliyyat rədd olunur).
-        try {
-          await api.createCashTransaction({
-            type: "expense",
-            amount: cost,
-            method: "cash",
-            description: `${partName || issueDescription || "Detal"} — ${deviceBrand} ${deviceModel}${repair.number ? ` (${repair.number})` : ""}`.trim(),
-            repair: repair.id,
-          });
-        } catch (err) {
-          setError(
-              (apiErrorDetail(err) || "Detal ödənişi qeydə alınmadı") +
-              ` — Təmir ${repair.number ?? ""} artıq yaradılıb, ödənişi Kassa səhifəsindən əlavə edə bilərsiniz.`
-          );
-          setSaving(false);
-          return;
-        }
-      }
-
-      const amount = parseFloat(paymentAmount);
-      if (amount > 0) {
-        try {
-          await api.addRepairPayment(repair.id, amount, paymentMethod);
-        } catch (err) {
-          setError(
-              (apiErrorDetail(err) || "İlkin ödəniş qeydə alınmadı") +
-              ` — Təmir ${repair.number ?? ""} artıq yaradılıb, ödənişi təmir səhifəsindən əlavə edə bilərsiniz.`
-          );
-          setSaving(false);
-          return;
-        }
-      }
       router.push(`/repairs/${repair.id}`);
     } catch (err) {
       setError(apiErrorDetail(err) || "Yadda saxlanılmadı. Zəhmət olmasa məlumatları yoxlayın.");
