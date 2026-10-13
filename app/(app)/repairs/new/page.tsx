@@ -2,7 +2,15 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Search, Plus, User, Smartphone, Wallet, ShieldCheck } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+
+// Backend konkret səbəb qaytarırsa (məs. "Kassada vəsait yoxdur") onu çıxarır.
+function apiErrorDetail(err: unknown): string | null {
+  if (err instanceof ApiError && err.data && typeof err.data === "object" && "detail" in (err.data as Record<string, unknown>)) {
+    return String((err.data as { detail: string }).detail);
+  }
+  return null;
+}
 import { useAuth } from "@/lib/auth-context";
 import { Modal } from "@/components/Modal";
 
@@ -153,18 +161,37 @@ export default function NewRepairPage() {
             paid_amount: partMode === "cash" ? cost : 0,
             repair: repair.id,
           });
-        } catch {
-          // təmir yaradılıb; borc qeydi alınmasa istifadəçi təchizatçı səhifəsindən əlavə edə bilər
+        } catch (err) {
+          // DİQQƏT: əvvəllər bu xəta sakitcə udulurdu (heç nə göstərmədən) — "Nağd aldım"
+          // seçiləndə kassada kifayət qədər pul yoxdursa, istifadəçi heç bir xəbərdarlıq
+          // görmədən təmir səhifəsinə yönləndirilirdi, halbuki detal/ödəniş qeydə alınmırdı.
+          // Təmirin özü artıq yaradılıb — onu geri ala bilmirik, amma İSTİFADƏÇİYƏ AÇIQ DEYİRİK
+          // nə baş verdi və naviqasiyanı dayandırırıq ki, görsün və lazım olsa özü düzəltsin.
+          setError(
+              (apiErrorDetail(err) || "Detal/ödəniş qeydə alınmadı") +
+              ` — Təmir ${repair.number ?? ""} artıq yaradılıb, detalı Təchizatçılar səhifəsindən əlavə edə bilərsiniz.`
+          );
+          setSaving(false);
+          return;
         }
       }
 
       const amount = parseFloat(paymentAmount);
       if (amount > 0) {
-        await api.addRepairPayment(repair.id, amount, paymentMethod);
+        try {
+          await api.addRepairPayment(repair.id, amount, paymentMethod);
+        } catch (err) {
+          setError(
+              (apiErrorDetail(err) || "İlkin ödəniş qeydə alınmadı") +
+              ` — Təmir ${repair.number ?? ""} artıq yaradılıb, ödənişi təmir səhifəsindən əlavə edə bilərsiniz.`
+          );
+          setSaving(false);
+          return;
+        }
       }
       router.push(`/repairs/${repair.id}`);
-    } catch {
-      setError("Yadda saxlanılmadı. Zəhmət olmasa məlumatları yoxlayın.");
+    } catch (err) {
+      setError(apiErrorDetail(err) || "Yadda saxlanılmadı. Zəhmət olmasa məlumatları yoxlayın.");
       setSaving(false);
     }
   }

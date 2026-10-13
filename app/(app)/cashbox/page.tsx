@@ -164,27 +164,23 @@ export default function CashboxPage() {
 
             {error && <div className="card" style={{ color: "var(--red)" }}>{error}</div>}
 
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                <div className="card">
-                    <span className="text-ink2 text-[13px] font-medium">Başlanğıc balans</span>
-                    <div className="text-2xl font-semibold tracking-tight mt-1.5">{summary ? fmt(summary.opening_balance) : "—"}</div>
-                </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Mədaxil (nağd)</span>
                     {/* Ləğv edilən xidmətlərin geri qaytarması birbaşa Mədaxildən çıxılır ki,
                         bu rəqəm ləğvdən sonra "dəyişmir" təəssüratı yaratmasın. */}
                     <div className="text-2xl font-semibold tracking-tight mt-1.5 pos">
-                        {summary ? `+${fmt(summary.income - summary.refund)}` : "—"}
+                        {summary ? `+${fmt(summary.income - summary.refund)} AZN` : "—"}
                     </div>
                 </div>
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Xərc</span>
-                    <div className="text-2xl font-semibold tracking-tight mt-1.5 neg">{summary ? `-${fmt(summary.expense)}` : "—"}</div>
+                    <div className="text-2xl font-semibold tracking-tight mt-1.5 neg">{summary ? `-${fmt(summary.expense)} AZN` : "—"}</div>
                 </div>
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Təchizatçı ödənişi</span>
                     <div className="text-2xl font-semibold tracking-tight mt-1.5" style={{ color: "var(--purple)" }}>
-                        {summary ? `-${fmt(summary.supplier_payment)}` : "—"}
+                        {summary ? `-${fmt(summary.supplier_payment)} AZN` : "—"}
                     </div>
                 </div>
                 <div className="card">
@@ -192,12 +188,12 @@ export default function CashboxPage() {
                         "Kassa balansı"na qarışdırılmır, burada AYRICA göstərilir. */}
                     <span className="text-ink2 text-[13px] font-medium">Kart / bank balansı</span>
                     <div className="text-2xl font-semibold tracking-tight mt-1.5" style={{ color: "var(--blue, #3b82f6)" }}>
-                        {summary ? fmt(summary.card_balance) : "—"}
+                        {summary ? `${fmt(summary.card_balance)} AZN` : "—"}
                     </div>
                 </div>
                 <div className="card" style={{ background: "var(--side)" }}>
                     <span className="text-[13px] font-medium text-[#8FA9B2]">Kassa balansı (nağd)</span>
-                    <div className="text-2xl font-semibold tracking-tight mt-1.5 text-white">{summary ? fmt(summary.current_balance) : "—"}</div>
+                    <div className="text-2xl font-semibold tracking-tight mt-1.5 text-white">{summary ? `${fmt(summary.current_balance)} AZN` : "—"}</div>
                 </div>
             </div>
 
@@ -323,7 +319,7 @@ export default function CashboxPage() {
                             <div className="flex-1">Təsvir</div>
                             <div className="flex-none w-[150px]">Növ</div>
                             <div className="flex-none w-[120px]">Üsul</div>
-                            <div className="flex-none w-[90px] text-right">Məbləğ</div>
+                            <div className="flex-none w-[110px] text-right">Məbləğ</div>
                             <div className="flex-none w-[44px]" />
                         </div>
                         {pageItems.map((t) => (
@@ -337,8 +333,8 @@ export default function CashboxPage() {
                                     <span className={`badge ${t.type === "income" || t.type === "expense_refund" ? "b-green" : t.type === "expense" ? "b-red" : t.type === "refund" ? "b-gray" : "b-purple"} !whitespace-normal`}><i />{TYPE_LABEL[t.type] || t.type}</span>
                                 </div>
                                 <div className="flex-none w-[120px] text-ink2 text-sm truncate">{METHOD_LABEL[t.method]}</div>
-                                <div className={`flex-none w-[90px] text-right font-semibold ${t.type === "income" || t.type === "expense_refund" ? "pos" : "neg"}`}>
-                                    {t.type === "income" || t.type === "expense_refund" ? "+" : "-"}{fmt(t.amount)}
+                                <div className={`flex-none w-[110px] text-right font-semibold ${t.type === "income" || t.type === "expense_refund" ? "pos" : "neg"}`}>
+                                    {t.type === "income" || t.type === "expense_refund" ? "+" : "-"}{fmt(t.amount)} ₼
                                 </div>
                                 <div className="flex-none w-[44px] flex justify-end">
                                     <button onClick={() => openEdit(t)} className="w-8 h-8 rounded-lg border border-line bg-white flex items-center justify-center text-ink2" title="Redaktə et">
