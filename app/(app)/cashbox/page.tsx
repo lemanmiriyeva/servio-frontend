@@ -185,8 +185,16 @@ export default function CashboxPage() {
                 </div>
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Təchizatçı ödənişi</span>
+                    {/* DİQQƏT: "Mədaxil" qutusu kimi burada da geri alınan (EXPENSE_REFUND) hissə
+                        çıxılır. Səbəb: bir xidmət ləğv edilib yenidən aktivləşdiriləndə, əvvəlcə
+                        ödənilmiş təchizatçı/usta pulu Kassaya "geri alınır" (EXPENSE_REFUND), sonra
+                        yenidən "ödənilir" (yeni SUPPLIER_PAYMENT) ki, Kassa balansı düzgün qalsın.
+                        Bu YALNIZ EYNİ bir alışın təkrar "ödənilməsi"dir, YENİ bir xərc deyil — əgər
+                        EXPENSE_REFUND-u çıxmasaq, hər ləğv+bərpa dövründə bu qutu süni şəkildə
+                        artır (məs. 50 AZN-lik bir alış 100, sonra 150 AZN kimi görünməyə başlayır,
+                        halbuki faktiki cəmi bir dəfə 50 AZN xərclənib). */}
                     <div className="text-2xl font-semibold tracking-tight mt-1.5" style={{ color: "var(--purple)" }}>
-                        {summary ? `${fmt(summary.total_supplier_payment)} AZN` : "—"}
+                        {summary ? `${fmt(summary.total_supplier_payment - summary.total_expense_refund)} AZN` : "—"}
                     </div>
                 </div>
                 <div className="card">
