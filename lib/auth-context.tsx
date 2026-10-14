@@ -33,6 +33,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     pending.finally(() => setLoading(false));
   }, []);
 
+  // Brauzerin "geri/irəli keşi" (bfcache) çıxışdan sonra köhnə (daxil olunmuş) səhifə
+  // görüntüsünü yaddaşdan göstərə bilər — `event.persisted` bunu bildirir. Belə olarsa
+  // tokenin/istifadəçinin hələ etibarlı olub-olmadığını YENİDƏN yoxlamaq üçün səhifəni
+  // yeniləyirik ki, köhnə ekran "hələ də daxiləm" təəssüratı yaratmasın.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    function onPageShow(e: PageTransitionEvent) {
+      if (e.persisted) window.location.reload();
+    }
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   async function login(username: string, password: string) {
     const data = (await api.login(username, password)) as { access: string; refresh: string; user: Me };
     setTokens(data.access, data.refresh);
@@ -48,7 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearTokens();
     if (typeof window !== "undefined") localStorage.removeItem(LAST_ACTIVITY_KEY);
     setUser(null);
-    router.push("/login");
+    // DİQQƏT: əvvəllər burada `router.push("/login")` idi — bu, Next.js-in client-side
+    // router keşini (və bəzi brauzerlərdə "geri" düyməsinin bfcache-ini) təmizləmirdi.
+    // Nəticədə çıxış edib yenidən saytı açanda (xüsusilə "geri" düyməsi ilə, ya da eyni
+    // tab-da) qorunan səhifə hələ yaddaşdan göstərilə bilirdi — istifadəçi sanki hələ də
+    // daxil olmuş kimi görünürdü, baxmayaraq ki token artıq silinib. `window.location`
+    // ilə TAM səhifə yenilənməsi məcburi edilir ki, bütün React/router vəziyyəti sıfırlansın
+    // və login səhifəsi həmişə təzə yüklənsin.
+    if (typeof window !== "undefined") window.location.href = "/login";
+    else router.push("/login");
   }
 
   // Giriş olunduqdan sonra fəaliyyətsizliyi izləyir — 10 dəq ərzində heç bir klik/klaviatura/skrol
