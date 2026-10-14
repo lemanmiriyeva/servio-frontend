@@ -15,12 +15,38 @@ function fmt(n: number) {
     return new Intl.NumberFormat("az-AZ").format(Math.round(n));
 }
 
+const AZ_MONTHS = [
+    "Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun",
+    "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr",
+];
+
+// Müştəri borclarını debt_date-in ayına görə qruplaşdırır — "Bu ay", "Keçən ay", sonra
+// "Oktyabr 2025" kimi digər aylar, ən yenidən köhnəyə doğru sıralanır.
+function groupByMonth(debts: CustomerDebt[]) {
+    const now = new Date();
+    const thisKey = `${now.getFullYear()}-${now.getMonth()}`;
+    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevKey = `${prevDate.getFullYear()}-${prevDate.getMonth()}`;
+
+    const groups = new Map<string, { label: string; sortKey: number; items: CustomerDebt[] }>();
+    for (const d of debts) {
+        const dt = new Date(d.debt_date);
+        if (Number.isNaN(dt.getTime())) continue;
+        const key = `${dt.getFullYear()}-${dt.getMonth()}`;
+        if (!groups.has(key)) {
+            const label = key === thisKey ? "Bu ay" : key === prevKey ? "Keçən ay" : `${AZ_MONTHS[dt.getMonth()]} ${dt.getFullYear()}`;
+            groups.set(key, { label, sortKey: dt.getFullYear() * 12 + dt.getMonth(), items: [] });
+        }
+        groups.get(key)!.items.push(d);
+    }
+    return Array.from(groups.values()).sort((a, b) => b.sortKey - a.sortKey);
+}
+
 export default function DebtsPage() {
     const [customerDebts, setCustomerDebts] = useState<CustomerDebt[] | null>(null);
     const [supplierDebts, setSupplierDebts] = useState<Supplier[] | null>(null);
     const [tab, setTab] = useState<"customer" | "supplier">("customer");
     const [error, setError] = useState("");
-    const [customerPage, setCustomerPage] = useState(1);
     const [supplierPage, setSupplierPage] = useState(1);
 
     useEffect(() => {
@@ -67,39 +93,49 @@ export default function DebtsPage() {
             </div>
 
             {tab === "customer" ? (
-                <div className="card !p-2">
-                    <div className="overflow-x-auto">
-                        <div className="min-w-[600px]">
-                            <div className="tr h">
-                                <div className="flex-1">Müştəri</div>
-                                <div className="flex-[1.2]">Səbəb</div>
-                                <div className="flex-none w-[110px]">Son tarix</div>
-                                <div className="flex-none w-[110px] text-right">Məbləğ</div>
+                <div className="flex flex-col gap-4">
+                    {groupByMonth(customerDebts ?? []).map((group) => {
+                        const groupTotal = group.items.reduce((s, d) => s + Number(d.amount), 0);
+                        return (
+                            <div key={group.label + group.sortKey} className="card !p-2">
+                                <div className="flex items-center justify-between px-2 py-2">
+                                    <b className="text-sm">{group.label}</b>
+                                    <span className="text-sm font-semibold amb">{fmt(groupTotal)} ₼</span>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <div className="min-w-[600px]">
+                                        <div className="tr h">
+                                            <div className="flex-1">Müştəri</div>
+                                            <div className="flex-[1.2]">Səbəb</div>
+                                            <div className="flex-none w-[110px]">Son tarix</div>
+                                            <div className="flex-none w-[110px] text-right">Məbləğ</div>
+                                        </div>
+                                        {group.items.map((d) => (
+                                            <Link key={d.id} href={`/repairs/${d.id}`} className="tr hover:bg-gray-50/60 cursor-pointer">
+                                                <div className="flex-1 flex items-center gap-2.5 font-semibold min-w-0">
+                                                    <div className="av a2">{d.customer_initials}</div>
+                                                    <span className="truncate">{d.customer_name}</span>
+                                                </div>
+                                                <div className="flex-[1.2] min-w-0">
+                                                    <span className="truncate block">{d.reason}</span>
+                                                    <span className="mono text-xs text-muted">{d.number}</span>
+                                                </div>
+                                                <div className="flex-none w-[110px]">
+                                                    {d.due_date ? (
+                                                        <span className={isOverdue(d.due_date) ? "neg font-semibold" : "text-ink2"}>{d.due_date}</span>
+                                                    ) : <span className="mut">—</span>}
+                                                </div>
+                                                <div className="flex-none w-[110px] text-right font-semibold amb">{fmt(d.amount)} ₼</div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
-                            {paginate(customerDebts ?? [], customerPage).map((d) => (
-                                <Link key={d.id} href={`/repairs/${d.id}`} className="tr hover:bg-gray-50/60 cursor-pointer">
-                                    <div className="flex-1 flex items-center gap-2.5 font-semibold min-w-0">
-                                        <div className="av a2">{d.customer_initials}</div>
-                                        <span className="truncate">{d.customer_name}</span>
-                                    </div>
-                                    <div className="flex-[1.2] min-w-0">
-                                        <span className="truncate block">{d.reason}</span>
-                                        <span className="mono text-xs text-muted">{d.number}</span>
-                                    </div>
-                                    <div className="flex-none w-[110px]">
-                                        {d.due_date ? (
-                                            <span className={isOverdue(d.due_date) ? "neg font-semibold" : "text-ink2"}>{d.due_date}</span>
-                                        ) : <span className="mut">—</span>}
-                                    </div>
-                                    <div className="flex-none w-[110px] text-right font-semibold amb">{fmt(d.amount)} ₼</div>
-                                </Link>
-                            ))}
-                            {customerDebts && customerDebts.length === 0 && (
-                                <div className="text-center text-muted text-sm py-10">Açıq müştəri borcu yoxdur. 🎉</div>
-                            )}
-                        </div>
-                    </div>
-                    <Pagination page={customerPage} totalItems={customerDebts?.length ?? 0} onChange={setCustomerPage} />
+                        );
+                    })}
+                    {customerDebts && customerDebts.length === 0 && (
+                        <div className="card text-center text-muted text-sm py-10">Açıq müştəri borcu yoxdur. 🎉</div>
+                    )}
                 </div>
             ) : (
                 <div className="card !p-2">

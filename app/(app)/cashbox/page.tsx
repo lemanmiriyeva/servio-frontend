@@ -9,6 +9,10 @@ type Summary = {
     opening_balance: number; income: number; expense: number;
     supplier_payment: number; refund: number; expense_refund: number; current_balance: number;
     card_balance: number;
+    // Nağd + kart/bank cəmi (statistika qutuları üçün) — "expense"/"supplier_payment"/"income"
+    // yuxarıda YALNIZ nağd hissəsidir (balans hesablaması üçün), kartla edilən məbləğ bura daxil deyil.
+    total_expense: number; total_supplier_payment: number; total_income: number;
+    total_refund: number; total_expense_refund: number;
 };
 type Transaction = {
     id: number; type: string; amount: number; method: string;
@@ -174,13 +178,15 @@ export default function CashboxPage() {
                     </div>
                 </div>
                 <div className="card">
+                    {/* Nağd + kart/bank cəmi göstərilir (DİQQƏT: kartla edilən xərc əvvəllər
+                        burada görünmürdü, yalnız nağd hissəsi göstərilirdi). */}
                     <span className="text-ink2 text-[13px] font-medium">Xərc</span>
-                    <div className="text-2xl font-semibold tracking-tight mt-1.5 neg">{summary ? `${fmt(summary.expense)} AZN` : "—"}</div>
+                    <div className="text-2xl font-semibold tracking-tight mt-1.5 neg">{summary ? `${fmt(summary.total_expense)} AZN` : "—"}</div>
                 </div>
                 <div className="card">
                     <span className="text-ink2 text-[13px] font-medium">Təchizatçı ödənişi</span>
                     <div className="text-2xl font-semibold tracking-tight mt-1.5" style={{ color: "var(--purple)" }}>
-                        {summary ? `${fmt(summary.supplier_payment)} AZN` : "—"}
+                        {summary ? `${fmt(summary.total_supplier_payment)} AZN` : "—"}
                     </div>
                 </div>
                 <div className="card">

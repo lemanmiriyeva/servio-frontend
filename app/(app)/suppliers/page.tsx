@@ -21,8 +21,6 @@ type Supplier = {
     purchases: Purchase[]; total_purchased: number; total_paid: number; total_debt: number;
     pending_returns?: PendingReturn[];
 };
-type RepairOption = { id: number; number: string; customer_name: string };
-
 // Backend "Kassada vəsait yoxdur" kimi konkret səbəb qaytarırsa onu çıxarır.
 function apiErrorDetail(err: unknown): string | null {
     if (err instanceof ApiError && err.data && typeof err.data === "object" && "detail" in (err.data as Record<string, unknown>)) {
@@ -52,17 +50,6 @@ export default function SuppliersPage() {
     const [newName, setNewName] = useState("");
     const [newPhone, setNewPhone] = useState("");
     const [search, setSearch] = useState("");
-
-    const [purchaseForm, setPurchaseForm] = useState<number | null>(null);
-    const [pDesc, setPDesc] = useState("");
-    const [pAmount, setPAmount] = useState("");
-    const [pRepairId, setPRepairId] = useState("");
-    // "Dərhal ödənildi" — alışı elə yaradılan anda nağd/köçürmə ilə ödəyəndə (məs. iDoctor,
-    // Eyşan Usta kimi xarici ustalara dərhal pul verilən hallar) bunu borc kimi yox, elə
-    // yaradılışda ödənilmiş kimi qeyd etmək üçün. Əvvəllər bu seçim yox idi, hamısı mütləq
-    // əvvəlcə borc kimi yaranır, sonra ayrıca "Borc ödə" ilə bağlanırdı.
-    const [pPaidNow, setPPaidNow] = useState(false);
-    const [repairOptions, setRepairOptions] = useState<RepairOption[] | null>(null);
 
     const [payForm, setPayForm] = useState<number | null>(null);
     const [payAmount, setPayAmount] = useState("");
@@ -103,18 +90,6 @@ export default function SuppliersPage() {
         setExpanded((cur) => (cur === supplierId ? null : supplierId));
     }
 
-    function openPurchaseForm(supplierId: number) {
-        setError("");
-        setPurchaseForm(purchaseForm === supplierId ? null : supplierId);
-        if (!repairOptions) {
-            api.repairs("?page_size=100&ordering=-created_at").then((d) => {
-                const data = d as { results?: { id: number; number: string; customer_name: string }[] } | { id: number; number: string; customer_name: string }[];
-                const list = Array.isArray(data) ? data : data.results ?? [];
-                setRepairOptions(list.map((r) => ({ id: r.id, number: r.number, customer_name: r.customer_name })));
-            }).catch(() => setRepairOptions([]));
-        }
-    }
-
     function closeNewSupplier() {
         setShowNewSupplier(false); setNewName(""); setNewPhone("");
     }
@@ -128,23 +103,6 @@ export default function SuppliersPage() {
             load();
         } catch (err) {
             setError(apiErrorDetail(err) || "Təchizatçı yaradıla bilmədi.");
-        } finally { setBusy(false); }
-    }
-
-    async function submitPurchase(supplierId: number) {
-        const amt = parseFloat(pAmount);
-        if (!amt || amt <= 0 || !pDesc.trim()) return;
-        setBusy(true);
-        try {
-            await api.addSupplierPurchase(supplierId, {
-                description: pDesc, amount: amt,
-                ...(pRepairId ? { repair: parseInt(pRepairId, 10) } : {}),
-                ...(pPaidNow ? { paid_amount: amt } : {}),
-            });
-            setPurchaseForm(null); setPDesc(""); setPAmount(""); setPRepairId(""); setPPaidNow(false);
-            load();
-        } catch (err) {
-            setError(apiErrorDetail(err) || "Alış əlavə edilmədi.");
         } finally { setBusy(false); }
     }
 
@@ -335,49 +293,18 @@ export default function SuppliersPage() {
 
                         {expanded === s.id && (
                             <div className="border-t border-line p-4 flex flex-col gap-3">
+                                {/* DİQQƏT: "Alış əlavə et" (yeni alış) düyməsi qəsdən buradan götürülüb —
+                                    alışlar artıq "Yeni xidmət" formasının "Detal mənbəyi" addımında,
+                                    təmirlə BİRLİKDƏ (eyni atomic tranzaksiyada, balans yoxlanışı ilə)
+                                    yaradılır. Bu manual forma ayrıca, yoxlamasız bir yol idi və
+                                    istifadəçinin xahişi ilə ləğv edilib. */}
                                 <div className="flex gap-2 flex-wrap">
-                                    <button className="btn" onClick={() => openPurchaseForm(s.id)}>
-                                        <Plus size={16} /><span>Alış əlavə et</span>
-                                    </button>
                                     {s.total_debt > 0 && (
                                         <button className="btn pri" onClick={() => { setError(""); setPayForm(payForm === s.id ? null : s.id); }}>
                                             <span>Borc ödə</span>
                                         </button>
                                     )}
                                 </div>
-
-                                {purchaseForm === s.id && (
-                                    <Modal title={`${s.name} — yeni alış`} onClose={() => setPurchaseForm(null)}>
-                                        <div className="flex flex-col gap-3">
-                                            <div className="fld">
-                                                <label>Təsvir</label>
-                                                <div className="inp"><input autoFocus value={pDesc} onChange={(e) => setPDesc(e.target.value)} placeholder="Ehtiyat hissələri" /></div>
-                                            </div>
-                                            <div className="fld">
-                                                <label>Məbləğ (AZN)</label>
-                                                <div className="inp"><input type="number" value={pAmount} onChange={(e) => setPAmount(e.target.value)} /></div>
-                                            </div>
-                                            <div className="fld">
-                                                <label>Hansı təmir üçün (istəyə bağlı)</label>
-                                                <select className="inp" value={pRepairId} onChange={(e) => setPRepairId(e.target.value)}>
-                                                    <option value="">Seçilməyib</option>
-                                                    {(repairOptions ?? []).map((r) => (
-                                                        <option key={r.id} value={r.id}>{r.number} — {r.customer_name}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                                                <input type="checkbox" checked={pPaidNow} onChange={(e) => setPPaidNow(e.target.checked)} />
-                                                Dərhal (indicə) ödənildi — borc kimi yaranmasın, Kassadan bu məbləğ düşsün
-                                            </label>
-                                        </div>
-                                        {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
-                                        <div className="flex gap-2 justify-end pt-1">
-                                            <button className="btn" onClick={() => setPurchaseForm(null)}>Ləğv et</button>
-                                            <button className="btn pri" disabled={busy} onClick={() => submitPurchase(s.id)}>Əlavə et</button>
-                                        </div>
-                                    </Modal>
-                                )}
 
                                 {s.pending_returns && s.pending_returns.length > 0 && (
                                     <div className="flex flex-col gap-2 p-3 rounded-[10px] border border-line bg-brand-soft">
