@@ -115,7 +115,7 @@ export default function DashboardPage() {
         {/* Hero bench */}
         <div className="rounded-[14px] p-7 flex flex-col sm:flex-row items-start sm:items-center gap-6 bg-side text-white">
           <div>
-            <div className="text-[13px] text-[#8FA9B2]">Bu ayın gəliri</div>
+            <div className="text-[13px] text-[#8FA9B2]">Bu ay üçün ümumi satış</div>
             <div className="text-[40px] md:text-[48px] font-semibold tracking-tight leading-[1.05] mt-1.5">
               {data ? (data.month_income === null ? "•••••" : mask(fmt(data.month_income))) : "—"}
               <small className="text-lg font-semibold text-[#8FA9B2] ml-2">AZN</small>
@@ -125,7 +125,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <div className="w-full sm:w-[250px] bg-white/[0.07] rounded-xl p-4.5 flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#8FA9B2]">Bu ayın qazancı</span>
+                <span className="text-[13px] text-[#8FA9B2]">Bu ay xalis mənfəət</span>
                 {canSeeProfit && (
                     <button onClick={() => setShowProfit((s) => !s)} className="w-8 h-8 rounded-lg bg-brand text-brand-ink flex items-center justify-center flex-none">
                       {showProfit ? <EyeOff size={18} /> : <Eye size={18} />}
