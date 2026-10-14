@@ -53,6 +53,10 @@ export default function SuppliersPage() {
 
     const [payForm, setPayForm] = useState<number | null>(null);
     const [payAmount, setPayAmount] = useState("");
+    // DİQQƏT: əvvəllər bura həmişə "cash" göndərilirdi — kart balansında pul olsa belə
+    // "Kassada vəsait yoxdur" (nağd) xətası verirdi. İndi istifadəçi seçir, seçilən
+    // üsulun ÖZ balansı yoxlanır (backend bunu artıq dəstəkləyir, bax: suppliers/views.py pay()).
+    const [payMethod, setPayMethod] = useState<"cash" | "card" | "bank_transfer">("cash");
 
     // Təchizatçının özünün (ad/telefon/qeyd) redaktəsi.
     const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
@@ -111,8 +115,8 @@ export default function SuppliersPage() {
         if (!amt || amt <= 0) return;
         setBusy(true);
         try {
-            await api.paySupplier(supplierId, amt);
-            setPayForm(null); setPayAmount("");
+            await api.paySupplier(supplierId, amt, payMethod);
+            setPayForm(null); setPayAmount(""); setPayMethod("cash");
             load();
         } catch (err) {
             setError(apiErrorDetail(err) || "Ödəniş edilmədi.");
@@ -329,12 +333,22 @@ export default function SuppliersPage() {
 
                                 {payForm === s.id && (
                                     <Modal title={`${s.name} — borc ödə`} onClose={() => setPayForm(null)}>
-                                        <div className="fld">
-                                            <label>Ödəniləcək məbləğ (AZN)</label>
-                                            <div className="inp"><input autoFocus type="number" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} placeholder={String(s.total_debt)} /></div>
+                                        <div className="flex gap-3 flex-wrap">
+                                            <div className="fld flex-1 min-w-[140px]">
+                                                <label>Ödəniləcək məbləğ (AZN)</label>
+                                                <div className="inp"><input autoFocus type="number" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} placeholder={String(s.total_debt)} /></div>
+                                            </div>
+                                            <div className="fld flex-1 min-w-[140px]">
+                                                <label>Ödəniş üsulu</label>
+                                                <select className="inp" value={payMethod} onChange={(e) => setPayMethod(e.target.value as typeof payMethod)}>
+                                                    <option value="cash">Nağd</option>
+                                                    <option value="card">Kart</option>
+                                                    <option value="bank_transfer">Bank köçürməsi</option>
+                                                </select>
+                                            </div>
                                         </div>
                                         <p className="text-xs text-muted">
-                                            Ödəniş avtomatik ən köhnə açıq alış(lar)a tətbiq olunur (FIFO).
+                                            Ödəniş avtomatik ən köhnə açıq alış(lar)a tətbiq olunur (FIFO). Seçilmiş üsulun öz balansından (nağd və ya kart/bank) çıxılacaq.
                                         </p>
                                         {error && <div className="text-sm font-medium" style={{ color: "var(--red)" }}>{error}</div>}
                                         <div className="flex gap-2 justify-end pt-1">
