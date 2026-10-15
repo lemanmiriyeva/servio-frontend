@@ -109,7 +109,7 @@ export default function CustomersPage() {
 
             {showNew && (
                 <Modal title="Yeni müştəri" onClose={() => setShowNew(false)} maxWidth="max-w-2xl">
-                    <div className="flex gap-3 flex-wrap">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
                         <div className="fld flex-1 min-w-[180px]">
                             <label>Ad Soyad</label>
                             <div className="inp"><input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Rəşad Məmmədov" /></div>
@@ -132,7 +132,7 @@ export default function CustomersPage() {
 
             {editingCustomer && (
                 <Modal title="Müştərini redaktə et" onClose={() => setEditingCustomer(null)} maxWidth="max-w-2xl">
-                    <div className="flex gap-3 flex-wrap">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
                         <div className="fld flex-1 min-w-[180px]">
                             <label>Ad Soyad</label>
                             <div className="inp"><input value={editName} onChange={(e) => setEditName(e.target.value)} /></div>

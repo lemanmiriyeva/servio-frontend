@@ -87,7 +87,7 @@ export default function ExpensesPage() {
 
             {showForm && (
                 <Modal title="Yeni xərc" onClose={() => setShowForm(false)} maxWidth="max-w-xl">
-                    <div className="flex gap-3 flex-wrap">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
                         <div className="fld flex-1 min-w-[140px]">
                             <label>Məbləğ (AZN)</label>
                             <div className="inp"><input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
