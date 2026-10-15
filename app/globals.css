@@ -56,11 +56,15 @@
   --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
 }
 
-html, body {
+html {
   /* Mobil ekranlarda hər hansı bir elementin (düzgün sarılmayan düymə sırası,
      geniş cədvəl və s.) səhifəni üfüqi sürüşdürməsinin qarşısını alan təhlükəsizlik
      toru — daxili "overflow-x-auto" olan konkret bloklar (cədvəllər) buna baxmayaraq
-     öz içində normal sürüşür, çünki onların öz scroll konteksti var. */
+     öz içində normal sürüşür, çünki onların öz scroll konteksti var.
+     DİQQƏT: bu YALNIZ `html`-ə qoyulur, `body`-yə YOX — hər ikisinə qoyulanda Chromium
+     sidebar-dakı `position: sticky`-ni sındırırdı (sidebar sayt aşağı sürüşdükcə özü də
+     yuxarı sürüşüb yoxa çıxırdı, "yapışqan" olmaq əvəzinə) çünki iki iç-içə overflow
+     konteksti (html VƏ body) sticky-nin "yapışacağı" halqanı qarışdırırdı. */
   overflow-x: hidden;
 }
 
