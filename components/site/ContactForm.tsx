@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Mail, Phone, MapPin, Clock, Send, Check } from "lucide-react";
 import { DARK_BG } from "./Sections";
+import { InstagramIcon, WhatsAppIcon, whatsAppUrl } from "./SocialIcons";
 import type { SiteSettingsContent } from "@/lib/site-content";
 import { api, ApiError } from "@/lib/api";
 
@@ -30,11 +31,17 @@ export function ContactForm({ settings }: { settings: SiteSettingsContent }) {
     }
   }
 
-  const items = [
+  const items: { icon: React.ComponentType<{ size?: number }>; label: string; value: string; href?: string; external?: boolean }[] = [
     { icon: Mail, label: "E-poçt", value: settings.email, href: `mailto:${settings.email}` },
     { icon: Phone, label: "Telefon", value: settings.phone, href: `tel:${settings.phone.replace(/\s/g, "")}` },
     { icon: MapPin, label: "Ünvan", value: settings.address },
     { icon: Clock, label: "İş saatları", value: settings.hours },
+    ...(settings.whatsapp
+        ? [{ icon: WhatsAppIcon, label: "WhatsApp", value: "Yazışmaq üçün klikləyin", href: whatsAppUrl(settings.whatsapp, "Salam! Servio haqqında məlumat almaq istəyirəm."), external: true }]
+        : []),
+    ...(settings.instagram_url
+        ? [{ icon: InstagramIcon, label: "Instagram", value: "Bizi izləyin", href: settings.instagram_url, external: true }]
+        : []),
   ];
 
   return (
@@ -54,7 +61,9 @@ export function ContactForm({ settings }: { settings: SiteSettingsContent }) {
                     <span className="w-12 h-12 rounded-xl bg-[#E3EFFF] text-[#116CFB] flex items-center justify-center flex-none"><i.icon size={22} /></span>
                     <div className="min-w-0">
                       <div className="text-xs text-[#3E4C6B]">{i.label}</div>
-                      {i.href ? <a href={i.href} className="font-semibold hover:text-[#116CFB] break-all">{i.value}</a> : <div className="font-semibold">{i.value}</div>}
+                      {i.href
+                          ? <a href={i.href} target={i.external ? "_blank" : undefined} rel={i.external ? "noopener noreferrer" : undefined} className="font-semibold hover:text-[#116CFB] break-all">{i.value}</a>
+                          : <div className="font-semibold">{i.value}</div>}
                     </div>
                   </div>
               ))}

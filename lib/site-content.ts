@@ -30,6 +30,7 @@ export type SiteSettingsContent = {
   email: string;
   phone: string;
   whatsapp: string;
+  instagram_url: string;
   address: string;
   hours: string;
   footer_note: string;
@@ -65,7 +66,7 @@ const EMPTY: SiteContent = {
   settings: {
     brand_name: SITE.name, tagline: "", logo: null,
     hero_title: "", hero_subtitle: "",
-    email: "", phone: "", whatsapp: "", address: "", hours: "", footer_note: "",
+    email: "", phone: "", whatsapp: "", instagram_url: "", address: "", hours: "", footer_note: "",
   },
   faq: [], features: [], about_values: [], home_steps: [], plans: [],
 };
