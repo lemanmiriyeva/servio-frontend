@@ -13,7 +13,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         <div className="h-[76px] flex-none flex items-center gap-3 px-4 sm:px-6 md:px-8 border-b border-line bg-bg">
             <button
                 onClick={onMenuClick}
-                className="md:hidden w-11 h-11 rounded-[10px] bg-white border border-line flex items-center justify-center text-ink2 flex-none"
+                className="lg:hidden w-11 h-11 rounded-[10px] bg-white border border-line flex items-center justify-center text-ink2 flex-none"
                 title="Menyu"
             >
                 <Menu size={20} />

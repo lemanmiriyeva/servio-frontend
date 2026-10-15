@@ -29,8 +29,9 @@ const NAV = [
 ] as const;
 
 type SidebarProps = {
-  // Mobil (md-dən aşağı) ekranlarda sidebar defolt gizlidir — bu, onu sağa sürüşərək açır
-  // (Topbar-dakı "menyu" düyməsi ilə). md+ ekranlarda hər zaman görünür, bu props-ların təsiri yoxdur.
+  // Mobil VƏ tablet (lg-dən aşağı, 1024px-ə qədər) ekranlarda sidebar defolt gizlidir — bu, onu
+  // sağa sürüşərək açır (Topbar-dakı "menyu" düyməsi ilə). lg+ ekranlarda hər zaman görünür, bu
+  // props-ların təsiri yoxdur.
   open?: boolean;
   onClose?: () => void;
 };
@@ -63,14 +64,17 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
 
   return (
       <>
-        {/* Mobil qaranlıq fon — sidebar açıq olanda, kənara klik edəndə bağlanır. md+ ekranda görünmür. */}
+        {/* Mobil qaranlıq fon — sidebar açıq olanda, kənara klik edəndə bağlanır. lg+ ekranda görünmür.
+            DİQQƏT: bu "lg" həddi (1024px) qəsdən "md"dən (768px) yuxarı saxlanılıb — 768-1023px
+            arasında (tablet) sidebar HƏMİŞƏ görünən/sabit olsaydı, qalan en (264px çıxılandan sonra)
+            kifayət qədər geniş olmurdu və kart/cədvəl məzmunu kənarda kəsilirdi. */}
         {open && (
-            <div className="md:hidden fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+            <div className="lg:hidden fixed inset-0 bg-black/40 z-40" onClick={onClose} />
         )}
         <aside
             className={`w-[264px] flex-none bg-side text-white py-6 pb-5 flex flex-col gap-6 h-screen
-            fixed md:sticky top-0 left-0 z-50 md:z-auto transition-transform duration-200
-            ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+            fixed lg:sticky top-0 left-0 z-50 lg:z-auto transition-transform duration-200
+            ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
         >
           <div className="flex items-center gap-3 px-2">
             <Link
@@ -84,7 +88,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
               <b className="block text-[15px] font-semibold truncate">{user?.shop?.name || "Servio"}</b>
               <span className="text-xs text-[#8FA9B2] truncate block">{user?.branch?.name || ""}</span>
             </div>
-            <button onClick={onClose} className="md:hidden text-[#8FA9B2] hover:text-white flex-none" title="Bağla">
+            <button onClick={onClose} className="lg:hidden text-[#8FA9B2] hover:text-white flex-none" title="Bağla">
               <X size={20} />
             </button>
           </div>
