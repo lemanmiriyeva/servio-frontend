@@ -255,11 +255,11 @@ export default function UsersPage() {
                                         </div>
                                     </div>
                                 ))}
-                                {users && users.length === 0 && (
-                                    <div className="text-center text-muted text-sm py-10">Hələ istifadəçi əlavə edilməyib.</div>
-                                )}
                             </div>
                         </div>
+                        {users && users.length === 0 && (
+                            <div className="text-center text-muted text-sm py-10">Hələ istifadəçi əlavə edilməyib.</div>
+                        )}
                         <Pagination page={usersPage} totalItems={users?.length ?? 0} onChange={setUsersPage} />
                     </div>
                 </>

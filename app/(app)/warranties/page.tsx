@@ -188,14 +188,14 @@ export default function WarrantiesPage() {
                                 </div>
                             );
                         })}
-                        {all && filtered.length === 0 && (
-                            <div className="text-center text-muted text-sm py-10">Bu kateqoriyada zəmanət yoxdur.</div>
-                        )}
-                        {!all && !error && (
-                            <Loader />
-                        )}
                     </div>
                 </div>
+                {all && filtered.length === 0 && (
+                    <div className="text-center text-muted text-sm py-10">Bu kateqoriyada zəmanət yoxdur.</div>
+                )}
+                {!all && !error && (
+                    <Loader />
+                )}
                 <Pagination page={page} totalItems={filtered.length} onChange={setPage} />
             </div>
         </>

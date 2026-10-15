@@ -156,14 +156,14 @@ export default function ExpensesPage() {
                                 <div className="flex-none w-[110px] text-right font-semibold neg">-{fmt(e.amount)} ₼</div>
                             </div>
                         ))}
-                        {expenses && expenses.length === 0 && (
-                            <div className="text-center text-muted text-sm py-10 flex flex-col items-center gap-2">
-                                <Receipt size={28} className="text-muted" />
-                                Hələ xərc qeydə alınmayıb.
-                            </div>
-                        )}
                     </div>
                 </div>
+                {expenses && expenses.length === 0 && (
+                    <div className="text-center text-muted text-sm py-10 flex flex-col items-center gap-2">
+                        <Receipt size={28} className="text-muted" />
+                        Hələ xərc qeydə alınmayıb.
+                    </div>
+                )}
                 <Pagination page={page} totalItems={expenses?.length ?? 0} onChange={setPage} />
             </div>
         </>

@@ -168,7 +168,7 @@ export default function RepairsPage() {
             <h1 className="text-[26px] md:text-[28px] font-semibold tracking-tight">Təmir / Xidmətlər</h1>
             <p className="text-ink2 mt-1">Bütün qəbul edilmiş cihazlar, statuslar və ödənişlər.</p>
           </div>
-          <div className="flex gap-2.5">
+          <div className="flex flex-wrap gap-2.5">
             {(activeTab || search) && (
                 <button className="btn" onClick={() => { setActiveTab(""); setSearch(""); }}>
                   <X size={18} /><span>Filtrləri sıfırla</span>

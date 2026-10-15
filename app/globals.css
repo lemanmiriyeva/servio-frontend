@@ -56,6 +56,14 @@
   --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
 }
 
+html, body {
+  /* Mobil ekranlarda hər hansı bir elementin (düzgün sarılmayan düymə sırası,
+     geniş cədvəl və s.) səhifəni üfüqi sürüşdürməsinin qarşısını alan təhlükəsizlik
+     toru — daxili "overflow-x-auto" olan konkret bloklar (cədvəllər) buna baxmayaraq
+     öz içində normal sürüşür, çünki onların öz scroll konteksti var. */
+  overflow-x: hidden;
+}
+
 body {
   background: #D3D8DB;
   color: var(--ink);

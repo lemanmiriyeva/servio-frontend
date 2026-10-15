@@ -151,11 +151,11 @@ export default function DebtsPage() {
                                     <div className="flex-none w-[110px] text-right font-semibold" style={{ color: "var(--purple)" }}>{fmt(s.total_debt)} ₼</div>
                                 </Link>
                             ))}
-                            {supplierDebts && supplierDebts.length === 0 && (
-                                <div className="text-center text-muted text-sm py-10">Açıq təchizatçı borcu yoxdur. 🎉</div>
-                            )}
                         </div>
                     </div>
+                    {supplierDebts && supplierDebts.length === 0 && (
+                        <div className="text-center text-muted text-sm py-10">Açıq təchizatçı borcu yoxdur. 🎉</div>
+                    )}
                     <Pagination page={supplierPage} totalItems={supplierDebts?.length ?? 0} onChange={setSupplierPage} />
                 </div>
             )}

@@ -72,6 +72,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else router.push("/login");
   }
 
+  // Tab/pəncərə bağlanarkən (və ya başqa bir sayta/linkə keçərkən) avtomatik çıxış —
+  // Servio adətən paylaşılan (dükan) kompüterlərdə açıq qalır, ona görə səhifədən tam
+  // ayrılan kimi (bağlama, başqa domenə keçid, F5 yeniləmə) sessiya dərhal silinir ki,
+  // növbəti açılışda mütləq yenidən giriş tələb olunsun. DİQQƏT: bu, Next.js-in daxili
+  // (client-side) səhifə keçidlərinə TƏSİR ETMİR — `router.push`/`<Link>` ilə tətbiq
+  // daxilində gəzmək browserin "unload" hadisəsini doğurmur, yalnız brauzer səviyyəsində
+  // SƏHİFƏDƏN TAM ÇIXIŞ (bağlama/xarici keçid/yeniləmə) bunu işə salır.
+  useEffect(() => {
+    if (!user || typeof window === "undefined") return;
+    function onUnload() {
+      clearTokens();
+      localStorage.removeItem(LAST_ACTIVITY_KEY);
+    }
+    window.addEventListener("pagehide", onUnload);
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      window.removeEventListener("pagehide", onUnload);
+      window.removeEventListener("beforeunload", onUnload);
+    };
+  }, [user]);
+
   // Giriş olunduqdan sonra fəaliyyətsizliyi izləyir — 10 dəq ərzində heç bir klik/klaviatura/skrol
   // olmasa, istifadəçi təhlükəsizlik üçün avtomatik çıxış edilib login səhifəsinə atılır.
   useEffect(() => {

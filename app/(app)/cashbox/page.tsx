@@ -357,11 +357,11 @@ export default function CashboxPage() {
                                 </div>
                             </div>
                         ))}
-                        {transactions && transactions.length === 0 && (
-                            <div className="text-center text-muted text-sm py-10">Əməliyyat tapılmadı.</div>
-                        )}
                     </div>
                 </div>
+                {transactions && transactions.length === 0 && (
+                    <div className="text-center text-muted text-sm py-10">Əməliyyat tapılmadı.</div>
+                )}
                 <Pagination page={page} totalItems={transactions?.length ?? 0} onChange={setPage} />
             </div>
         </>

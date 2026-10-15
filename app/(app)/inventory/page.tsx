@@ -311,11 +311,11 @@ export default function InventoryPage() {
                                         </div>
                                     </div>
                                 ))}
-                                {products && products.length === 0 && (
-                                    <div className="text-center text-muted text-sm py-10">Hələ məhsul əlavə edilməyib.</div>
-                                )}
                             </div>
                         </div>
+                        {products && products.length === 0 && (
+                            <div className="text-center text-muted text-sm py-10">Hələ məhsul əlavə edilməyib.</div>
+                        )}
                         <Pagination page={productsPage} totalItems={products?.length ?? 0} onChange={setProductsPage} />
                     </div>
                 </>

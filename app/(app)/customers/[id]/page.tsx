@@ -191,11 +191,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                                         </div>
                                     </Link>
                                 ))}
-                                {repairs && repairs.length === 0 && (
-                                    <div className="text-center text-muted text-sm py-8">Hələ heç bir təmir yoxdur.</div>
-                                )}
                             </div>
                         </div>
+                        {repairs && repairs.length === 0 && (
+                            <div className="text-center text-muted text-sm py-8">Hələ heç bir təmir yoxdur.</div>
+                        )}
                         <Pagination page={repairsPage} totalItems={repairs?.length ?? 0} onChange={setRepairsPage} />
                     </div>
                 </div>
