@@ -37,7 +37,7 @@ const STATUS_BADGE: Record<string, string> = {
   waiting_repair: "b-amber",
   in_progress: "b-cyan",
   ready: "b-green",
-  delivered: "b-gray",
+  delivered: "b-green",
   cancelled: "b-red",
 };
 

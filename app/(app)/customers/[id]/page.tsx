@@ -25,7 +25,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 const STATUS_BADGE: Record<string, string> = {
     received: "b-blue", diagnosing: "b-purple", waiting_repair: "b-amber",
-    in_progress: "b-cyan", ready: "b-green", delivered: "b-gray", cancelled: "b-red",
+    in_progress: "b-cyan", ready: "b-green", delivered: "b-green", cancelled: "b-red",
 };
 
 export default function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {

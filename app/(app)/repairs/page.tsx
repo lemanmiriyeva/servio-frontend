@@ -35,7 +35,7 @@ const STATUS_TABS = [
 
 const STATUS_BADGE: Record<string, string> = {
   received: "b-blue", diagnosing: "b-purple", waiting_repair: "b-amber",
-  in_progress: "b-cyan", ready: "b-green", delivered: "b-gray", cancelled: "b-red",
+  in_progress: "b-cyan", ready: "b-green", delivered: "b-green", cancelled: "b-red",
 };
 const STATUS_LABEL: Record<string, string> = {
   received: "Qəbul edildi", diagnosing: "Diaqnostikada", waiting_repair: "Təmir gözləyir",
