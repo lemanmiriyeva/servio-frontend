@@ -26,11 +26,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const access = typeof window !== "undefined" ? localStorage.getItem("scrm_access") : null;
+    if (typeof window === "undefined") {
+      setLoading(false);
+      return;
+    }
+    const access = localStorage.getItem("scrm_access");
+    // "Tab bağlananda (və ya başqa sayta keçəndə) çıxış et" tələbi — amma brauzer SƏHİFƏ
+    // YENİLƏMƏNİ (F5) və TAB BAĞLAMANI eyni "unload" hadisəsi kimi göstərir, ikisini ayırmaq
+    // mümkün deyil. Ona görə iki siqnalı birləşdiririk:
+    //  1) `sessionStorage` bu TAB üçün — səhifə YENİLƏNƏNDƏ qorunur, TAB TAM bağlanıb yenidən
+    //     açılanda (və ya brauzer yenidən başladılanda) avtomatik sıfırlanır.
+    //  2) `localStorage`-da paylaşılan "açıq tab sayğacı" — başqa bir tab HAZIRDA açıqdırsa
+    //     (məs. istifadəçi ikinci tab açıb), bu sayğac > 0 olur, ona görə yeni tab köhnə
+    //     sessiyanı "bağlanıb-yenidən-açılma" kimi SƏHVƏN yozub çıxış etmir.
+    // Yalnız HƏR İKİSİ mənfi olanda (bu tab əvvəllər YOX idi VƏ heç bir başqa tab açıq
+    // deyildi) — deməli, HƏQİQƏTƏN hər şey bağlanıb sonra yenidən açılıb — çıxış edirik.
+    const sessionAlive = sessionStorage.getItem("scrm_tab_alive");
+    const openTabs = Number(localStorage.getItem("scrm_open_tabs") || "0");
+    sessionStorage.setItem("scrm_tab_alive", "1");
+    localStorage.setItem("scrm_open_tabs", String(openTabs + 1));
+
+    function onUnload() {
+      const n = Math.max(0, Number(localStorage.getItem("scrm_open_tabs") || "1") - 1);
+      localStorage.setItem("scrm_open_tabs", String(n));
+    }
+    window.addEventListener("pagehide", onUnload);
+    window.addEventListener("beforeunload", onUnload);
+
+    // DİQQƏT: cleanup da sayğacı AZALDIR (təkcə listener-ləri silmir) — bu, React-in
+    // development rejimindəki Strict Mode-unun effekti QƏSDƏN iki dəfə işə salmasında
+    // (mount→cleanup→mount) sayğacın səhvən şişməsinin qarşısını alır. Real "tab bağlanması"
+    // zamanı isə brauzer bu cleanup-ı işə salmadan JS mühitini dərhal dayandırır, ona görə
+    // orada ikiqat azalma riski yoxdur — yalnız `onUnload` (pagehide/beforeunload) işləyir.
+    function cleanup() {
+      window.removeEventListener("pagehide", onUnload);
+      window.removeEventListener("beforeunload", onUnload);
+      onUnload();
+    }
+
+    if (access && !sessionAlive && openTabs <= 0) {
+      clearTokens();
+      setLoading(false);
+      return cleanup;
+    }
+
     const pending: Promise<unknown> = access
         ? api.me().then(setUser).catch(() => clearTokens())
         : Promise.resolve();
     pending.finally(() => setLoading(false));
+
+    return cleanup;
   }, []);
 
   // Brauzerin "geri/irəli keşi" (bfcache) çıxışdan sonra köhnə (daxil olunmuş) səhifə
@@ -71,27 +116,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined") window.location.href = "/login";
     else router.push("/login");
   }
-
-  // Tab/pəncərə bağlanarkən (və ya başqa bir sayta/linkə keçərkən) avtomatik çıxış —
-  // Servio adətən paylaşılan (dükan) kompüterlərdə açıq qalır, ona görə səhifədən tam
-  // ayrılan kimi (bağlama, başqa domenə keçid, F5 yeniləmə) sessiya dərhal silinir ki,
-  // növbəti açılışda mütləq yenidən giriş tələb olunsun. DİQQƏT: bu, Next.js-in daxili
-  // (client-side) səhifə keçidlərinə TƏSİR ETMİR — `router.push`/`<Link>` ilə tətbiq
-  // daxilində gəzmək browserin "unload" hadisəsini doğurmur, yalnız brauzer səviyyəsində
-  // SƏHİFƏDƏN TAM ÇIXIŞ (bağlama/xarici keçid/yeniləmə) bunu işə salır.
-  useEffect(() => {
-    if (!user || typeof window === "undefined") return;
-    function onUnload() {
-      clearTokens();
-      localStorage.removeItem(LAST_ACTIVITY_KEY);
-    }
-    window.addEventListener("pagehide", onUnload);
-    window.addEventListener("beforeunload", onUnload);
-    return () => {
-      window.removeEventListener("pagehide", onUnload);
-      window.removeEventListener("beforeunload", onUnload);
-    };
-  }, [user]);
 
   // Giriş olunduqdan sonra fəaliyyətsizliyi izləyir — 10 dəq ərzində heç bir klik/klaviatura/skrol
   // olmasa, istifadəçi təhlükəsizlik üçün avtomatik çıxış edilib login səhifəsinə atılır.
