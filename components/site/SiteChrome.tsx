@@ -1,5 +1,6 @@
 import { SiteHeader } from "./SiteHeader";
 import { SiteFooter } from "./SiteFooter";
+import { WhatsAppButton } from "./WhatsAppButton";
 import { getSiteContent } from "@/lib/site-content";
 
 // Adi (mötərizəsiz) qovluq strukturu ilə işləmək üçün paylaşılan header/footer bükücüsü.
@@ -11,6 +12,7 @@ export async function SiteChrome({ children }: { children: React.ReactNode }) {
       <SiteHeader settings={settings} />
       <main className="flex-1">{children}</main>
       <SiteFooter settings={settings} />
+      <WhatsAppButton whatsapp={settings.whatsapp} />
     </div>
   );
 }

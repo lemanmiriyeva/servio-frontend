@@ -225,12 +225,12 @@ export default function RepairDetailPage({ params }: { params: Promise<{ id: str
           <Link href="/repairs" className="w-10 h-10 rounded-[10px] bg-white border border-line flex items-center justify-center text-ink2 flex-none">
             <ArrowLeft size={18} />
           </Link>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-semibold">{data.number}</h1>
+              <h1 className="text-xl font-semibold truncate">{data.number}</h1>
               <span className={`badge ${STATUS_BADGE[data.status]}`}><i />{STATUS_LABEL[data.status]}</span>
             </div>
-            <p className="text-ink2 text-sm mt-0.5">{data.customer.full_name} · {data.customer.phone}</p>
+            <p className="text-ink2 text-sm mt-0.5 truncate">{data.customer.full_name} · {data.customer.phone}</p>
           </div>
         </div>
 

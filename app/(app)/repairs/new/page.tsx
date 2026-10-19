@@ -218,12 +218,12 @@ export default function NewRepairPage() {
                 <h3 className="text-base font-semibold">Müştəri</h3>
                 {selectedCustomer ? (
                     <div className="flex items-center gap-3 p-3 rounded-[10px] border border-line">
-                      <div className="av a1">{selectedCustomer.initials}</div>
-                      <div className="flex-1">
-                        <b className="block">{selectedCustomer.full_name}</b>
-                        <span className="text-xs text-muted">{selectedCustomer.phone}</span>
+                      <div className="av a1 flex-none">{selectedCustomer.initials}</div>
+                      <div className="flex-1 min-w-0">
+                        <b className="block truncate">{selectedCustomer.full_name}</b>
+                        <span className="text-xs text-muted truncate block">{selectedCustomer.phone}</span>
                       </div>
-                      <button className="btn ghost" onClick={() => setSelectedCustomer(null)}>Dəyiş</button>
+                      <button className="btn ghost flex-none" onClick={() => setSelectedCustomer(null)}>Dəyiş</button>
                     </div>
                 ) : (
                     <>

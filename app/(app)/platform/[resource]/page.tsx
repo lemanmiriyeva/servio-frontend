@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, X, Search, ChevronLeft, ChevronRight, Eye, Check } from "lucide-react";
 import { api, ApiError, type PlatformField, type PlatformResource } from "@/lib/api";
@@ -392,24 +392,35 @@ export function ResourceView({ res, fixedFilters, hiddenColumns }: {
         return () => clearTimeout(t);
     }, [searchInput]);
 
+    // DÜZƏLİŞ ("Plan əlavə edəndə gah düz, gah səhv göstərir" şikayəti) — bu, klassik
+    // "sıra pozulmuş cavab" (race condition) bugu idi: `load()` hər çağırışda YENİ bir
+    // GET sorğusu göndərirdi, amma hansı cavabın "sonuncu/ən təzə" olduğunu YOXLAMIRDI.
+    // Məsələn, Plan əlavə edəndən sonra `onSaved` yeni bir `load()` çağırır — amma əgər bir az
+    // əvvəl başlamış KÖHNƏ sorğu (məs. filtr dəyişəndə avtomatik tetiklənən) şəbəkə gecikməsi
+    // ucbatından YENİ sorğudan SONRA cavab versə, onun köhnə nəticəsi `setRows`-u YENİDƏN
+    // ÜSTƏLƏYİB səhv (köhnəlmiş) datanı göstərirdi. Həll: hər çağırışa artan bir sıra nömrəsi
+    // verilir, cavab gələndə YALNIZ ən son göndərilən sorğunun nömrəsi uyğun gələrsə tətbiq olunur.
+    const requestSeq = useRef(0);
     const load = useCallback(() => {
         const q = new URLSearchParams({ page: String(page), page_size: String(PAGE_SIZE) });
         if (search.trim()) q.set("search", search.trim());
         Object.entries(filters).forEach(([k, v]) => { if (v) q.set(k, v); });
         Object.entries(fixedFilters ?? {}).forEach(([k, v]) => q.set(k, String(v)));
+        const mySeq = ++requestSeq.current;
         // setLoading mikrotapşırığa təxirə salınır ki, effekt daxilində birbaşa (sinxron)
         // setState çağırışı olmasın (react-hooks/set-state-in-effect) — davranış eyni qalır.
         Promise.resolve().then(() => setLoading(true));
         api.platformList(res.key, `?${q.toString()}`)
             .then((d) => {
+                if (mySeq !== requestSeq.current) return; // köhnəlmiş cavab — artıq daha təzə sorğu var
                 const data = d as { count?: number };
                 const list = listOf(d);
                 setRows(list);
                 setCount(data.count ?? list.length);
                 setError("");
             })
-            .catch((e) => setError(errText(e, res.fields)))
-            .finally(() => setLoading(false));
+            .catch((e) => { if (mySeq === requestSeq.current) setError(errText(e, res.fields)); })
+            .finally(() => { if (mySeq === requestSeq.current) setLoading(false); });
     }, [res, page, search, filters, fixedFilters]);
 
     useEffect(() => { load(); }, [load]);

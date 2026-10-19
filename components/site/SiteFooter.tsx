@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { SocialBar } from "./SocialBar";
 import { NAV } from "@/lib/site-config";
 import type { SiteSettingsContent } from "@/lib/site-content";
 
@@ -12,6 +13,7 @@ export function SiteFooter({ settings }: { settings: SiteSettingsContent }) {
           <p className="mt-4 text-sm leading-relaxed max-w-[340px]">
             {settings.tagline || "Telefon və kompüter servis bizneslərini müştəridən hesabata qədər bir platformada idarə edin."}
           </p>
+          <div className="mt-5"><SocialBar settings={settings} variant="dark" /></div>
         </div>
         <div>
           <b className="text-white text-sm">Səhifələr</b>

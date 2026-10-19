@@ -31,51 +31,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const access = localStorage.getItem("scrm_access");
-    // "Tab bağlananda (və ya başqa sayta keçəndə) çıxış et" tələbi — amma brauzer SƏHİFƏ
-    // YENİLƏMƏNİ (F5) və TAB BAĞLAMANI eyni "unload" hadisəsi kimi göstərir, ikisini ayırmaq
-    // mümkün deyil. Ona görə iki siqnalı birləşdiririk:
-    //  1) `sessionStorage` bu TAB üçün — səhifə YENİLƏNƏNDƏ qorunur, TAB TAM bağlanıb yenidən
-    //     açılanda (və ya brauzer yenidən başladılanda) avtomatik sıfırlanır.
-    //  2) `localStorage`-da paylaşılan "açıq tab sayğacı" — başqa bir tab HAZIRDA açıqdırsa
-    //     (məs. istifadəçi ikinci tab açıb), bu sayğac > 0 olur, ona görə yeni tab köhnə
-    //     sessiyanı "bağlanıb-yenidən-açılma" kimi SƏHVƏN yozub çıxış etmir.
-    // Yalnız HƏR İKİSİ mənfi olanda (bu tab əvvəllər YOX idi VƏ heç bir başqa tab açıq
-    // deyildi) — deməli, HƏQİQƏTƏN hər şey bağlanıb sonra yenidən açılıb — çıxış edirik.
+    // DÜZƏLİŞ (mobil cihazlarda "çox tez çıxış edir" şikayəti): ƏVVƏLKİ versiya bir də
+    // `pagehide`/`beforeunload` hadisələrini "tab bağlandı" ilə eyniləşdirib paylaşılan
+    // (localStorage) bir "açıq tab sayğacı"nı azaldırdı. Problem budur: mobil brauzerlər
+    // (xüsusən iOS Safari) tətbiqi arxa plana atanda, ekranı kilidləyəndə, və ya başqa app-a
+    // keçəndə DƏ `pagehide`-ı atəşləyir — tab əslində AÇIQ qalsa belə. Bu, sayğacı tez-tez
+    // səhvən 0-a endirirdi, və istifadəçi geri qayıdanda (xüsusən sessionStorage da yaddaş
+    // təzyiqi altında brauzer tərəfindən silinmişdisə) "tab bağlanıb yenidən açılıb" kimi
+    // YOZULUB avtomatik çıxış edilirdi — baxmayaraq ki, istifadəçi sadəcə tətbiqi dəyişmişdi.
+    //
+    // Düzgün, sadə qayda: `sessionStorage` artıq TƏK BAŞINA kifayətdir. O, hər tab üçün
+    // AYRICADIR (başqa tab-larla paylaşılmır), səhifə YENİLƏNƏNDƏ qorunur, və YALNIZ bu TAB
+    // HƏQİQƏTƏN bağlananda sıfırlanır (brauzerin öz davranışı — bizim əlavə bir hadisə
+    // dinləyicimizə ehtiyac yoxdur). Bu, "başqa tab bağlansa bu tab çıxış etməsin" tələbini
+    // DƏ avtomatik ödəyir, çünki sessionStorage onsuz da tab-lar arasında paylaşılmır — paylaşılan
+    // sayğaca heç ehtiyac yox imiş.
     const sessionAlive = sessionStorage.getItem("scrm_tab_alive");
-    const openTabs = Number(localStorage.getItem("scrm_open_tabs") || "0");
     sessionStorage.setItem("scrm_tab_alive", "1");
-    localStorage.setItem("scrm_open_tabs", String(openTabs + 1));
 
-    function onUnload() {
-      const n = Math.max(0, Number(localStorage.getItem("scrm_open_tabs") || "1") - 1);
-      localStorage.setItem("scrm_open_tabs", String(n));
-    }
-    window.addEventListener("pagehide", onUnload);
-    window.addEventListener("beforeunload", onUnload);
-
-    // DİQQƏT: cleanup da sayğacı AZALDIR (təkcə listener-ləri silmir) — bu, React-in
-    // development rejimindəki Strict Mode-unun effekti QƏSDƏN iki dəfə işə salmasında
-    // (mount→cleanup→mount) sayğacın səhvən şişməsinin qarşısını alır. Real "tab bağlanması"
-    // zamanı isə brauzer bu cleanup-ı işə salmadan JS mühitini dərhal dayandırır, ona görə
-    // orada ikiqat azalma riski yoxdur — yalnız `onUnload` (pagehide/beforeunload) işləyir.
-    function cleanup() {
-      window.removeEventListener("pagehide", onUnload);
-      window.removeEventListener("beforeunload", onUnload);
-      onUnload();
-    }
-
-    if (access && !sessionAlive && openTabs <= 0) {
+    if (access && !sessionAlive) {
       clearTokens();
       setLoading(false);
-      return cleanup;
+      return;
     }
 
     const pending: Promise<unknown> = access
         ? api.me().then(setUser).catch(() => clearTokens())
         : Promise.resolve();
     pending.finally(() => setLoading(false));
-
-    return cleanup;
   }, []);
 
   // Brauzerin "geri/irəli keşi" (bfcache) çıxışdan sonra köhnə (daxil olunmuş) səhifə

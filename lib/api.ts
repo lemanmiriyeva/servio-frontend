@@ -58,18 +58,39 @@ export class ApiError extends Error {
   }
 }
 
+// DİQQƍT (bax: backend `SIMPLE_JWT.ROTATE_REFRESH_TOKENS=True`) — hər refresh sorğusunda server
+// YENİ refresh token da qaytarır, köhnəsi dövriyyədən çıxır. Əvvəllər bura yalnız yeni access
+// tokeni yazırdı, yeni refresh tokeni isə atılırdı — nəticədə localStorage-da köhnəlmiş refresh
+// token qalırdı. Bu da səhifə eyni anda bir neçə sorğu göndərəndə (hamısı 401 alıb paralel
+// refresh cəhdi edəndə) təsadüfi "bəziləri uğurlu, bəziləri logout" effektinə səbəb olurdu.
+//
+// İki düzəliş: (1) yeni refresh tokeni də həmişə yadda saxla, (2) eyni anda bir neçə sorğu 401
+// alsa, HAMISI eyni "in-flight" refresh promise-ini gözləsin (təkrar-təkrar refresh çağırmasın) —
+// `/auth/token/refresh/`-ə paralel bir neçə sorğu getməsin deyə.
+let refreshInFlight: Promise<string | null> | null = null;
+
 async function refreshAccessToken(): Promise<string | null> {
-  const { refresh } = getTokens();
-  if (!refresh) return null;
-  const res = await fetch(`${API_URL}/auth/token/refresh/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh }),
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  localStorage.setItem("scrm_access", data.access);
-  return data.access;
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    try {
+      const { refresh } = getTokens();
+      if (!refresh) return null;
+      const res = await fetch(`${API_URL}/auth/token/refresh/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      localStorage.setItem("scrm_access", data.access);
+      if (data.refresh) localStorage.setItem("scrm_refresh", data.refresh);
+      return data.access;
+    } finally {
+      // Növbəti dəfə token həqiqətən bitəndə təzə refresh cəhdi edə bilsin deyə təmizləyirik.
+      refreshInFlight = null;
+    }
+  })();
+  return refreshInFlight;
 }
 
 export async function apiFetch(path: string, options: RequestInit = {}, retry = true): Promise<unknown> {
