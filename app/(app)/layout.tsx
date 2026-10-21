@@ -30,10 +30,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (loading) return;
         if (!user) { router.replace("/login"); return; }
-        if (pureSuperadmin && !pathname.startsWith("/platform")) router.replace("/platform");
+        if (pureSuperadmin && !(pathname.startsWith("/platform") || pathname.startsWith("/operations"))) router.replace("/platform");
     }, [loading, user, pureSuperadmin, pathname, router]);
 
-    if (loading || !user || (pureSuperadmin && !pathname.startsWith("/platform"))) {
+    if (loading || !user || (pureSuperadmin && !(pathname.startsWith("/platform") || pathname.startsWith("/operations")))) {
         return <Loader fullScreen size={44} />;
     }
 

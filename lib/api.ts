@@ -204,6 +204,7 @@ export const api = {
   marketplaceOrderAction: (id: number | string, action: string) =>
       apiFetch(`/marketplace/orders/${id}/${action}/`, { method: "POST", body: JSON.stringify({}) }),
   cashboxSummary: () => apiFetch("/cashbox/summary/"),
+  operationLog: (params = "") => apiFetch(`/cashbox/operation-log/${params}`),
   cashTransactions: (params = "") => apiFetch(`/cashbox/transactions/${params}`),
   createCashTransaction: (payload: Record<string, unknown>) =>
       apiFetch("/cashbox/transactions/", { method: "POST", body: JSON.stringify(payload) }),

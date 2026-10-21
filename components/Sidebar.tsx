@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutGrid, Users, Wrench, Truck, Boxes, Wallet, Receipt,
   CreditCard, BarChart3, ShieldCheck, UsersRound, Bell, Settings2, LogOut, Crown,
-  ArrowLeft, LayoutDashboard,
+  ArrowLeft, LayoutDashboard, History,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { usePlatform } from "@/lib/platform-context";
@@ -24,6 +24,7 @@ const NAV = [
   { href: "/reports", label: "Hesabatlar", icon: BarChart3, module: "reports" },
   { href: "/warranties", label: "Zəmanətlər", icon: ShieldCheck, module: null },
   { href: "/users", label: "İstifadəçilər", icon: UsersRound, module: "users" },
+  { href: "/operations", label: "Əməliyyatlar", icon: History, module: null, adminOnly: true },
   { href: "/notifications", label: "Bildirişlər", icon: Bell, module: null },
   { href: "/settings", label: "Parametrlər", icon: Settings2, module: "settings" },
 ] as const;
@@ -41,8 +42,9 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const { user, hasModule, logout } = useAuth();
   const { resources } = usePlatform();
 
-  const inPlatform = pathname.startsWith("/platform");
   const isSuperadmin = !!user?.is_superadmin;
+  // Mağazasız saf Super Admin üçün "Əməliyyatlar" da Platforma bölməsinin bir hissəsidir.
+  const inPlatform = pathname.startsWith("/platform") || (isSuperadmin && !user?.shop && pathname.startsWith("/operations"));
   const canUsePlatform = isSuperadmin || !!(user?.shop && user?.is_shop_admin);
   // Mağazaya bağlı olmayan saf Platform Super Admin üçün "İdarəetmə paneli"nə (adi mağaza
   // dashboard-u) qayıdışın mənası yoxdur — onun göstəriləcək mağazası yoxdur.
@@ -106,6 +108,10 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                     <LayoutDashboard size={20} />
                     <span>Ümumi baxış</span>
                   </Link>
+                  <Link href="/operations" className={`ni ${pathname.startsWith("/operations") ? "on" : ""}`}>
+                    <History size={20} />
+                    <span>Əməliyyatlar</span>
+                  </Link>
                   {sections.map((s) => (
                       <div key={s.name} className="flex flex-col gap-0.5 mt-3 pt-3 border-t border-white/10 first:mt-1 first:pt-1 first:border-t-0">
                         {/* "Platforma" sözü sidebarda görünmür — müştəri üçün qarışıq, texniki termindir. */}
@@ -131,6 +137,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   {NAV.map((item) => {
                     const active = pathname === item.href || pathname.startsWith(item.href + "/");
                     if (item.module && !hasModule(item.module)) return null;
+                    if ("adminOnly" in item && item.adminOnly && !(user?.is_shop_admin || user?.is_superadmin)) return null;
                     const Icon = item.icon;
                     return (
                         <Link key={item.href} href={item.href} className={`ni ${active ? "on" : ""}`}>
